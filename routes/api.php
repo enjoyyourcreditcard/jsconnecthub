@@ -11,7 +11,7 @@ Route::get('/user', function (Request $request) {
 
 Route::get('/sample', fn() => response()->json(['status' => true, 'result' => ['supguys' => 'wefniejnwf']]));
 
-$types = ['roles', 'users'];
+$types = config('constants');
 
 foreach ($types as $type) {
     Route::prefix($type)->group(function () use ($type) {
