@@ -2,19 +2,19 @@ import axios from 'axios';
 import { createSlice } from '@reduxjs/toolkit';
 
 // Dummy states for now (replace with yours)
-const APP_STATE = { data: {}, spinner: {}, alert: {} };
 const ROLES_STATE = { data: [], spinner: {}, alert: {} };
+const USERS_STATE = { data: [], spinner: {}, alert: {} };
 // ... add others
 
 export const stateKey = {
-  app: 'app',
   roles: 'roles',
+  users: 'users',
   // ... add others
 };
 
 const INITIAL_STATE = {
-  [stateKey.app]: APP_STATE,
   [stateKey.roles]: ROLES_STATE,
+  [stateKey.users]: USERS_STATE,
   // ... add others
 };
 
@@ -40,20 +40,20 @@ const GlobalSlice = createSlice({
 
 export const { setStateData, resetStateData, resetStateKeyData } = GlobalSlice.actions;
 
-export const getRecords = ({ type = stateKey.app, endPoint, key }) => async (dispatch) => {
-  dispatch(setStateData({ key: 'spinner', data: { show: true, text: 'Fetching...' } }));
-  try {
-    const response = await axios.get(endPoint);
-    dispatch(resetStateKeyData({ key: 'spinner' }));
-    if (response.data.status) {
-      dispatch(setStateData({ type, data: response.data.result, key, isMerge: false }));
-      return response.data.result;
+export const getRecords = ({ type, endPoint, key }) => async (dispatch) => {
+    dispatch(setStateData({ key: 'spinner', data: { show: true, text: 'Fetching...' } }));
+    try {
+      const response = await axios.get(`/api/${type}`); // e.g., /api/roles
+      dispatch(resetStateKeyData({ key: 'spinner' }));
+      if (response.data.status) {
+        dispatch(setStateData({ type, data: response.data.result, key, isMerge: false }));
+        return response.data.result;
+      }
+      return false;
+    } catch (error) {
+      dispatch(resetStateKeyData({ key: 'spinner' }));
+      return false;
     }
-    return false;
-  } catch (error) {
-    dispatch(resetStateKeyData({ key: 'spinner' }));
-    return false;
-  }
-};
+  };
 
 export const globalReducer = GlobalSlice.reducer;
