@@ -2,22 +2,27 @@
 
 use App\Http\Controllers\Api\MasterApiController;
 use App\Http\Controllers\Auth\LoginController;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Route;
+
+/**
+ * References
+ */
+Route::get('/sample', fn() => response()->json(['status' => true, 'result' => ['supguys' => 'wefniejnwf']]));
 
 Route::post('/login', [LoginController::class, 'login']);
 
-Route::get('/sample', fn() => response()->json(['status' => true, 'result' => ['supguys' => 'wefniejnwf']]));
+Route::group(['middleware' => 'auth:sanctum'], function () {
+    Route::post('/logout', [LoginController::class, 'logout']);
 
-$types = config('constants');
+    $types = config('constants');
 
-foreach ($types as $type) {
-    Route::prefix($type)->group(function () use ($type) {
-        Route::get('/', [MasterApiController::class, 'index']);
-        Route::get('/{id}', [MasterApiController::class, 'show']);
-        Route::post('/', [MasterApiController::class, 'store']);
-        Route::put('/{id}', [MasterApiController::class, 'update']);
-        Route::delete('/{id}', [MasterApiController::class, 'destroy']);
-    });
-}
+    foreach ($types as $type) {
+        Route::prefix($type)->group(function () use ($type) {
+            Route::get('/', [MasterApiController::class, 'index']);
+            Route::get('/{id}', [MasterApiController::class, 'show']);
+            Route::post('/', [MasterApiController::class, 'store']);
+            Route::put('/{id}', [MasterApiController::class, 'update']);
+            Route::delete('/{id}', [MasterApiController::class, 'destroy']);
+        });
+    }
+});
