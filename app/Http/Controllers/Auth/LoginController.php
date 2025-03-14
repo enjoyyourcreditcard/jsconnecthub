@@ -9,7 +9,6 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class LoginController extends Controller
 {
@@ -45,7 +44,7 @@ class LoginController extends Controller
     }
 
     /**
-     * Login proses and generate token.
+     * Login process and generate token.
      *
      * @return JsonResponse
      */
@@ -70,10 +69,22 @@ class LoginController extends Controller
 
         $user->tokens()->delete();
 
-        $user->save();
-
         $tokenString = $user->first_name . "-" . $user->email . "-" . $user->username . "_" . $user->id;
 
         return response()->json(['status' => true, 'result' => $user, 'token' => $user->createToken($tokenString)->plainTextToken]);
+    }
+
+    /**
+     * Logout process and delete token.
+     *
+     * @return JsonResponse
+     */
+    public function logout(Request $request)
+    {
+        $user = $request->user();
+
+        $user->tokens()->delete();
+
+        return response()->json(['status' => true, 'message' => 'logged out']);
     }
 }
