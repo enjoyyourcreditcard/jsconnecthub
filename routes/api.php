@@ -25,13 +25,21 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
     $types = config('constants.MASTER_TYPE_ARRAY');
 
-    foreach ($types as $type) {
-        Route::prefix($type)->group(function () use ($type) {
-            Route::get('/', [MasterApiController::class, 'index']);
-            Route::get('/{id}', [MasterApiController::class, 'show']);
-            Route::post('/', [MasterApiController::class, 'store']);
-            Route::put('/{id}', [MasterApiController::class, 'update']);
-            Route::delete('/{id}', [MasterApiController::class, 'destroy']);
-        });
-    }
+    // foreach ($types as $type) {
+    //     Route::prefix($type)->group(function () use ($type) {
+    //         Route::get('/', [MasterApiController::class, 'index'])->name("$type.index");
+    //         Route::get('/{id}', [MasterApiController::class, 'show']);
+    //         Route::post('/', [MasterApiController::class, 'store']);
+    //         Route::put('/{id}', [MasterApiController::class, 'update']);
+    //         Route::delete('/{id}', [MasterApiController::class, 'destroy']);
+    //     });
+    // }
+    Route::prefix('{type}')->where(['type' => implode('|', $types)])->group(function () {
+        Route::get('/', [MasterApiController::class, 'index']);
+        Route::get('/{id}', [MasterApiController::class, 'show']);
+        Route::post('/', [MasterApiController::class, 'store']);
+        Route::put('/{id}', [MasterApiController::class, 'update']);
+        Route::delete('/{id}', [MasterApiController::class, 'destroy']);
+    });
+
 });

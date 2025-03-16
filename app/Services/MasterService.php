@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Level;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Str;
 
 class MasterService
@@ -9,6 +11,8 @@ class MasterService
     protected $modelMap = [
         // 'roles' => \App\Models\Role::class,
         // 'users' => \App\Models\User::class,
+        'levels'=> \App\Models\Level::class,
+        'class'=> \App\Models\DataClass::class,
     ];
 
     protected function getModel($type)
@@ -21,13 +25,13 @@ class MasterService
     }
 
     public function getAll($type)
-    {
+    { 
         return $this->getModel($type)->all();
     }
 
     public function getById($type, $id)
     {
-        return $this->getModel($type)->findOrFail($id);
+        return $this->getModel($type)->find($id);
     }
 
     public function create($type, array $data)
@@ -47,4 +51,5 @@ class MasterService
         $model = $this->getModel($type)->findOrFail($id);
         $model->delete();
     }
+
 }
