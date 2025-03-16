@@ -26,6 +26,12 @@ class MasterService
 
     public function getAll($type)
     { 
+        if ($type === config('constants.MASTER_TYPE_ARRAY.LEVEL_MASTER_TYPE')){
+            return $this->getModel($type)->with('classes')->get();
+        }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.CLASS_MASTER_TYPE')){
+            return $this->getModel($type)->with('level')->get();
+        }
         return $this->getModel($type)->all();
     }
 
