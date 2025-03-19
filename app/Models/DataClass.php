@@ -3,14 +3,23 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DataClass extends Model
 {
+    protected $table        = "data_classes";
+    protected $primaryKey   = "id";
+    protected $keyType      = "int";
+
+    public $timestamps      = true;
+    public $incrementing    = true;
+
     protected $fillable = [
-        'name',
-        'level_id'
+        'level_id',
+        'name'
     ];
+
     /**
      * Get the level that owns the DataClass
      *
@@ -19,5 +28,15 @@ class DataClass extends Model
     public function level(): BelongsTo
     {
         return $this->belongsTo(level::class);
+    }
+
+    /**
+     * Get the students of the class
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function students(): HasMany
+    {
+        return $this->hasMany(Student::class);
     }
 }

@@ -7,9 +7,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Level extends Model
 {
+    protected $table        = "levels";
+    protected $primaryKey   = "id";
+    protected $keyType      = "int";
+
+    public $timestamps      = true;
+    public $incrementing    = true;
+
     protected $fillable = [
-        'name'
+        'name',
     ];
+
     /**
      * Get all of the classes for the Level
      *

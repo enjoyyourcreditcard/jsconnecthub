@@ -13,15 +13,48 @@ class StudentSeeder extends Seeder
      */
     public function run(): void
     {
-        $names = [
-            'Dariusz Symanski',
-            'Justyn Dąbrowski',
-            'Walentyna Maciejewska',
-            'Szczęsny Maciejewski'
+        $seeds = [
+            1 => [
+                'Aaron Tan',
+                'Li Jia Wei'
+            ],
+            2 => [
+                'Nurul Aisyah',
+                'Benjamin Lee'
+            ],
+            3 => [
+                'Chen Yi Xin',
+                'Siti Nur Hidayah'
+            ],
+            4 => [
+                'Daniel Ong',
+                'Xiao Mei'
+            ],
+            5 => [
+                'Rahul Kumar',
+                'Ethan Lim'
+            ],
+            6 => [
+                'Mei Ling Chua',
+                'Aisha bte Rahman'
+            ],
+            7 => [
+                'Chloe Goh',
+                'Jasmine Tan'
+            ],
+            8 => [
+                'Kevin Lee',
+                'Xiaolin Wong'
+            ]
         ];
 
-        foreach ($names as $name) {
-            Student::create(['name' => $name]);
+        foreach ($seeds as $classId => $names) {
+            foreach ($names as $name) {
+                Student::create([
+                    'data_class_id'  => $classId,
+                    'name'      => $name
+                ]);
+            }
         }
     }
 }
