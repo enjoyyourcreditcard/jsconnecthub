@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('students', function (Blueprint $table) {
             $table->id();
             $table->foreignId('data_class_id')->constrained();
-            $table->string('name', 100)->nullable("false")->unique("students_name_unique");
+            $table->string('name', 100)->nullable('false')->unique('students_name_unique');
             $table->timestamps();
         });
     }

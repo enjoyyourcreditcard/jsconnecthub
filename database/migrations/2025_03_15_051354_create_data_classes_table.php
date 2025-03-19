@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('data_classes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('level_id')->constrained();
-            $table->string('name', 100)->nullable("false")->unique("data_classes_name_unique");
+            $table->string('name', 100)->nullable('false')->unique('data_classes_name_unique');
             $table->timestamps();
         });
     }
