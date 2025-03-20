@@ -49,3 +49,4 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
  * Check-in/out
  */
 Route::post('/checkin', [CheckinController::class, 'checkin']);
+Route::post('/checkout', [CheckinController::class, 'checkout']);
