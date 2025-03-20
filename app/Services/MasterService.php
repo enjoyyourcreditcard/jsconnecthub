@@ -13,6 +13,8 @@ class MasterService
         // 'users' => \App\Models\User::class,
         'levels'=> \App\Models\Level::class,
         'class'=> \App\Models\DataClass::class,
+        'students'=> \App\Models\Student::class,
+        'activity'=> \App\Models\Activity::class,
     ];
 
     protected function getModel($type)
@@ -31,6 +33,9 @@ class MasterService
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.CLASS_MASTER_TYPE')){
             return $this->getModel($type)->with('level')->get();
+        }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.STUDENT_MASTER_TYPE')){
+            return $this->getModel($type)->with('class')->get();
         }
         return $this->getModel($type)->all();
     }

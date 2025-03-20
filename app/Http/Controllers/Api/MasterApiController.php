@@ -31,6 +31,12 @@ class MasterApiController extends Controller
         if ($type === config('constants.MASTER_TYPE_ARRAY.CLASS_MASTER_TYPE')) {
             $rules = config('constants.MASTER_VALIDATION_ARRAY.CLASS_MASTER_VALIDATION');
         }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.STUDENT_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.STUDENT_MASTER_VALIDATION');
+        }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.ACTIVITY_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.ACTIVITY_MASTER_VALIDATION');
+        }
 
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {

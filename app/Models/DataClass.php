@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DataClass extends Model
 {
@@ -19,5 +20,15 @@ class DataClass extends Model
     public function level(): BelongsTo
     {
         return $this->belongsTo(level::class);
+    }
+
+    /**
+     * Get all of the students for the DataClass
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function students(): HasMany
+    {
+        return $this->hasMany(Student::class);
     }
 }
