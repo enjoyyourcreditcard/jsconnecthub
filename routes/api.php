@@ -31,9 +31,12 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 });
 
 /**
- * Master data
+ * Dashboard
  */
 Route::group(['middleware' => 'auth:sanctum'], function () {
+    /**
+     * Master data
+     */
     $types = config('constants.MASTER_TYPE_ARRAY');
 
     Route::prefix('{type}')->where(['type' => implode('|', $types)])->group(function () {
@@ -46,7 +49,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 });
 
 /**
- * Check-in/out
+ * Check-in & out
  */
-Route::post('/checkin', [CheckinController::class, 'checkin']);
-Route::post('/checkout', [CheckinController::class, 'checkout']);
+Route::post('/check-in', [CheckinController::class, 'checkin']);
+Route::post('/check-out', [CheckinController::class, 'checkout']);

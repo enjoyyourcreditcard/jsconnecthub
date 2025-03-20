@@ -4,7 +4,8 @@ return [
     'MASTER_TYPE_ARRAY' => [
         'ROLE_MASTER_TYPE' => 'roles',
         'LEVEL_MASTER_TYPE' => 'levels',
-        'CLASS_MASTER_TYPE' => 'class'
+        'CLASS_MASTER_TYPE' => 'class',
+        'CHECKIN_MASTER_TYPE' => 'checkin'
     ],
 
     'MASTER_VALIDATION_ARRAY'=>[
