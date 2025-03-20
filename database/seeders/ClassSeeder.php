@@ -13,32 +13,17 @@ class ClassSeeder extends Seeder
      */
     public function run(): void
     {
-        $seeds = [
-            1 => [
-                '1A',
-                '1B'
-            ],
-            2 => [
-                '2A',
-                '2B'
-            ],
-            3 => [
-                '3A',
-                '3B'
-            ],
-            4 => [
-                '4A',
-                '4B'
-            ]
+        $classes = [
+            ['name' => '1A', 'level_id' => 1],
+            ['name' => '1B', 'level_id' => 1],
+            ['name' => '2A', 'level_id' => 2],
+            ['name' => '2B', 'level_id' => 2],
+            ['name' => '3A', 'level_id' => 3],
+            ['name' => '3B', 'level_id' => 3],
+            ['name' => '4A', 'level_id' => 4],
+            ['name' => '4B', 'level_id' => 4]
         ];
 
-        foreach ($seeds as $level_id => $levels) {
-            foreach ($levels as $name) {
-                DataClass::create([
-                    'level_id'  => $level_id,
-                    'name'      => $name
-                ]);
-            }
-        }
+        DataClass::insert($classes);
     }
 }

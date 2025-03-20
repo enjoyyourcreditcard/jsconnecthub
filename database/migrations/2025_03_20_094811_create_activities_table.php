@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('activities', function (Blueprint $table) {
             $table->id();
+            $table->string('name', 250)->nullable('false')->unique('activities_name_unique');
+            $table->text('description')->nullable('true');
             $table->timestamps();
         });
     }

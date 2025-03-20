@@ -13,48 +13,25 @@ class StudentSeeder extends Seeder
      */
     public function run(): void
     {
-        $seeds = [
-            1 => [
-                'Aaron Tan',
-                'Li Jia Wei'
-            ],
-            2 => [
-                'Nurul Aisyah',
-                'Benjamin Lee'
-            ],
-            3 => [
-                'Chen Yi Xin',
-                'Siti Nur Hidayah'
-            ],
-            4 => [
-                'Daniel Ong',
-                'Xiao Mei'
-            ],
-            5 => [
-                'Rahul Kumar',
-                'Ethan Lim'
-            ],
-            6 => [
-                'Mei Ling Chua',
-                'Aisha bte Rahman'
-            ],
-            7 => [
-                'Chloe Goh',
-                'Jasmine Tan'
-            ],
-            8 => [
-                'Kevin Lee',
-                'Xiaolin Wong'
-            ]
+        $students = [
+            ['name' => 'Aaron Tan', 'data_class_id' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Li Jia Wei', 'data_class_id' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Nurul Aisyah', 'data_class_id' => 2, 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Benjamin Lee', 'data_class_id' => 2, 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Chen Yi Xin', 'data_class_id' => 3, 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Siti Nur Hidayah', 'data_class_id' => 3, 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Daniel Ong', 'data_class_id' => 4, 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Xiao Mei', 'data_class_id' => 4, 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Rahul Kumar', 'data_class_id' => 5, 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Ethan Lim', 'data_class_id' => 5, 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Mei Ling Chua', 'data_class_id' => 6, 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Aisha bte Rahman', 'data_class_id' => 6, 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Chloe Goh', 'data_class_id' => 7, 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Jasmine Tan', 'data_class_id' => 7, 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Kevin Lee', 'data_class_id' => 8, 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Xiaolin Wong', 'data_class_id' => 8, 'created_at' => now(), 'updated_at' => now()]
         ];
 
-        foreach ($seeds as $classId => $names) {
-            foreach ($names as $name) {
-                Student::create([
-                    'data_class_id'  => $classId,
-                    'name'      => $name
-                ]);
-            }
-        }
+        Student::insert($students);
     }
 }
