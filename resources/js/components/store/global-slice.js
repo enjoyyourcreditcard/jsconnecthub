@@ -9,14 +9,12 @@ export const stateKey = {
     app: "app",
     roles: "roles",
     users: "users",
-    // ... add others
 };
 
 const INITIAL_STATE = {
     [stateKey.app]: APP_STATE,
     [stateKey.roles]: ROLES_STATE,
     [stateKey.users]: USERS_STATE,
-    // ... add others
 };
 
 const globalSlice = createSlice({
