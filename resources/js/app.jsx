@@ -13,10 +13,13 @@ import Home from "./components/pages/Home";
 import About from "./components/pages/About";
 import NotFound from "./components/pages/NotFound";
 
-console.log("AuthProvider:", AuthProvider);
-
 const App = () => (
-    <AuthProvider authType="localstorage" authName="_auth">
+    <AuthProvider
+        authType="cookie"
+        authName="_auth"
+        cookieDomain={window.location.hostname}
+        cookieSecure={window.location.protocol === "https:"}
+    >
         <BrowserRouter>
             <Routes>
                 <Route path="/" element={<Home />} />

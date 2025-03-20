@@ -10,10 +10,11 @@
         "primeicons": "^7.0.0",
         "primereact": "^10.9.3",
         "react": "^18.3.1",
-        "react-auth-kit": "^2.12.7",
+        "react-auth-kit": "^2.8.2",
         "react-dom": "^18.3.1",
         "react-redux": "^9.2.0",
-        "react-router-dom": "^7.3.0"
+        "react-router": "^7.4.0",
+        "react-router-dom": "^7.4.0"
     },
     "devDependencies": {
         "@popperjs/core": "^2.11.6",
