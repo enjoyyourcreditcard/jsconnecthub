@@ -24,7 +24,7 @@ function Header({ title }) {
         >
             <h1>{title || "My App"}</h1>
             <nav style={{ display: "flex", gap: "15px", alignItems: "center" }}>
-                <Link to="/">Home</Link> | <Link to="/about">About</Link>
+                <Link to="/">Home</Link> | <Link to="/about">About</Link> | <Link to="/users">User</Link>
                 <div style={{ marginLeft: "auto" }}>
                     {auth() ? (
                         <button

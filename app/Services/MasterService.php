@@ -9,10 +9,10 @@ use Illuminate\Support\Str;
 class MasterService
 {
     protected $modelMap = [
-        // 'roles' => \App\Models\Role::class,
-        // 'users' => \App\Models\User::class,
+        'users' => \App\Models\User::class,
         'levels'=> \App\Models\Level::class,
         'class'=> \App\Models\DataClass::class,
+        'students' => \App\Models\Student::class,
     ];
 
     protected function getModel($type)
@@ -25,7 +25,7 @@ class MasterService
     }
 
     public function getAll($type)
-    { 
+    {
         if ($type === config('constants.MASTER_TYPE_ARRAY.LEVEL_MASTER_TYPE')){
             return $this->getModel($type)->with('classes')->get();
         }
