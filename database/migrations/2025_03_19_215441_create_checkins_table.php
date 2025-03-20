@@ -14,9 +14,10 @@ return new class extends Migration
         Schema::create('checkins', function (Blueprint $table) {
             $table->id();
             $table->foreignId('student_id')->constrained();
+            $table->foreignId('activity_id')->nullable('true')->constrained();
             $table->timestamp('checkin_time')->nullable('false')->useCurrent();
             $table->timestamp('checkout_time')->nullable('true');
-            // $table->json('activities')->nullable();
+            $table->string('other_activity')->nullable('true');
             $table->text('reason')->nullable('true');
         });
     }

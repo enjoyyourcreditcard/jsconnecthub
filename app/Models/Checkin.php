@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Student;
+use App\Models\Activity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -17,8 +18,10 @@ class Checkin extends Model
 
     protected $fillable = [
         'student_id',
+        'activity_id',
         'checkin_time',
         'checkout_time',
+        'other_activity',
         'reason'
     ];
 
@@ -30,6 +33,16 @@ class Checkin extends Model
     public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class);
+    }
+
+    /**
+     * Get the activity that owns the checkin
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function activity(): BelongsTo
+    {
+        return $this->belongsTo(Activity::class);
     }
 
     /**
