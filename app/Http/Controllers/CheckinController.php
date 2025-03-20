@@ -12,7 +12,6 @@ class CheckinController extends Controller
     public function checkin(Request $request) : JsonResponse {
         $request->validate([
             'student_id'    => ['required', 'exists:students,id'],
-            'reason'        => ['nullable', 'string'],
         ]);
 
         $isCheckedIn = Checkin::whereDate('checkin_time', Carbon::today())
@@ -28,7 +27,6 @@ class CheckinController extends Controller
         $checkin = Checkin::create([
             'student_id'   => $request->student_id,
             'checkin_time' => now(),
-            'reason'       => $request->reason
         ]);
 
         return New JsonResponse([
@@ -44,7 +42,8 @@ class CheckinController extends Controller
 
     public function checkout(Request $request) : JsonResponse {
         $request->validate([
-            'student_id' => ['required', 'exists:students,id']
+            'student_id'    => ['required', 'exists:students,id'],
+            'reason'        => ['nullable', 'string']
         ]);
 
         $checkin = Checkin::whereDate('checkin_time', Carbon::today())
@@ -67,6 +66,11 @@ class CheckinController extends Controller
         }
 
         $checkin->checkout_time = now();
+
+        if ($request->reason) {
+            $checkin->reason = $request->reason;
+        }
+
         $checkin->save();
 
         return New JsonResponse([
