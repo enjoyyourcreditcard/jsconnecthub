@@ -16,7 +16,7 @@ class Student extends Model
     public $incrementing    = true;
 
     protected $fillable = [
-        'class_id',
+        'data_class_id',
         'name'
     ];
 
@@ -25,7 +25,7 @@ class Student extends Model
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function class(): BelongsTo
+    public function dataClass(): BelongsTo
     {
         return $this->belongsTo(DataClass::class);
     }
