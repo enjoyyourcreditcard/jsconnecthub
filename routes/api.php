@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\MasterApiController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\CheckinController;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -43,3 +44,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::delete('/{id}', [MasterApiController::class, 'destroy']);
     });
 });
+
+/**
+ * Check-in/out
+ */
+Route::post('/checkin', [CheckinController::class, 'checkin']);
