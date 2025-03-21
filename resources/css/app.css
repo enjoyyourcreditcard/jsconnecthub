@@ -4,7 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Apply Nunito globally */
 @layer base {
   html, body {
     font-family: 'Nunito', sans-serif;

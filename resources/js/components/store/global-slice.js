@@ -1,24 +1,18 @@
-import { createSlice } from "@reduxjs/toolkit";
 import api from "../api";
-
-const APP_STATE = { data: [], spinner: { show: false, text: "" }, alert: {} };
-const USERS_STATE = { data: [], spinner: { show: false, text: "" }, alert: {} };
-const ROLES_STATE = { data: [], spinner: { show: false, text: "" }, alert: {} };
-const LEVEL_STATE = { data: [], spinner: { show: false, text: "" }, alert: {} };
-const CLASS_STATE = { data: [], spinner: { show: false, text: "" }, alert: {} };
-
-export const stateKey = {
-    app: "app",
-    users: "users",
-    roles: "roles",
-    levels: "levels",
-    class: "class",
-};
+import { createSlice } from "@reduxjs/toolkit";
+import {
+    APP_STATE,
+    USER_STATE,
+    ROLE_STATE,
+    LEVEL_STATE,
+    CLASS_STATE,
+} from "./state";
+import { stateKey } from "../utils/constants";
 
 const INITIAL_STATE = {
     [stateKey.app]: APP_STATE,
-    [stateKey.users]: USERS_STATE,
-    [stateKey.roles]: ROLES_STATE,
+    [stateKey.users]: USER_STATE,
+    [stateKey.roles]: ROLE_STATE,
     [stateKey.levels]: LEVEL_STATE,
     [stateKey.class]: CLASS_STATE,
 };

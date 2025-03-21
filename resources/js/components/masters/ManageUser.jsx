@@ -15,7 +15,7 @@ function ManageUser() {
     const [visible, setVisible] = useState(false);
     const [formData, setFormData] = useState({
         first_name: "",
-        email: "",
+        email: "",  
         password: "",
     });
     const [loading, setLoading] = useState(false);
