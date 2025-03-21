@@ -13,7 +13,11 @@ class MasterService
         // 'users' => \App\Models\User::class,
         'levels'=> \App\Models\Level::class,
         'class'=> \App\Models\DataClass::class,
+        'students'=> \App\Models\Student::class,
+        'activities'=> \App\Models\Activity::class,
+        'roles'=> \Spatie\Permission\Models\Role::class,
         'checkin'=> \App\Models\Checkin::class
+
     ];
 
     protected function getModel($type)
@@ -32,6 +36,9 @@ class MasterService
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.CLASS_MASTER_TYPE')){
             return $this->getModel($type)->with('level')->get();
+        }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.STUDENT_MASTER_TYPE')){
+            return $this->getModel($type)->with('dataClass.level')->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.CHECKIN_MASTER_TYPE')){
             return $this->getModel($type)->with(['student.dataClass.level', 'activity'])->get();

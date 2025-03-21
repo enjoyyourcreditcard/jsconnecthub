@@ -5,6 +5,9 @@ return [
         'ROLE_MASTER_TYPE' => 'roles',
         'LEVEL_MASTER_TYPE' => 'levels',
         'CLASS_MASTER_TYPE' => 'class',
+        'STUDENT_MASTER_TYPE' => 'students',
+        'ACTIVITY_MASTER_TYPE' => 'activities',
+        'ROLE_MASTER_TYPE' => 'roles',
         'CHECKIN_MASTER_TYPE' => 'checkin'
     ],
 
@@ -16,6 +19,21 @@ return [
         [
             'name'=>'string|required',
             'level_id'=>'integer|required'
+        ],
+        'STUDENT_MASTER_VALIDATION'=>
+        [
+            'data_clas_id'  => ['required', 'exists:data_classes,id'],
+            'name'          => ['required', 'string', 'max:100'],
+        ],
+        'ACTIVITY_MASTER_VALIDATION'=>
+        [
+            'name'          => ['required', 'string', 'max:250'],
+            'description'   => ['nullable', 'string'],
+        ],
+        'ROLE_MASTER_VALIDATION'=>
+        [
+            'name'          => ['required', 'string', 'unique:roles'],
+            'guard_name'    => ['nullable', 'string'],
         ],
         'CHECKIN_MASTER_VALIDATION'=>
         [

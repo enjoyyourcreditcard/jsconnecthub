@@ -3,13 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Checkin;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 
 class CheckinController extends Controller
 {
-    public function checkin(Request $request) : JsonResponse {
+    public function checkin(Request $request) : JsonResponse
+    {
         $request->validate([
             'student_id'        => ['required', 'exists:students,id'],
             'activity_id'       => ['nullable', 'required_without:other_activity', 'exists:activities,id'],
@@ -21,9 +23,7 @@ class CheckinController extends Controller
             ->first() ? true : false;
 
         if ($isCheckedIn) {
-            return New JsonResponse([
-                'message' => 'You have already checked in. Please check out before attempting to check in again.'
-            ], 422);
+            return New JsonResponse(['message' => 'You have already checked in. Please check out before attempting to check in again.'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $checkin = New Checkin;
@@ -50,10 +50,11 @@ class CheckinController extends Controller
                 'level'     => $checkin->student->dataClass->level->name,
                 'checkin'   => $checkin->checkin_time
             ]
-        ], 201);
+        ], Response::HTTP_CREATED);
     }
 
-    public function checkout(Request $request) : JsonResponse {
+    public function checkout(Request $request) : JsonResponse
+    {
         $request->validate([
             'student_id'    => ['required', 'exists:students,id'],
             'reason'        => ['nullable', 'string']
@@ -67,15 +68,11 @@ class CheckinController extends Controller
         $isCheckedIn = $checkin ? true : false;
 
         if (!$isCheckedIn) {
-            return New JsonResponse([
-                'message' => 'You have not checked in yet. Please check in first.'
-            ], 422);
+            return New JsonResponse(['message' => 'You have not checked in yet. Please check in first.'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         if ($checkin->checkout_time) {
-            return response()->json([
-                'message' => 'You have already checked out.'
-            ], 422);
+            return New JsonResponse(['message' => 'You have already checked out.'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $checkin->checkout_time = now();
@@ -88,13 +85,13 @@ class CheckinController extends Controller
 
         return New JsonResponse([
             'message' => 'Check-out successful!',
-            'data'      => [
+            'data'    => [
                 'student'   => $checkin->student->name,
                 'class'     => $checkin->student->dataClass->name,
                 'level'     => $checkin->student->dataClass->level->name,
                 'checkin'   => $checkin->checkin_time,
                 'checkout'  => $checkin->checkout_time
             ]
-        ], 200);
+        ], Response::HTTP_OK);
     }
 }
