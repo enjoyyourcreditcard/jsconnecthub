@@ -14,7 +14,6 @@ export const setAuthToken = (getAuthHeader) => {
     api.interceptors.request.use(
         (config) => {
             const authHeader = getAuthHeader();
-            console.log("Interceptor Header:", authHeader);
             if (authHeader) {
                 config.headers.Authorization = authHeader;
             }

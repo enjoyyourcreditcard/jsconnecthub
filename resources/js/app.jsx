@@ -19,9 +19,7 @@ import NotFound from "./components/pages/NotFound";
 
 const AppWrapper = () => {
     const authHeader = useAuthHeader();
-
     useEffect(() => {
-        console.log("Auth Header on Mount:", authHeader());
         setAuthToken(authHeader);
     }, [authHeader]);
 
