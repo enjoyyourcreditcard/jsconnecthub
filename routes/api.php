@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\Api\MasterApiController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\CheckinController;
+use App\Http\Controllers\Api\CheckinController;
 use Illuminate\Support\Facades\Route;
 
 /**

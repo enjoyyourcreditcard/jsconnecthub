@@ -72,7 +72,7 @@ function ManageUser() {
         setLoading(true);
         setError("");
         try {
-            const success = await dispatch(
+            const success = dispatch(
                 createRecord({
                     type: "users",
                     endPoint: "/api/users",
