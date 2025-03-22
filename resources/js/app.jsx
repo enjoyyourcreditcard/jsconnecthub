@@ -1,30 +1,51 @@
-/**
- * First we will load all of this project's JavaScript dependencies which
- * includes React and other helpers. It's a great starting point while
- * building robust, powerful web applications using React + Laravel.
- */
+import "./bootstrap";
+import "../css/app.css";
 
-import './bootstrap';
-import '../css/app.css';
+import React, { useEffect } from "react";
+import { createRoot } from "react-dom/client";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider, useAuthHeader } from "react-auth-kit";
+import { Provider } from "react-redux";
+import { store } from "./components/store";
+import { setAuthToken } from "./components/api";
+import Login from "./components/pages/Login";
+import Home from "./components/pages/Home";
+import About from "./components/pages/About";
+import ManageUser from "./components/masters/ManageUser";
+import NotFound from "./components/pages/NotFound";
 
-/**
- * Next, we will create a fresh React component instance and attach it to
- * the page. Then, you may begin adding components to this application
- * or customize the JavaScript scaffolding to fit your unique needs.
- */
+const AppWrapper = () => {
+    const authHeader = useAuthHeader();
+    useEffect(() => {
+        setAuthToken(authHeader);
+    }, [authHeader]);
 
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import { Provider } from 'react-redux';
-import { store } from './components/store/index';
-import 'primereact/resources/themes/saga-blue/theme.css';
-import 'primereact/resources/primereact.min.css';
-import 'primeicons/primeicons.css';
-import App from './components/App';
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/" element={<Home />} />
+                <Route path="/home" element={<Home />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/users" element={<ManageUser />} />
+                <Route path="/*" element={<NotFound />} />
+            </Routes>
+        </BrowserRouter>
+    );
+};
 
-const root = createRoot(document.getElementById('app'));
-root.render(
-  <Provider store={store}>
-    <App />
-  </Provider>
+const App = () => (
+    <Provider store={store}>
+        <AuthProvider
+            authType="cookie"
+            authName="_auth"
+            cookieDomain={window.location.hostname}
+            cookieSecure={window.location.protocol === "https:"}
+        >
+            <AppWrapper />
+        </AuthProvider>
+    </Provider>
 );
+
+const root = createRoot(document.getElementById("app"));
+root.render(<App />);

@@ -1,17 +1,17 @@
-import React from 'react';
-import Header from '../shared/layout/Header';
+import React from "react";
+import { useAuthUser } from "react-auth-kit";
+import Header from "../shared/layout/Header";
 
 function About() {
+    const auth = useAuthUser();
+    const user = auth();
+
     return (
         <div>
             <Header title="About This App" />
-            <main style={{ padding: '20px' }}>
-                <h2>Halo, Asad!</h2>
-                <p>
-                    This is the About page for your Laravel 11 + React app.
-                    Built with Vite for speed and awesomeness.
-                    You’re a software engineer who’s lazy but smart—hope this saves you some time!
-                </p>
+            <main style={{ padding: "20px" }}>
+                <h2>{user ? `Halo, ${user.name}!` : "Halo!"}</h2>
+                <p>This is jsconnecthub!</p>
             </main>
         </div>
     );

@@ -1,22 +1,20 @@
-import axios from "axios";
+import api from "../api";
 import { createSlice } from "@reduxjs/toolkit";
-
-const APP_STATE = { data: [], spinner: { show: false, text: "" }, alert: {} };
-const ROLES_STATE = { data: [], spinner: { show: false, text: "" }, alert: {} };
-const USERS_STATE = { data: [], spinner: { show: false, text: "" }, alert: {} };
-
-export const stateKey = {
-    app: "app",
-    roles: "roles",
-    users: "users",
-    // ... add others
-};
+import {
+    APP_STATE,
+    USER_STATE,
+    ROLE_STATE,
+    LEVEL_STATE,
+    CLASS_STATE,
+} from "./state";
+import { stateKey } from "../utils/constants";
 
 const INITIAL_STATE = {
     [stateKey.app]: APP_STATE,
-    [stateKey.roles]: ROLES_STATE,
-    [stateKey.users]: USERS_STATE,
-    // ... add others
+    [stateKey.users]: USER_STATE,
+    [stateKey.roles]: ROLE_STATE,
+    [stateKey.levels]: LEVEL_STATE,
+    [stateKey.class]: CLASS_STATE,
 };
 
 const globalSlice = createSlice({
@@ -65,7 +63,7 @@ export const getRecords =
             const url = endPoint || (type ? `/api/${type}` : "");
             if (!url) throw new Error("No endpoint or type provided");
 
-            const response = await axios.get(url);
+            const response = await api.get(url);
             dispatch(resetStateKeyData({ key: "spinner" }));
             if (response.data.status) {
                 dispatch(
@@ -86,6 +84,40 @@ export const getRecords =
         }
     };
 
+export const createRecord =
+    ({ type = "", endPoint, data }) =>
+    async (dispatch) => {
+        dispatch(
+            setStateData({
+                type,
+                key: "spinner",
+                data: { show: true, text: "Creating..." },
+            })
+        );
+        try {
+            const response = await api.post(endPoint, data);
+            dispatch(resetStateKeyData({ type, key: "spinner" }));
+            if (response.data.status) {
+                dispatch(
+                    setStateData({
+                        type,
+                        key: "data",
+                        data: response.data.result,
+                        isMerge: true,
+                    })
+                );
+                return true;
+            }
+            return false;
+        } catch (error) {
+            dispatch(resetStateKeyData({ type, key: "spinner" }));
+            const errorMsg =
+                error.response?.data?.message || "Failed to create record";
+            console.error("Create error:", errorMsg);
+            throw new Error(errorMsg);
+        }
+    };
+
 export const deleteRecord =
     ({ endPoint }) =>
     async (dispatch) => {
@@ -96,7 +128,7 @@ export const deleteRecord =
             })
         );
         try {
-            const response = await axios.delete(endPoint);
+            const response = await api.delete(endPoint);
             dispatch(resetStateKeyData({ key: "spinner" }));
             if (response.data.status) {
                 return true;

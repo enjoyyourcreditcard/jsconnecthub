@@ -16,9 +16,9 @@ const Table = ({
     endpoint = "",
 }) => {
     const dispatch = useDispatch();
-    const {
-        [type]: { data: collection, spinner },
-    } = useSelector((state) => state.global);
+    const { [type]: { data: collection = [], spinner } = {} } = useSelector(
+        (state) => state.global
+    );
 
     useEffect(() => {
         dispatch(
@@ -62,10 +62,14 @@ const Table = ({
         );
     };
 
-    const formattedData = collection.map((item) => ({
-        ...item,
-        date: item.date ? new Date(item.date).toLocaleDateString("en-US") : "",
-    }));
+    const formattedData = Array.isArray(collection)
+        ? collection?.map((item) => ({
+              ...item,
+              date: item.date
+                  ? new Date(item.date).toLocaleDateString("en-US")
+                  : "",
+          }))
+        : [];
 
     const generateColumns = () => {
         if (!collection.length) return [];

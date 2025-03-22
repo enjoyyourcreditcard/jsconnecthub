@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use App\Http\Controllers\Api\Route;
 
 class MasterApiController extends Controller
 {
@@ -17,16 +18,47 @@ class MasterApiController extends Controller
     public function __construct(MasterService $masterService)
     {
         $this->masterService = $masterService;
+
+        foreach (config('constants.MASTER_TYPE_ARRAY') as $masterType) {
+            $this->middleware('permission:' . $masterType . ' list', ['only' => ['index', 'show']]);
+            $this->middleware('permission:' . $masterType . ' create', ['only' => ['store']]);
+            $this->middleware('permission:' . $masterType . ' edit', ['only' => ['update']]);
+            $this->middleware('permission:' . $masterType . ' delete', ['only' => ['destroy']]);
+        }
     }
 
     private function doRequestValidation(Request $request, $type)
     {
         $rules = [];
 
-        if ($type === config('constants.LEVEL_MASTER_TYPE')) {
+        if ($type === config('constants.MASTER_TYPE_ARRAY.LEVEL_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.LEVEL_MASTER_VALIDATION');
         }
 
-        if ($type === config('constants.CLASS_MASTER_TYPE')) {
+        if ($type === config('constants.MASTER_TYPE_ARRAY.CLASS_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.CLASS_MASTER_VALIDATION');
+        }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.STUDENT_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.STUDENT_MASTER_VALIDATION');
+        }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.ACTIVITY_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.ACTIVITY_MASTER_VALIDATION');
+        }
+
+        if ($type === config('constants.MASTER_TYPE_ARRAY.STUDENT_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.STUDENT_MASTER_VALIDATION');
+        }
+
+        if ($type === config('constants.MASTER_TYPE_ARRAY.ACTIVITY_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.ACTIVITY_MASTER_VALIDATION');
+        }
+
+        if ($type === config('constants.MASTER_TYPE_ARRAY.ROLE_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.ROLE_MASTER_VALIDATION');
+        }
+
+        if ($type === config('constants.MASTER_TYPE_ARRAY.CHECKIN_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.CHECKIN_MASTER_VALIDATION');
         }
 
         $validator = Validator::make($request->all(), $rules);
@@ -89,4 +121,5 @@ class MasterApiController extends Controller
         $this->masterService->delete($type, $id);
         return response()->json(['status' => true, 'message' => "$type deleted"], Response::HTTP_OK);
     }
+
 }
