@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DataClass extends Model
 {
-    protected $table        = "class";
+    protected $table        = "classes";
     protected $primaryKey   = "id";
     protected $keyType      = "int";
 
