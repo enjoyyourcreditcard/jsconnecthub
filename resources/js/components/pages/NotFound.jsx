@@ -39,18 +39,7 @@ function NotFound() {
                 >
                     The page you're looking for doesn’t exist or has been moved.
                 </p>
-                <Link
-                    to="/"
-                    style={{
-                        display: "inline-block",
-                        padding: "8px 16px",
-                        background: "#007bff",
-                        color: "white",
-                        textDecoration: "none",
-                        borderRadius: "5px",
-                        fontSize: "0.9rem",
-                    }}
-                >
+                <Link to="/" className="p-button font-bold">
                     Back to Home
                 </Link>
             </Card>
