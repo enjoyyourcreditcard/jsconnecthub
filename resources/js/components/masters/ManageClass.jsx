@@ -10,31 +10,28 @@ import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
 
-function ManageUser() {
+function ManageClass() {
     const dispatch = useDispatch();
     const isAuthenticated = useIsAuthenticated();
     const [visible, setVisible] = useState(false);
     const [mode, setMode] = useState("create");
     const [editId, setEditId] = useState(null);
     const [formData, setFormData] = useState({
+        level_id: "",
         name: "",
-        email: "",
-        password: "",
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-
     const {
-        users: { data: users = [] },
+        class: { data: classes = [] },
     } = useSelector((state) => state.global);
 
     const handleEdit = (id) => {
-        const user = users.find((u) => u.id === id);
-        if (user) {
+        const iClass = classes.find((u) => u.id === id);
+        if (iClass) {
             setFormData({
-                name: user.name,
-                email: user.email,
-                password: "",
+                level_id: iClass.level_id,
+                name: iClass.name,
             });
             setEditId(id);
             setMode("edit");
@@ -44,7 +41,7 @@ function ManageUser() {
 
     const handleAdd = () => {
         setMode("create");
-        setFormData({ name: "", email: "", password: "" });
+        setFormData({ name: "" });
         setVisible(true);
     };
 
@@ -61,18 +58,18 @@ function ManageUser() {
             if (mode === "create") {
                 const success = dispatch(
                     createRecord({
-                        type: "users",
-                        endPoint: "/api/users",
+                        type: "class",
+                        endPoint: "/api/class",
                         data: formData,
                     })
                 );
                 if (success) {
-                    setFormData({ name: "", email: "", password: "" });
+                    setFormData({ name: "" });
                     setVisible(false);
                     dispatch(
                         getRecords({
-                            type: "users",
-                            endPoint: "/api/users",
+                            type: "class",
+                            endPoint: "/api/class",
                             key: "data",
                         })
                     );
@@ -80,18 +77,18 @@ function ManageUser() {
             } else {
                 const success = dispatch(
                     updateRecord({
-                        type: "users",
-                        endPoint: `/api/users/${editId}`,
+                        type: "class",
+                        endPoint: `/api/class/${editId}`,
                         data: formData,
                     })
                 );
                 if (success) {
-                    setFormData({ name: "", email: "", password: "" });
+                    setFormData({ name: "" });
                     setVisible(false);
                     dispatch(
                         getRecords({
-                            type: "users",
-                            endPoint: "/api/users",
+                            type: "class",
+                            endPoint: "/api/class",
                             key: "data",
                         })
                     );
@@ -112,16 +109,18 @@ function ManageUser() {
                     {isAuthenticated() ? (
                         <>
                             <DataTable
-                                type="users"
+                                type="class"
                                 identifier="id"
                                 onEdit={handleEdit}
                                 onAdd={handleAdd}
-                                endpoint="/api/users"
-                                title="User"
+                                endpoint="/api/class"
+                                title="Class"
                             />
                             <Dialog
                                 header={
-                                    mode === "create" ? `Add User` : `Edit User`
+                                    mode === "create"
+                                        ? `Add Class`
+                                        : `Edit Class`
                                 }
                                 visible={visible}
                                 style={{ width: "400px" }}
@@ -141,13 +140,32 @@ function ManageUser() {
                                     <div style={{ marginBottom: "2rem" }}>
                                         <FloatLabel>
                                             <InputText
+                                                name="level"
+                                                value={formData.level_id}
+                                                onChange={handleChange}
+                                                style={{ width: "100%" }}
+                                                required
+                                                disabled={loading}
+                                                tooltip="Enter class level"
+                                                tooltipOptions={{
+                                                    position: "bottom",
+                                                    mouseTrack: true,
+                                                    mouseTrackTop: 15,
+                                                }}
+                                            />
+                                            <label htmlFor="level">Level</label>
+                                        </FloatLabel>
+                                    </div>
+                                    <div style={{ marginBottom: "2rem" }}>
+                                        <FloatLabel>
+                                            <InputText
                                                 name="name"
                                                 value={formData.name}
                                                 onChange={handleChange}
                                                 style={{ width: "100%" }}
                                                 required
                                                 disabled={loading}
-                                                tooltip="Enter user name"
+                                                tooltip="Enter class name"
                                                 tooltipOptions={{
                                                     position: "bottom",
                                                     mouseTrack: true,
@@ -155,48 +173,6 @@ function ManageUser() {
                                                 }}
                                             />
                                             <label htmlFor="name">Name</label>
-                                        </FloatLabel>
-                                    </div>
-                                    <div style={{ marginBottom: "2rem" }}>
-                                        <FloatLabel>
-                                            <InputText
-                                                name="email"
-                                                value={formData.email}
-                                                onChange={handleChange}
-                                                type="email"
-                                                style={{ width: "100%" }}
-                                                required
-                                                disabled={loading}
-                                                tooltip="Enter user email"
-                                                tooltipOptions={{
-                                                    position: "bottom",
-                                                    mouseTrack: true,
-                                                    mouseTrackTop: 15,
-                                                }}
-                                            />
-                                            <label htmlFor="email">Email</label>
-                                        </FloatLabel>
-                                    </div>
-                                    <div style={{ marginBottom: "2rem" }}>
-                                        <FloatLabel>
-                                            <InputText
-                                                name="password"
-                                                value={formData.password}
-                                                onChange={handleChange}
-                                                type="password"
-                                                style={{ width: "100%" }}
-                                                required={mode === "create"}
-                                                disabled={loading}
-                                                tooltip="Enter user password"
-                                                tooltipOptions={{
-                                                    position: "bottom",
-                                                    mouseTrack: true,
-                                                    mouseTrackTop: 15,
-                                                }}
-                                            />
-                                            <label htmlFor="password">
-                                                Password
-                                            </label>
                                         </FloatLabel>
                                     </div>
                                     <div
@@ -230,7 +206,7 @@ function ManageUser() {
                             </Dialog>
                         </>
                     ) : (
-                        <p>Please log in to view and manage users.</p>
+                        <p>Please log in to view and manage class.</p>
                     )}
                 </Card>
             </main>
@@ -238,4 +214,4 @@ function ManageUser() {
     );
 }
 
-export default ManageUser;
+export default ManageClass;

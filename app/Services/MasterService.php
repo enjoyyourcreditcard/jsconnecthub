@@ -30,19 +30,20 @@ class MasterService
 
     public function getAll($type)
     {
+        $q = $this->getModel($type);
         if ($type === config('constants.MASTER_TYPE_ARRAY.LEVEL_MASTER_TYPE')) {
-            return $this->getModel($type)->with('classes')->get();
+            $q->with('classes');
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.CLASS_MASTER_TYPE')) {
-            return $this->getModel($type)->with('level')->get();
+            $q->with('level');
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.STUDENT_MASTER_TYPE')) {
-            return $this->getModel($type)->with('class.level')->get();
+            $q->with('class.level');
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.CHECKIN_MASTER_TYPE')) {
-            return $this->getModel($type)->with(['student.class.level', 'activity'])->get();
+            $q->with(['student.class.level', 'activity']);
         }
-        return $this->getModel($type)->all();
+        return $q->get();
     }
 
     public function getById($type, $id)

@@ -10,7 +10,7 @@ import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
 
-function ManageUser() {
+function ManageActivity() {
     const dispatch = useDispatch();
     const isAuthenticated = useIsAuthenticated();
     const [visible, setVisible] = useState(false);
@@ -18,23 +18,20 @@ function ManageUser() {
     const [editId, setEditId] = useState(null);
     const [formData, setFormData] = useState({
         name: "",
-        email: "",
-        password: "",
+        description: "",
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-
     const {
-        users: { data: users = [] },
+        activities: { data: activities = [] },
     } = useSelector((state) => state.global);
 
     const handleEdit = (id) => {
-        const user = users.find((u) => u.id === id);
-        if (user) {
+        const activity = activities.find((u) => u.id === id);
+        if (activity) {
             setFormData({
-                name: user.name,
-                email: user.email,
-                password: "",
+                name: activity.name,
+                description: activity.description,
             });
             setEditId(id);
             setMode("edit");
@@ -44,7 +41,7 @@ function ManageUser() {
 
     const handleAdd = () => {
         setMode("create");
-        setFormData({ name: "", email: "", password: "" });
+        setFormData({ name: "", description: "" });
         setVisible(true);
     };
 
@@ -61,18 +58,18 @@ function ManageUser() {
             if (mode === "create") {
                 const success = dispatch(
                     createRecord({
-                        type: "users",
-                        endPoint: "/api/users",
+                        type: "activities",
+                        endPoint: "/api/activities",
                         data: formData,
                     })
                 );
                 if (success) {
-                    setFormData({ name: "", email: "", password: "" });
+                    setFormData({ name: "", description: "" });
                     setVisible(false);
                     dispatch(
                         getRecords({
-                            type: "users",
-                            endPoint: "/api/users",
+                            type: "activities",
+                            endPoint: "/api/activities",
                             key: "data",
                         })
                     );
@@ -80,18 +77,18 @@ function ManageUser() {
             } else {
                 const success = dispatch(
                     updateRecord({
-                        type: "users",
-                        endPoint: `/api/users/${editId}`,
+                        type: "activities",
+                        endPoint: `/api/activities/${editId}`,
                         data: formData,
                     })
                 );
                 if (success) {
-                    setFormData({ name: "", email: "", password: "" });
+                    setFormData({ name: "", description: "" });
                     setVisible(false);
                     dispatch(
                         getRecords({
-                            type: "users",
-                            endPoint: "/api/users",
+                            type: "activities",
+                            endPoint: "/api/activities",
                             key: "data",
                         })
                     );
@@ -112,16 +109,18 @@ function ManageUser() {
                     {isAuthenticated() ? (
                         <>
                             <DataTable
-                                type="users"
+                                type="activities"
                                 identifier="id"
                                 onEdit={handleEdit}
                                 onAdd={handleAdd}
-                                endpoint="/api/users"
-                                title="User"
+                                endpoint="/api/activities"
+                                title="Activity"
                             />
                             <Dialog
                                 header={
-                                    mode === "create" ? `Add User` : `Edit User`
+                                    mode === "create"
+                                        ? `Add Activity`
+                                        : `Edit Activity`
                                 }
                                 visible={visible}
                                 style={{ width: "400px" }}
@@ -147,7 +146,7 @@ function ManageUser() {
                                                 style={{ width: "100%" }}
                                                 required
                                                 disabled={loading}
-                                                tooltip="Enter user name"
+                                                tooltip="Enter activity name"
                                                 tooltipOptions={{
                                                     position: "bottom",
                                                     mouseTrack: true,
@@ -160,42 +159,21 @@ function ManageUser() {
                                     <div style={{ marginBottom: "2rem" }}>
                                         <FloatLabel>
                                             <InputText
-                                                name="email"
-                                                value={formData.email}
+                                                name="description"
+                                                value={formData.description}
                                                 onChange={handleChange}
-                                                type="email"
                                                 style={{ width: "100%" }}
                                                 required
                                                 disabled={loading}
-                                                tooltip="Enter user email"
+                                                tooltip="Enter activity description"
                                                 tooltipOptions={{
                                                     position: "bottom",
                                                     mouseTrack: true,
                                                     mouseTrackTop: 15,
                                                 }}
                                             />
-                                            <label htmlFor="email">Email</label>
-                                        </FloatLabel>
-                                    </div>
-                                    <div style={{ marginBottom: "2rem" }}>
-                                        <FloatLabel>
-                                            <InputText
-                                                name="password"
-                                                value={formData.password}
-                                                onChange={handleChange}
-                                                type="password"
-                                                style={{ width: "100%" }}
-                                                required={mode === "create"}
-                                                disabled={loading}
-                                                tooltip="Enter user password"
-                                                tooltipOptions={{
-                                                    position: "bottom",
-                                                    mouseTrack: true,
-                                                    mouseTrackTop: 15,
-                                                }}
-                                            />
-                                            <label htmlFor="password">
-                                                Password
+                                            <label htmlFor="description">
+                                                Description
                                             </label>
                                         </FloatLabel>
                                     </div>
@@ -230,7 +208,7 @@ function ManageUser() {
                             </Dialog>
                         </>
                     ) : (
-                        <p>Please log in to view and manage users.</p>
+                        <p>Please log in to view and manage activities.</p>
                     )}
                 </Card>
             </main>
@@ -238,4 +216,4 @@ function ManageUser() {
     );
 }
 
-export default ManageUser;
+export default ManageActivity;

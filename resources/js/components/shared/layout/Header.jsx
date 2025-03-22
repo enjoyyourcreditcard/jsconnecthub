@@ -45,11 +45,10 @@ const Header = () => {
             label: "Master",
             items: [
                 { label: "User", command: () => navigate("/users") },
-                { label: "Level", command: () => navigate("/levels") },
                 { label: "Class", command: () => navigate("/class") },
-                { label: "Activity", command: () => navigate("/") },
-                { label: "Facility", command: () => navigate("/") },
-                { label: "User", command: () => navigate("/") },
+                { label: "Level", command: () => navigate("/levels") },
+                { label: "Activity", command: () => navigate("/activities") },
+                { label: "Facility", command: () => navigate("/facilities") },
             ],
         },
     ];

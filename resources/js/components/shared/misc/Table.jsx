@@ -16,7 +16,7 @@ const Table = ({
     endpoint = "",
 }) => {
     const dispatch = useDispatch();
-    const { [type]: { data: collection = [], spinner } = {} } = useSelector(
+    const { [type]: { data: collection = [] } = {} } = useSelector(
         (state) => state.global
     );
 

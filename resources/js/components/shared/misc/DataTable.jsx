@@ -11,10 +11,13 @@ import { Toolbar } from "primereact/toolbar";
 import { InputText } from "primereact/inputtext";
 import { IconField } from "primereact/iconfield";
 import { InputIcon } from "primereact/inputicon";
+import { MultiSelect } from "primereact/multiselect";
+import { OverlayPanel } from "primereact/overlaypanel";
+import { FileUpload } from "primereact/fileupload";
 import { getRecords, deleteRecord } from "../../store/global-slice";
 import PropTypes from "prop-types";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 
 const CustomDataTable = ({
@@ -29,12 +32,14 @@ const CustomDataTable = ({
     const dispatch = useDispatch();
     const toast = useRef(null);
     const dt = useRef(null);
+    const overlayPanelRef = useRef(null);
     const { [type]: { data: collection = [], spinner } = {} } = useSelector(
         (state) => state.global
     );
     const [selectedRecords, setSelectedRecords] = useState(null);
     const [deleteRecordsDialog, setDeleteRecordsDialog] = useState(false);
     const [globalFilter, setGlobalFilter] = useState("");
+    const [visibleColumns, setVisibleColumns] = useState([]);
 
     useEffect(() => {
         dispatch(
@@ -46,9 +51,26 @@ const CustomDataTable = ({
         );
     }, [dispatch, type, endpoint]);
 
+    useEffect(() => {
+        if (collection.length > 0) {
+            const allColumns = generateColumns();
+            const defaultHidden = [
+                "id",
+                "email_verified_at",
+                "created_at",
+                "updated_at",
+            ];
+            const initialVisible = allColumns.filter(
+                (col) =>
+                    !defaultHidden.includes(col.field) &&
+                    col.field !== "actions"
+            );
+            setVisibleColumns(initialVisible);
+        }
+    }, [collection]);
+
     const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
-    // Single delete with confirmation popup
     const handleDelete = (event, id) => {
         confirmPopup({
             target: event.currentTarget,
@@ -83,7 +105,6 @@ const CustomDataTable = ({
         });
     };
 
-    // Multiple delete confirmation
     const confirmDeleteSelected = () => {
         if (selectedRecords && selectedRecords.length > 0) {
             setDeleteRecordsDialog(true);
@@ -124,7 +145,6 @@ const CustomDataTable = ({
         setSelectedRecords(null);
     };
 
-    // Export functions
     const exportCSV = () => dt.current.exportCSV();
     const exportExcel = () => {
         const worksheet = XLSX.utils.json_to_sheet(collection);
@@ -134,27 +154,64 @@ const CustomDataTable = ({
     };
     const exportPDF = () => {
         const doc = new jsPDF();
-        const columns = generateColumns()
-            .filter((col) => col.field !== "actions")
-            .map((col) => ({ title: col.header, dataKey: col.field }));
-        const data = collection.map((item) =>
-            columns.reduce((obj, col) => {
-                obj[col.dataKey] = item[col.dataKey] || "";
-                return obj;
-            }, {})
-        );
-        doc.autoTable({
-            head: [columns.map((col) => col.title)],
-            body: data.map((row) => columns.map((col) => row[col.dataKey])),
+        autoTable(doc, {
+            head: [visibleColumns.map((col) => col.header)],
+            body: collection.map((item) =>
+                visibleColumns.map((col) => item[col.field] || "")
+            ),
+            styles: { fontSize: 10 },
+            margin: { top: 10 },
         });
         doc.save(`${type}_data.pdf`);
     };
 
-    // Toolbar templates
+    // File upload handler
+    const handleFileUpload = async (event) => {
+        const file = event.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const response = await fetch(`/api/${type}/import`, {
+                method: "POST",
+                body: formData,
+                headers: {},
+            });
+
+            if (!response.ok) throw new Error("Import failed");
+
+            toast.current.show({
+                severity: "success",
+                summary: "Success",
+                detail: `${capitalize(type)} data imported successfully`,
+                life: 3000,
+            });
+
+            dispatch(
+                getRecords({
+                    type,
+                    endPoint: endpoint || `/api/${type}`,
+                    key: "data",
+                })
+            );
+        } catch (error) {
+            toast.current.show({
+                severity: "error",
+                summary: "Error",
+                detail: error.message || "Failed to import data",
+                life: 3000,
+            });
+        } finally {
+            overlayPanelRef.current.hide();
+        }
+    };
+
     const leftToolbarTemplate = () => (
         <div className="flex flex-wrap gap-2">
             <Button
-                label={`Add`}
+                label="Add"
                 icon="pi pi-plus"
                 severity="success"
                 onClick={onAdd}
@@ -184,10 +241,15 @@ const CustomDataTable = ({
                 severity="warning"
                 onClick={exportPDF}
             />
+            <Button
+                label="Import"
+                icon="pi pi-upload"
+                severity="info"
+                onClick={(e) => overlayPanelRef.current.toggle(e)}
+            />
         </div>
     );
 
-    // Actions column template
     const actionsTemplate = (rowData) => (
         <>
             <Button
@@ -207,7 +269,6 @@ const CustomDataTable = ({
         </>
     );
 
-    // Format data for display
     const formattedData = Array.isArray(collection)
         ? collection.map((item) => ({
               ...item,
@@ -217,7 +278,6 @@ const CustomDataTable = ({
           }))
         : [];
 
-    // Generate columns dynamically
     const generateColumns = () => {
         if (!collection.length) return [];
 
@@ -226,7 +286,10 @@ const CustomDataTable = ({
 
         const dynamicColumns = properties.map((prop) => ({
             field: prop,
-            header: prop.charAt(0).toUpperCase() + prop.slice(1),
+            header: prop
+                .split("_")
+                .map((word) => capitalize(word))
+                .join(" "),
             sortable: true,
         }));
 
@@ -234,21 +297,33 @@ const CustomDataTable = ({
             ...dynamicColumns,
             {
                 field: "actions",
+                header: "Actions",
                 body: actionsTemplate,
                 exportable: false,
-                headerStyle: { minWidth: "12rem"}
+                headerStyle: { minWidth: "10rem" },
             },
         ];
     };
 
-    const columns = generateColumns();
+    const indexTemplate = (rowData, column) => column.rowIndex + 1;
 
-    // Multiple delete dialog footer
+    const onColumnToggle = (event) => {
+        const selectedColumns = event.value;
+        const allColumns = generateColumns().filter(
+            (col) => col.field !== "actions"
+        );
+        const orderedSelectedColumns = allColumns.filter((col) =>
+            selectedColumns.some((sCol) => sCol.field === col.field)
+        );
+        setVisibleColumns(orderedSelectedColumns);
+    };
+
     const deleteRecordsDialogFooter = (
         <>
             <Button
                 label="No"
                 icon="pi pi-times"
+                severity="secondary"
                 outlined
                 onClick={() => setDeleteRecordsDialog(false)}
             />
@@ -256,12 +331,12 @@ const CustomDataTable = ({
                 label="Yes"
                 icon="pi pi-check"
                 severity="danger"
+                className="ml-2"
                 onClick={deleteSelectedRecords}
             />
         </>
     );
 
-    // Spinner for loading state
     if (spinner?.show) {
         return (
             <div
@@ -279,20 +354,32 @@ const CustomDataTable = ({
         );
     }
 
-    // Dynamic header with search
     const header = (
-        <div className="flex items-center justify-between w-full">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between w-full">
             <h4 className="m-0">Manage {title}</h4>
-            <IconField iconPosition="left">
-                <InputIcon className="pi pi-search" />
-                <InputText
-                    type="search"
-                    style={{ paddingLeft: "35px" }}
-                    value={globalFilter}
-                    onChange={(e) => setGlobalFilter(e.target.value)}
-                    placeholder="Search..."
+            <div className="flex items-center gap-4">
+                <MultiSelect
+                    value={visibleColumns}
+                    options={generateColumns().filter(
+                        (col) => col.field !== "actions"
+                    )}
+                    optionLabel="header"
+                    onChange={onColumnToggle}
+                    className="w-full sm:w-20rem"
+                    display="chip"
+                    placeholder="Select Columns"
                 />
-            </IconField>
+                <IconField className="flex items-center w-64">
+                    <InputIcon className="pi pi-search" />
+                    <InputText
+                        type="search"
+                        value={globalFilter}
+                        onChange={(e) => setGlobalFilter(e.target.value)}
+                        placeholder="Search..."
+                        className="w-full ml-2"
+                    />
+                </IconField>
+            </div>
         </div>
     );
 
@@ -325,7 +412,13 @@ const CustomDataTable = ({
                     headerStyle={{ width: "3rem" }}
                     exportable={false}
                 />
-                {columns.map((col) => (
+                <Column
+                    header="#"
+                    body={indexTemplate}
+                    style={{ width: "3rem" }}
+                    exportable={false}
+                />
+                {visibleColumns.map((col) => (
                     <Column
                         key={col.field}
                         field={col.field}
@@ -336,6 +429,13 @@ const CustomDataTable = ({
                         headerStyle={col.headerStyle}
                     />
                 ))}
+                <Column
+                    field="actions"
+                    header="Actions"
+                    body={actionsTemplate}
+                    exportable={false}
+                    headerStyle={{ minWidth: "10rem" }}
+                />
             </DataTable>
             <Dialog
                 visible={deleteRecordsDialog}
@@ -346,20 +446,64 @@ const CustomDataTable = ({
                 onHide={() => setDeleteRecordsDialog(false)}
             >
                 <div className="confirmation-content">
-                    <i
-                        className="pi pi-exclamation-triangle mr-3"
-                        style={{ fontSize: "2rem" }}
-                    />
                     <span>
                         Are you sure you want to delete the selected {type}?
                     </span>
                 </div>
             </Dialog>
+            <OverlayPanel
+                ref={overlayPanelRef}
+                showCloseIcon
+                style={{ width: "600px" }}
+            >
+                <FileUpload
+                    name="file"
+                    url={`/api/${type}/import`}
+                    accept=".csv, .xlsx"
+                    maxFileSize={10000000}
+                    emptyTemplate={
+                        <p className="m-0">
+                            Drag and drop files(csv/excel) here to upload (Max
+                            10Mb).
+                        </p>
+                    }
+                    onUpload={(e) => {
+                        toast.current.show({
+                            severity: "success",
+                            summary: "Success",
+                            detail: `${capitalize(
+                                type
+                            )} data imported successfully`,
+                            life: 3000,
+                        });
+                        dispatch(
+                            getRecords({
+                                type,
+                                endPoint: endpoint || `/api/${type}`,
+                                key: "data",
+                            })
+                        );
+                        overlayPanelRef.current.hide();
+                    }}
+                    onError={(e) => {
+                        toast.current.show({
+                            severity: "error",
+                            summary: "Error",
+                            detail: "Failed to import data",
+                            life: 3000,
+                        });
+                    }}
+                    // auto
+                    customUpload
+                    uploadHandler={handleFileUpload}
+                />
+            </OverlayPanel>
         </div>
     );
 };
 
 CustomDataTable.propTypes = {
+    title: PropTypes.string,
     type: PropTypes.string.isRequired,
     identifier: PropTypes.string,
     onEdit: PropTypes.func,
