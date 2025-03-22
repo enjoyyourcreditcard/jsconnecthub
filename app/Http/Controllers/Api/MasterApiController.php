@@ -18,10 +18,17 @@ class MasterApiController extends Controller
     public function __construct(MasterService $masterService)
     {
         $this->masterService = $masterService;
+
+        foreach (config('constants.MASTER_TYPE_ARRAY') as $masterType) {
+            $this->middleware('permission:' . $masterType . ' list', ['only' => ['index', 'show']]);
+            $this->middleware('permission:' . $masterType . ' create', ['only' => ['store']]);
+            $this->middleware('permission:' . $masterType . ' edit', ['only' => ['update']]);
+            $this->middleware('permission:' . $masterType . ' delete', ['only' => ['destroy']]);
+        }
     }
 
     private function doRequestValidation(Request $request, $type)
-    { 
+    {
         $rules = [];
 
         if ($type === config('constants.MASTER_TYPE_ARRAY.LEVEL_MASTER_TYPE')) {
@@ -36,6 +43,22 @@ class MasterApiController extends Controller
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.ACTIVITY_MASTER_TYPE')) {
             $rules = config('constants.MASTER_VALIDATION_ARRAY.ACTIVITY_MASTER_VALIDATION');
+        }
+
+        if ($type === config('constants.MASTER_TYPE_ARRAY.STUDENT_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.STUDENT_MASTER_VALIDATION');
+        }
+
+        if ($type === config('constants.MASTER_TYPE_ARRAY.ACTIVITY_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.ACTIVITY_MASTER_VALIDATION');
+        }
+
+        if ($type === config('constants.MASTER_TYPE_ARRAY.ROLE_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.ROLE_MASTER_VALIDATION');
+        }
+
+        if ($type === config('constants.MASTER_TYPE_ARRAY.CHECKIN_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.CHECKIN_MASTER_VALIDATION');
         }
 
         $validator = Validator::make($request->all(), $rules);

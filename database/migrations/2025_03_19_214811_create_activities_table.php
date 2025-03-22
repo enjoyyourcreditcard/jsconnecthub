@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Level;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -12,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('data_classes', function (Blueprint $table) {
+        Schema::create('activities', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('level_id')->constrained();
-            $table->string('name', 100)->nullable('false')->unique('data_classes_name_unique');
+            $table->string('name', 250)->nullable('false')->unique('activities_name_unique');
+            $table->text('description')->nullable('true');
             $table->timestamps();
         });
     }
@@ -25,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('data_classes');
+        Schema::dropIfExists('activities');
     }
 };

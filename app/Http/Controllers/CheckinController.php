@@ -3,16 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Checkin;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 
 class CheckinController extends Controller
 {
-    public function checkin(Request $request) : JsonResponse {
+    public function checkin(Request $request) : JsonResponse
+    {
         $request->validate([
-            'student_id'    => ['required', 'exists:students,id'],
-            'reason'        => ['nullable', 'string'],
+            'student_id'        => ['required', 'exists:students,id'],
+            'activity_id'       => ['nullable', 'required_without:other_activity', 'exists:activities,id'],
+            'other_activity'    => ['nullable', 'required_without:activity_id', 'string', 'max:250']
         ]);
 
         $isCheckedIn = Checkin::whereDate('checkin_time', Carbon::today())
@@ -20,16 +23,24 @@ class CheckinController extends Controller
             ->first() ? true : false;
 
         if ($isCheckedIn) {
-            return New JsonResponse([
-                'message' => 'You have already checked in. Please check out before attempting to check in again.'
-            ], 422);
+            return New JsonResponse(['message' => 'You have already checked in. Please check out before attempting to check in again.'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $checkin = Checkin::create([
-            'student_id'   => $request->student_id,
-            'checkin_time' => now(),
-            'reason'       => $request->reason
-        ]);
+        $checkin = New Checkin;
+
+        $checkin->student_id = $request->student_id;
+
+        $checkin->checkin_time = now();
+
+        if ($request->activity_id) {
+            $checkin->activity_id = $request->activity_id;
+        }
+
+        if ($request->other_activity) {
+            $checkin->other_activity = $request->other_activity;
+        }
+
+        $checkin->save();
 
         return New JsonResponse([
             'message'   => 'Check-in successful!',
@@ -39,12 +50,14 @@ class CheckinController extends Controller
                 'level'     => $checkin->student->dataClass->level->name,
                 'checkin'   => $checkin->checkin_time
             ]
-        ], 201);
+        ], Response::HTTP_CREATED);
     }
 
-    public function checkout(Request $request) : JsonResponse {
+    public function checkout(Request $request) : JsonResponse
+    {
         $request->validate([
-            'student_id' => ['required', 'exists:students,id']
+            'student_id'    => ['required', 'exists:students,id'],
+            'reason'        => ['nullable', 'string']
         ]);
 
         $checkin = Checkin::whereDate('checkin_time', Carbon::today())
@@ -55,29 +68,30 @@ class CheckinController extends Controller
         $isCheckedIn = $checkin ? true : false;
 
         if (!$isCheckedIn) {
-            return New JsonResponse([
-                'message' => 'You have not checked in yet. Please check in first.'
-            ], 422);
+            return New JsonResponse(['message' => 'You have not checked in yet. Please check in first.'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         if ($checkin->checkout_time) {
-            return response()->json([
-                'message' => 'You have already checked out.'
-            ], 422);
+            return New JsonResponse(['message' => 'You have already checked out.'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $checkin->checkout_time = now();
+
+        if ($request->reason) {
+            $checkin->reason = $request->reason;
+        }
+
         $checkin->save();
 
         return New JsonResponse([
             'message' => 'Check-out successful!',
-            'data'      => [
+            'data'    => [
                 'student'   => $checkin->student->name,
                 'class'     => $checkin->student->dataClass->name,
                 'level'     => $checkin->student->dataClass->level->name,
                 'checkin'   => $checkin->checkin_time,
                 'checkout'  => $checkin->checkout_time
             ]
-        ], 200);
+        ], Response::HTTP_OK);
     }
 }
