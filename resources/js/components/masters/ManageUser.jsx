@@ -1,16 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useIsAuthenticated } from "react-auth-kit";
-import {
-    getRecords,
-    deleteRecord,
-    createRecord,
-    updateRecord,
-} from "../store/global-slice";
+import { getRecords, createRecord, updateRecord } from "../store/global-slice";
 import Header from "../shared/layout/Header";
 import DataTable from "../shared/misc/DataTable";
 import { Card } from "primereact/card";
 import { Dialog } from "primereact/dialog";
+import { Tooltip } from "primereact/tooltip";
+import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
 
@@ -149,54 +146,77 @@ function ManageUser() {
                                 style={{ width: "400px" }}
                                 onHide={() => setVisible(false)}
                             >
-                                <form
-                                    onSubmit={handleSubmit}
-                                    style={{ padding: "20px" }}
-                                >
+                                <form onSubmit={handleSubmit} className="mt-8">
                                     {error && (
                                         <p
                                             style={{
                                                 color: "red",
-                                                marginBottom: "15px",
+                                                marginBottom: "2rem",
                                             }}
                                         >
                                             {error}
                                         </p>
                                     )}
-                                    <div style={{ marginBottom: "15px" }}>
-                                        <InputText
-                                            name="name"
-                                            value={formData.name}
-                                            onChange={handleChange}
-                                            placeholder="Name"
-                                            style={{ width: "100%" }}
-                                            required
-                                            disabled={loading}
-                                        />
+                                    <div style={{ marginBottom: "2rem" }}>
+                                        <FloatLabel>
+                                            <InputText
+                                                name="name"
+                                                value={formData.name}
+                                                onChange={handleChange}
+                                                style={{ width: "100%" }}
+                                                required
+                                                disabled={loading}
+                                                tooltip="Enter your name"
+                                                tooltipOptions={{
+                                                    position: "bottom",
+                                                    mouseTrack: true,
+                                                    mouseTrackTop: 15,
+                                                }}
+                                            />
+                                            <label htmlFor="name">Name</label>
+                                        </FloatLabel>
                                     </div>
-                                    <div style={{ marginBottom: "15px" }}>
-                                        <InputText
-                                            name="email"
-                                            value={formData.email}
-                                            onChange={handleChange}
-                                            placeholder="Email"
-                                            type="email"
-                                            style={{ width: "100%" }}
-                                            required
-                                            disabled={loading}
-                                        />
+                                    <div style={{ marginBottom: "2rem" }}>
+                                        <FloatLabel>
+                                            <InputText
+                                                name="email"
+                                                value={formData.email}
+                                                onChange={handleChange}
+                                                type="email"
+                                                style={{ width: "100%" }}
+                                                required
+                                                disabled={loading}
+                                                tooltip="Enter your email"
+                                                tooltipOptions={{
+                                                    position: "bottom",
+                                                    mouseTrack: true,
+                                                    mouseTrackTop: 15,
+                                                }}
+                                            />
+                                            <label htmlFor="email">Email</label>
+                                        </FloatLabel>
                                     </div>
-                                    <div style={{ marginBottom: "15px" }}>
-                                        <InputText
-                                            name="password"
-                                            value={formData.password}
-                                            onChange={handleChange}
-                                            placeholder="Password"
-                                            type="password"
-                                            style={{ width: "100%" }}
-                                            required={mode === "create"}
-                                            disabled={loading}
-                                        />
+                                    <div style={{ marginBottom: "2rem" }}>
+                                        <FloatLabel>
+                                            <InputText
+                                                name="password"
+                                                value={formData.password}
+                                                onChange={handleChange}
+                                                type="password"
+                                                style={{ width: "100%" }}
+                                                required={mode === "create"}
+                                                disabled={loading}
+                                                tooltip="Enter your password"
+                                                tooltipOptions={{
+                                                    position: "bottom",
+                                                    mouseTrack: true,
+                                                    mouseTrackTop: 15,
+                                                }}
+                                            />
+                                            <label htmlFor="password">
+                                                Password
+                                            </label>
+                                        </FloatLabel>
                                     </div>
                                     <div
                                         style={{
