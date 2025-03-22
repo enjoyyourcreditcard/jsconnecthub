@@ -7,6 +7,9 @@
     },
     "dependencies": {
         "@reduxjs/toolkit": "^2.6.1",
+        "bootstrap": "^5.3.3",
+        "jspdf": "^3.0.1",
+        "jspdf-autotable": "^5.0.2",
         "primeicons": "^7.0.0",
         "primereact": "^10.9.3",
         "react": "^18.3.1",
@@ -14,14 +17,14 @@
         "react-dom": "^18.3.1",
         "react-redux": "^9.2.0",
         "react-router": "^7.4.0",
-        "react-router-dom": "^7.4.0"
+        "react-router-dom": "^7.4.0",
+        "xlsx": "^0.18.5"
     },
     "devDependencies": {
         "@popperjs/core": "^2.11.6",
         "@vitejs/plugin-react": "^4.3.4",
         "autoprefixer": "^10.4.20",
         "axios": "^1.8.2",
-        "bootstrap": "^5.2.3",
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^1.2.0",
         "postcss": "^8.4.47",

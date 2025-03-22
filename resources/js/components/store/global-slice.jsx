@@ -10,7 +10,11 @@ import {
 import { stateKey } from "../utils/constants";
 
 const INITIAL_STATE = {
-    [stateKey.app]: APP_STATE,
+    [stateKey.app]: {
+        ...APP_STATE,
+        spinner: { show: false, text: "" },
+        toastMessage: null,
+    },
     [stateKey.users]: USER_STATE,
     [stateKey.roles]: ROLE_STATE,
     [stateKey.levels]: LEVEL_STATE,
@@ -50,6 +54,10 @@ const globalSlice = createSlice({
 export const { setStateData, resetStateData, resetStateKeyData } =
     globalSlice.actions;
 
+export const setToastMessage = (message) => (dispatch) => {
+    dispatch(setStateData({ key: "toastMessage", data: message }));
+};
+
 export const getRecords =
     ({ type = "", endPoint, key }) =>
     async (dispatch) => {
@@ -79,7 +87,13 @@ export const getRecords =
             return false;
         } catch (error) {
             dispatch(resetStateKeyData({ key: "spinner" }));
-            console.error("Fetch error:", error.message);
+            if (error.response?.status === 401) {
+                console.warn(
+                    "Authentication required. Retrying after login..."
+                );
+            } else {
+                console.error("Fetch error:", error.message);
+            }
             return false;
         }
     };
@@ -89,14 +103,13 @@ export const createRecord =
     async (dispatch) => {
         dispatch(
             setStateData({
-                type,
                 key: "spinner",
                 data: { show: true, text: "Creating..." },
             })
         );
         try {
             const response = await api.post(endPoint, data);
-            dispatch(resetStateKeyData({ type, key: "spinner" }));
+            dispatch(resetStateKeyData({ key: "spinner" }));
             if (response.data.status) {
                 dispatch(
                     setStateData({
@@ -106,14 +119,87 @@ export const createRecord =
                         isMerge: true,
                     })
                 );
+                dispatch(
+                    setToastMessage({
+                        severity: "success",
+                        summary: "Success",
+                        detail: "Record created successfully",
+                    })
+                );
                 return true;
             }
+            dispatch(
+                setToastMessage({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Failed to create record",
+                })
+            );
             return false;
         } catch (error) {
-            dispatch(resetStateKeyData({ type, key: "spinner" }));
+            dispatch(resetStateKeyData({ key: "spinner" }));
             const errorMsg =
                 error.response?.data?.message || "Failed to create record";
-            console.error("Create error:", errorMsg);
+            dispatch(
+                setToastMessage({
+                    severity: "error",
+                    summary: "Error",
+                    detail: errorMsg,
+                })
+            );
+            throw new Error(errorMsg);
+        }
+    };
+
+export const updateRecord =
+    ({ type = "", endPoint, data }) =>
+    async (dispatch) => {
+        dispatch(
+            setStateData({
+                key: "spinner",
+                data: { show: true, text: "Updating..." },
+            })
+        );
+        try {
+            const response = await api.put(endPoint, data);
+            dispatch(resetStateKeyData({ key: "spinner" }));
+            if (response.data.status) {
+                dispatch(
+                    setStateData({
+                        type,
+                        key: "data",
+                        data: response.data.result,
+                        isMerge: true,
+                    })
+                );
+                dispatch(
+                    setToastMessage({
+                        severity: "success",
+                        summary: "Success",
+                        detail: "Record updated successfully",
+                    })
+                );
+                return true;
+            }
+            dispatch(
+                setToastMessage({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Failed to update record",
+                })
+            );
+            return false;
+        } catch (error) {
+            dispatch(resetStateKeyData({ key: "spinner" }));
+            const errorMsg =
+                error.response?.data?.message || "Failed to update record";
+            dispatch(
+                setToastMessage({
+                    severity: "error",
+                    summary: "Error",
+                    detail: errorMsg,
+                })
+            );
             throw new Error(errorMsg);
         }
     };
@@ -131,12 +217,34 @@ export const deleteRecord =
             const response = await api.delete(endPoint);
             dispatch(resetStateKeyData({ key: "spinner" }));
             if (response.data.status) {
+                dispatch(
+                    setToastMessage({
+                        severity: "success",
+                        summary: "Success",
+                        detail: "Record deleted successfully",
+                    })
+                );
                 return true;
             }
+            dispatch(
+                setToastMessage({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Failed to delete record",
+                })
+            );
             return false;
         } catch (error) {
             dispatch(resetStateKeyData({ key: "spinner" }));
-            console.error("Delete error:", error.message);
+            const errorMsg =
+                error.response?.data?.message || "Failed to delete record";
+            dispatch(
+                setToastMessage({
+                    severity: "error",
+                    summary: "Error",
+                    detail: errorMsg,
+                })
+            );
             return false;
         }
     };

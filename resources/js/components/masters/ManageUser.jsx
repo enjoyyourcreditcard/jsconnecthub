@@ -1,19 +1,25 @@
 import React, { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useIsAuthenticated } from "react-auth-kit";
-import { getRecords, deleteRecord, createRecord } from "../store/global-slice";
+import {
+    getRecords,
+    deleteRecord,
+    createRecord,
+    updateRecord,
+} from "../store/global-slice";
 import Header from "../shared/layout/Header";
-import Table from "../shared/misc/Table";
+import DataTable from "../shared/misc/DataTable";
 import { Card } from "primereact/card";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
-import { ProgressSpinner } from "primereact/progressspinner";
 
 function ManageUser() {
     const dispatch = useDispatch();
     const isAuthenticated = useIsAuthenticated();
     const [visible, setVisible] = useState(false);
+    const [mode, setMode] = useState("create");
+    const [editId, setEditId] = useState(null);
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -22,6 +28,9 @@ function ManageUser() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [isReady, setIsReady] = useState(false);
+    const {
+        users: { data: users = [] },
+    } = useSelector((state) => state.global);
 
     useEffect(() => {
         if (isAuthenticated()) {
@@ -42,25 +51,23 @@ function ManageUser() {
     }, [dispatch, isReady]);
 
     const handleEdit = (id) => {
-        console.log(`Edit user with ID: ${id}`);
+        const user = users.find((u) => u.id === id);
+        if (user) {
+            setFormData({
+                name: user.name,
+                email: user.email,
+                password: "",
+            });
+            setEditId(id);
+            setMode("edit");
+            setVisible(true);
+        }
     };
 
-    const handleDelete = (id) => {
-        if (window.confirm(`Are you sure you want to delete user ${id}?`)) {
-            dispatch(deleteRecord({ endPoint: `/api/users/${id}` })).then(
-                (success) => {
-                    if (success) {
-                        dispatch(
-                            getRecords({
-                                type: "users",
-                                endPoint: "/api/users",
-                                key: "data",
-                            })
-                        );
-                    }
-                }
-            );
-        }
+    const handleAdd = () => {
+        setMode("create");
+        setFormData({ name: "", email: "", password: "" });
+        setVisible(true);
     };
 
     const handleChange = (e) => {
@@ -68,53 +75,56 @@ function ManageUser() {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleCreate = async () => {
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         setLoading(true);
         setError("");
         try {
-            const success = await dispatch(
-                createRecord({
-                    type: "users",
-                    endPoint: "/api/users",
-                    data: formData,
-                })
-            );
-            if (success) {
-                setFormData({ name: "", email: "", password: "" });
-                setVisible(false);
-                dispatch(
-                    getRecords({
+            if (mode === "create") {
+                const success = dispatch(
+                    createRecord({
                         type: "users",
                         endPoint: "/api/users",
-                        key: "data",
+                        data: formData,
                     })
                 );
+                if (success) {
+                    setFormData({ name: "", email: "", password: "" });
+                    setVisible(false);
+                    dispatch(
+                        getRecords({
+                            type: "users",
+                            endPoint: "/api/users",
+                            key: "data",
+                        })
+                    );
+                }
+            } else {
+                const success = dispatch(
+                    updateRecord({
+                        type: "users",
+                        endPoint: `/api/users/${editId}`,
+                        data: formData,
+                    })
+                );
+                if (success) {
+                    setFormData({ name: "", email: "", password: "" });
+                    setVisible(false);
+                    dispatch(
+                        getRecords({
+                            type: "users",
+                            endPoint: "/api/users",
+                            key: "data",
+                        })
+                    );
+                }
             }
         } catch (err) {
-            setError(err.message || "Failed to create user");
+            setError(err.message || "Operation failed");
         } finally {
             setLoading(false);
         }
     };
-
-    const footerContent = (
-        <div>
-            <Button
-                label="Cancel"
-                icon="pi pi-times"
-                onClick={() => setVisible(false)}
-                className="p-button-text"
-                disabled={loading}
-            />
-            <Button
-                label="Create"
-                icon="pi pi-check"
-                onClick={handleCreate}
-                disabled={loading}
-                autoFocus
-            />
-        </div>
-    );
 
     return (
         <div>
@@ -123,82 +133,99 @@ function ManageUser() {
                 <Card>
                     {isAuthenticated() ? (
                         <>
-                            <Button
-                                label="Add User"
-                                icon="pi pi-plus"
-                                onClick={() => setVisible(true)}
-                                style={{ marginBottom: "20px" }}
-                            />
-                            <Table
+                            <DataTable
                                 type="users"
                                 identifier="id"
                                 onEdit={handleEdit}
-                                onDelete={handleDelete}
+                                onAdd={handleAdd}
                                 endpoint="/api/users"
+                                title="User"
                             />
                             <Dialog
-                                header="Create New User"
+                                header={
+                                    mode === "create" ? `Add User` : `Edit User`
+                                }
                                 visible={visible}
                                 style={{ width: "400px" }}
                                 onHide={() => setVisible(false)}
-                                footer={footerContent}
                             >
-                                {loading ? (
+                                <form
+                                    onSubmit={handleSubmit}
+                                    style={{ padding: "20px" }}
+                                >
+                                    {error && (
+                                        <p
+                                            style={{
+                                                color: "red",
+                                                marginBottom: "15px",
+                                            }}
+                                        >
+                                            {error}
+                                        </p>
+                                    )}
+                                    <div style={{ marginBottom: "15px" }}>
+                                        <InputText
+                                            name="name"
+                                            value={formData.name}
+                                            onChange={handleChange}
+                                            placeholder="Name"
+                                            style={{ width: "100%" }}
+                                            required
+                                            disabled={loading}
+                                        />
+                                    </div>
+                                    <div style={{ marginBottom: "15px" }}>
+                                        <InputText
+                                            name="email"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            placeholder="Email"
+                                            type="email"
+                                            style={{ width: "100%" }}
+                                            required
+                                            disabled={loading}
+                                        />
+                                    </div>
+                                    <div style={{ marginBottom: "15px" }}>
+                                        <InputText
+                                            name="password"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                            placeholder="Password"
+                                            type="password"
+                                            style={{ width: "100%" }}
+                                            required={mode === "create"}
+                                            disabled={loading}
+                                        />
+                                    </div>
                                     <div
                                         style={{
-                                            textAlign: "center",
-                                            padding: "20px",
+                                            display: "flex",
+                                            gap: "10px",
+                                            justifyContent: "flex-end",
                                         }}
                                     >
-                                        <ProgressSpinner />
-                                        <p>Creating...</p>
+                                        <Button
+                                            label="Cancel"
+                                            icon="pi pi-times"
+                                            type="button"
+                                            onClick={() => setVisible(false)}
+                                            className="p-button-text"
+                                            disabled={loading}
+                                        />
+                                        <Button
+                                            label={
+                                                mode === "create"
+                                                    ? "Create"
+                                                    : "Update"
+                                            }
+                                            icon="pi pi-check"
+                                            type="submit"
+                                            disabled={loading}
+                                            autoFocus
+                                        />
                                     </div>
-                                ) : (
-                                    <div style={{ padding: "20px" }}>
-                                        {error && (
-                                            <p
-                                                style={{
-                                                    color: "red",
-                                                    marginBottom: "15px",
-                                                }}
-                                            >
-                                                {error}
-                                            </p>
-                                        )}
-                                        <div style={{ marginBottom: "15px" }}>
-                                            <InputText
-                                                name="name"
-                                                value={formData.name}
-                                                onChange={handleChange}
-                                                placeholder="Name"
-                                                style={{ width: "100%" }}
-                                                required
-                                            />
-                                        </div>
-                                        <div style={{ marginBottom: "15px" }}>
-                                            <InputText
-                                                name="email"
-                                                value={formData.email}
-                                                onChange={handleChange}
-                                                placeholder="Email"
-                                                type="email"
-                                                style={{ width: "100%" }}
-                                                required
-                                            />
-                                        </div>
-                                        <div style={{ marginBottom: "15px" }}>
-                                            <InputText
-                                                name="password"
-                                                value={formData.password}
-                                                onChange={handleChange}
-                                                placeholder="Password"
-                                                type="password"
-                                                style={{ width: "100%" }}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                )}
+                                </form>
                             </Dialog>
                         </>
                     ) : (

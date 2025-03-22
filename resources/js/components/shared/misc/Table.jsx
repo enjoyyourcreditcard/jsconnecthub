@@ -1,10 +1,10 @@
-// resources/js/components/Table.jsx
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Button } from "primereact/button";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { ProgressSpinner } from "primereact/progressspinner";
+import { ConfirmPopup, confirmPopup } from "primereact/confirmpopup";
 import { getRecords, deleteRecord } from "../../store/global-slice";
 import PropTypes from "prop-types";
 
@@ -30,8 +30,37 @@ const Table = ({
         );
     }, [dispatch, type, endpoint]);
 
+    const handleDelete = (event, id) => {
+        confirmPopup({
+            target: event.currentTarget,
+            message: "Do you want to delete this record?",
+            icon: "pi pi-info-circle",
+            acceptClassName: "p-button-danger",
+            accept: () => {
+                if (onDelete()) {
+                    onDelete(id);
+                } else {
+                    dispatch(
+                        deleteRecord({ endPoint: `/api/${type}/${id}` })
+                    ).then((success) => {
+                        if (success) {
+                            dispatch(
+                                getRecords({
+                                    type,
+                                    endPoint: endpoint || `/api/${type}`,
+                                    key: "data",
+                                })
+                            );
+                        }
+                    });
+                }
+            },
+        });
+    };
+
     const actionsTemplate = (rowData) => (
         <>
+            <ConfirmPopup />
             <Button
                 icon="pi pi-pencil"
                 className="p-button-sm p-button-text"
@@ -40,27 +69,10 @@ const Table = ({
             <Button
                 icon="pi pi-trash"
                 className="p-button-sm p-button-danger p-button-text"
-                onClick={() => handleDelete(rowData[identifier])}
+                onClick={(event) => handleDelete(event, rowData[identifier])}
             />
         </>
     );
-
-    const handleDelete = (id) => {
-        dispatch(deleteRecord({ endPoint: `/api/${type}/${id}` })).then(
-            (success) => {
-                if (success) {
-                    dispatch(
-                        getRecords({
-                            type,
-                            endPoint: endpoint || `/api/${type}`,
-                            key: "data",
-                        })
-                    );
-                    onDelete(id);
-                }
-            }
-        );
-    };
 
     const formattedData = Array.isArray(collection)
         ? collection?.map((item) => ({
@@ -90,23 +102,6 @@ const Table = ({
     };
 
     const columns = generateColumns();
-
-    if (spinner.show) {
-        return (
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    height: "200px",
-                }}
-            >
-                <ProgressSpinner />
-                <span style={{ marginTop: "10px" }}>{spinner.text}</span>
-            </div>
-        );
-    }
 
     return (
         <DataTable

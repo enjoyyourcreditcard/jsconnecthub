@@ -121,5 +121,4 @@ class MasterApiController extends Controller
         $this->masterService->delete($type, $id);
         return response()->json(['status' => true, 'message' => "$type deleted"], Response::HTTP_OK);
     }
-
 }
