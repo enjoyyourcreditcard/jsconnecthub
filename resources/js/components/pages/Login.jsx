@@ -2,7 +2,8 @@ import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSignIn } from "react-auth-kit";
-import { ProgressSpinner } from "primereact/progressspinner";
+import { useDispatch } from "react-redux"; // Add Redux dispatch
+import { setStateData } from "../store/global-slice"; // Import to control spinner
 import { Card } from "primereact/card";
 import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
@@ -11,6 +12,7 @@ import { Button } from "primereact/button";
 const Login = () => {
     const navigate = useNavigate();
     const signIn = useSignIn();
+    const dispatch = useDispatch(); // For Redux state updates
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
@@ -20,12 +22,24 @@ const Login = () => {
         e.preventDefault();
         setError("");
         setLoading(true);
+        dispatch(
+            setStateData({
+                key: "spinner",
+                data: { show: true, text: "Logging in..." },
+            })
+        );
         try {
             const response = await axios.post("/api/login", {
                 email,
                 password,
             });
             setLoading(false);
+            dispatch(
+                setStateData({
+                    key: "spinner",
+                    data: { show: false, text: "" },
+                })
+            );
             if (response.data.status) {
                 signIn({
                     token: response.data.token,
@@ -37,6 +51,12 @@ const Login = () => {
             }
         } catch (error) {
             setLoading(false);
+            dispatch(
+                setStateData({
+                    key: "spinner",
+                    data: { show: false, text: "" },
+                })
+            );
             const errorMsg =
                 error.response?.data?.errors?.message?.[0] || "Login failed";
             setError(errorMsg);
@@ -82,14 +102,6 @@ const Login = () => {
                         padding: "0",
                     }}
                 />
-                {loading && (
-                    <div style={{ marginBottom: "20px" }}>
-                        <ProgressSpinner
-                            style={{ width: "50px", height: "50px" }}
-                        />
-                        <p>Logging in...</p>
-                    </div>
-                )}
                 <div className="card flex justify-content-center">
                     <Card title="JS-CONNECT-HUB" className="w-full">
                         <form onSubmit={handleSubmit}>
@@ -141,7 +153,6 @@ const Login = () => {
                                 disabled={loading}
                                 style={{
                                     width: "100%",
-                                    padding: "0.5rem",
                                     cursor: loading ? "not-allowed" : "pointer",
                                 }}
                             />

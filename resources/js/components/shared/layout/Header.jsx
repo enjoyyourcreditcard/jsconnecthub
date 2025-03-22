@@ -107,7 +107,7 @@ const Header = () => {
                         >
                             <Avatar
                                 label={(
-                                    auth()?.email?.charAt(0) || "P"
+                                    auth()?.email?.charAt(0) || "G"
                                 ).toUpperCase()}
                                 shape="circle"
                                 size="small"
@@ -119,7 +119,9 @@ const Header = () => {
                                     flexWrap: "nowrap",
                                 }}
                             >
-                                <span className="font-bold">Name</span>
+                                <span className="font-bold">
+                                    {auth()?.name || "Guest"}
+                                </span>
                             </div>
                         </Button>
                         <Menu
