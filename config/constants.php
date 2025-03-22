@@ -2,6 +2,7 @@
 
 return [
     'MASTER_TYPE_ARRAY' => [
+        'USER_MASTER_TYPE' => 'users',
         'ROLE_MASTER_TYPE' => 'roles',
         'LEVEL_MASTER_TYPE' => 'levels',
         'CLASS_MASTER_TYPE' => 'class',

@@ -2,13 +2,14 @@
 
 use App\Http\Controllers\Api\MasterApiController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\CheckinController;
 use Illuminate\Support\Facades\Route;
 
 /**
  * References
  */
-Route::post('/login', [LoginController::class, 'login']);
 Route::get('/app', fn() => response()->json(['status' => true, 'result' => ['tes' => 'up']]));
+
 Route::get('/sample', function () {
     return response()->json([
         'status' => true,
@@ -20,20 +21,21 @@ Route::get('/sample', function () {
     ]);
 });
 
+/**
+ * Authentication
+ */
+Route::post('/login', [LoginController::class, 'login']);
+
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post('/logout', [LoginController::class, 'logout']);
+});
 
+/**
+ * Master data
+ */
+Route::group(['middleware' => 'auth:sanctum'], function () {
     $types = config('constants.MASTER_TYPE_ARRAY');
 
-    // foreach ($types as $type) {
-    //     Route::prefix($type)->group(function () use ($type) {
-    //         Route::get('/', [MasterApiController::class, 'index'])->name("$type.index");
-    //         Route::get('/{id}', [MasterApiController::class, 'show']);
-    //         Route::post('/', [MasterApiController::class, 'store']);
-    //         Route::put('/{id}', [MasterApiController::class, 'update']);
-    //         Route::delete('/{id}', [MasterApiController::class, 'destroy']);
-    //     });
-    // }
     Route::prefix('{type}')->where(['type' => implode('|', $types)])->group(function () {
         Route::get('/', [MasterApiController::class, 'index']);
         Route::get('/{id}', [MasterApiController::class, 'show']);
@@ -41,5 +43,10 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('/{id}', [MasterApiController::class, 'update']);
         Route::delete('/{id}', [MasterApiController::class, 'destroy']);
     });
-
 });
+
+/**
+ * Check-in/out
+ */
+Route::post('/checkin', [CheckinController::class, 'checkin']);
+Route::post('/checkout', [CheckinController::class, 'checkout']);
