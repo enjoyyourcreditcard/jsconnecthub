@@ -4,8 +4,10 @@ import {
     APP_STATE,
     USER_STATE,
     ROLE_STATE,
-    LEVEL_STATE,
     CLASS_STATE,
+    LEVEL_STATE,
+    ACTIVITY_STATE,
+    FACILITY_STATE,
 } from "./state";
 import { stateKey } from "../utils/constants";
 
@@ -17,8 +19,10 @@ const INITIAL_STATE = {
     },
     [stateKey.users]: USER_STATE,
     [stateKey.roles]: ROLE_STATE,
-    [stateKey.levels]: LEVEL_STATE,
     [stateKey.class]: CLASS_STATE,
+    [stateKey.levels]: LEVEL_STATE,
+    [stateKey.activities]: ACTIVITY_STATE,
+    [stateKey.facilities]: FACILITY_STATE,
 };
 
 const globalSlice = createSlice({

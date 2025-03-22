@@ -12,6 +12,8 @@ import { InputText } from "primereact/inputtext";
 import { IconField } from "primereact/iconfield";
 import { InputIcon } from "primereact/inputicon";
 import { MultiSelect } from "primereact/multiselect";
+import { OverlayPanel } from "primereact/overlaypanel";
+import { FileUpload } from "primereact/fileupload";
 import { getRecords, deleteRecord } from "../../store/global-slice";
 import PropTypes from "prop-types";
 import jsPDF from "jspdf";
@@ -30,6 +32,7 @@ const CustomDataTable = ({
     const dispatch = useDispatch();
     const toast = useRef(null);
     const dt = useRef(null);
+    const overlayPanelRef = useRef(null);
     const { [type]: { data: collection = [], spinner } = {} } = useSelector(
         (state) => state.global
     );
@@ -162,6 +165,49 @@ const CustomDataTable = ({
         doc.save(`${type}_data.pdf`);
     };
 
+    // File upload handler
+    const handleFileUpload = async (event) => {
+        const file = event.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const response = await fetch(`/api/${type}/import`, {
+                method: "POST",
+                body: formData,
+                headers: {},
+            });
+
+            if (!response.ok) throw new Error("Import failed");
+
+            toast.current.show({
+                severity: "success",
+                summary: "Success",
+                detail: `${capitalize(type)} data imported successfully`,
+                life: 3000,
+            });
+
+            dispatch(
+                getRecords({
+                    type,
+                    endPoint: endpoint || `/api/${type}`,
+                    key: "data",
+                })
+            );
+        } catch (error) {
+            toast.current.show({
+                severity: "error",
+                summary: "Error",
+                detail: error.message || "Failed to import data",
+                life: 3000,
+            });
+        } finally {
+            overlayPanelRef.current.hide();
+        }
+    };
+
     const leftToolbarTemplate = () => (
         <div className="flex flex-wrap gap-2">
             <Button
@@ -194,6 +240,12 @@ const CustomDataTable = ({
                 icon="pi pi-file-pdf"
                 severity="warning"
                 onClick={exportPDF}
+            />
+            <Button
+                label="Import"
+                icon="pi pi-upload"
+                severity="info"
+                onClick={(e) => overlayPanelRef.current.toggle(e)}
             />
         </div>
     );
@@ -399,6 +451,53 @@ const CustomDataTable = ({
                     </span>
                 </div>
             </Dialog>
+            <OverlayPanel
+                ref={overlayPanelRef}
+                showCloseIcon
+                style={{ width: "600px" }}
+            >
+                <FileUpload
+                    name="file"
+                    url={`/api/${type}/import`}
+                    accept=".csv, .xlsx"
+                    maxFileSize={10000000}
+                    emptyTemplate={
+                        <p className="m-0">
+                            Drag and drop files(csv/excel) here to upload (Max
+                            10Mb).
+                        </p>
+                    }
+                    onUpload={(e) => {
+                        toast.current.show({
+                            severity: "success",
+                            summary: "Success",
+                            detail: `${capitalize(
+                                type
+                            )} data imported successfully`,
+                            life: 3000,
+                        });
+                        dispatch(
+                            getRecords({
+                                type,
+                                endPoint: endpoint || `/api/${type}`,
+                                key: "data",
+                            })
+                        );
+                        overlayPanelRef.current.hide();
+                    }}
+                    onError={(e) => {
+                        toast.current.show({
+                            severity: "error",
+                            summary: "Error",
+                            detail: "Failed to import data",
+                            life: 3000,
+                        });
+                    }}
+                    // auto
+                    customUpload
+                    uploadHandler={handleFileUpload}
+                />
+            </OverlayPanel>
         </div>
     );
 };

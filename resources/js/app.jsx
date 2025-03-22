@@ -17,6 +17,10 @@ import Home from "./components/pages/Home";
 import About from "./components/pages/About";
 import ManageUser from "./components/masters/ManageUser";
 import NotFound from "./components/pages/NotFound";
+import ManageClass from "./components/masters/ManageClass";
+import ManageLevel from "./components/masters/ManageLevel";
+import ManageActivity from "./components/masters/ManageActivity";
+import ManageFacility from "./components/masters/ManageFacility";
 
 const AppWrapper = () => {
     const authHeader = useAuthHeader();
@@ -92,6 +96,10 @@ const AppWrapper = () => {
                 <Route path="/home" element={<Home />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/users" element={<ManageUser />} />
+                <Route path="/class" element={<ManageClass />} />
+                <Route path="/levels" element={<ManageLevel />} />
+                <Route path="/activities" element={<ManageActivity />} />
+                <Route path="/facilities" element={<ManageFacility />} />
                 <Route path="/*" element={<NotFound />} />
             </Routes>
         </BrowserRouter>
