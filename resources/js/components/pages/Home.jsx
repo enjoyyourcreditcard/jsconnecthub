@@ -4,7 +4,7 @@ import Header from "../shared/layout/Header";
 function Home() {
   return (
     <div>
-      <Header title="Home Page" />
+      <Header/>
       {/* Empty landing page */}
     </div>
   );

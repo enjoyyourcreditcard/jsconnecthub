@@ -8,9 +8,6 @@ import { AuthProvider, useAuthHeader } from "react-auth-kit";
 import { Provider } from "react-redux";
 import { store } from "./components/store";
 import { setAuthToken } from "./components/api";
-import "primereact/resources/themes/saga-blue/theme.css";
-import "primereact/resources/primereact.min.css";
-import "primeicons/primeicons.css";
 import Login from "./components/pages/Login";
 import Home from "./components/pages/Home";
 import About from "./components/pages/About";
@@ -26,8 +23,8 @@ const AppWrapper = () => {
     return (
         <BrowserRouter>
             <Routes>
-                <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/" element={<Home />} />
                 <Route path="/home" element={<Home />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/users" element={<ManageUser />} />
