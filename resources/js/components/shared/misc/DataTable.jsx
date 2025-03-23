@@ -24,6 +24,7 @@ const CustomDataTable = ({
     title,
     type,
     identifier = "id",
+    hasImport,
     onEdit = () => {},
     onDelete = null,
     onAdd = () => {},
@@ -241,12 +242,14 @@ const CustomDataTable = ({
                 severity="warning"
                 onClick={exportPDF}
             />
-            <Button
-                label="Import"
-                icon="pi pi-upload"
-                severity="info"
-                onClick={(e) => overlayPanelRef.current.toggle(e)}
-            />
+            {hasImport && (
+                <Button
+                    label="Import"
+                    icon="pi pi-upload"
+                    severity="info"
+                    onClick={(e) => overlayPanelRef.current.toggle(e)}
+                />
+            )}
         </div>
     );
 
@@ -277,6 +280,8 @@ const CustomDataTable = ({
                   : "",
           }))
         : [];
+
+    console.log(formattedData);
 
     const generateColumns = () => {
         if (!collection.length) return [];
@@ -506,6 +511,7 @@ CustomDataTable.propTypes = {
     title: PropTypes.string,
     type: PropTypes.string.isRequired,
     identifier: PropTypes.string,
+    hasImport: PropTypes.bool,
     onEdit: PropTypes.func,
     onDelete: PropTypes.func,
     onAdd: PropTypes.func,

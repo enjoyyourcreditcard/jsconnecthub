@@ -109,6 +109,7 @@ function ManageFacility() {
                             <DataTable
                                 type="facilities"
                                 identifier="id"
+                                hasImport={true}
                                 onEdit={handleEdit}
                                 onAdd={handleAdd}
                                 endpoint="/api/facilities"

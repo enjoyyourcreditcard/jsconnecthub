@@ -114,6 +114,7 @@ function ManageUser() {
                             <DataTable
                                 type="users"
                                 identifier="id"
+                                hasImport={true}
                                 onEdit={handleEdit}
                                 onAdd={handleAdd}
                                 endpoint="/api/users"

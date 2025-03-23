@@ -71,7 +71,7 @@ export const getRecords =
                 data: { show: true, text: "Fetching..." },
             })
         );
-        try {
+        try {   
             const url = endPoint || (type ? `/api/${type}` : "");
             if (!url) throw new Error("No endpoint or type provided");
 
@@ -92,8 +92,13 @@ export const getRecords =
         } catch (error) {
             dispatch(resetStateKeyData({ key: "spinner" }));
             if (error.response?.status === 401) {
-                console.warn(
-                    "Authentication required. Retrying after login..."
+                dispatch(
+                    setToastMessage({
+                        severity: "warn",
+                        summary: "Warning!",
+                        detail: "Authentication required. Retrying after login...",
+                        life: 10000
+                    })
                 );
             } else {
                 console.error("Fetch error:", error.message);

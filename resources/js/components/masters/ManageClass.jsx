@@ -111,6 +111,7 @@ function ManageClass() {
                             <DataTable
                                 type="class"
                                 identifier="id"
+                                hasImport={true}
                                 onEdit={handleEdit}
                                 onAdd={handleAdd}
                                 endpoint="/api/class"

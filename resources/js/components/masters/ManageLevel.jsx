@@ -109,6 +109,7 @@ function ManageLevel() {
                             <DataTable
                                 type="levels"
                                 identifier="id"
+                                hasImport={true}
                                 onEdit={handleEdit}
                                 onAdd={handleAdd}
                                 endpoint="/api/levels"
