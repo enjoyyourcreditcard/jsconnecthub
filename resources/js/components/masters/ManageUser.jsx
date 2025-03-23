@@ -25,8 +25,18 @@ function ManageUser() {
     const [error, setError] = useState("");
 
     const {
-        users: { data: users = [] },
+        users: { data: users = [], endPoints: usersEndPoints },
     } = useSelector((state) => state.global);
+
+    useEffect(() => {
+        dispatch(
+            getRecords({
+                type: "users",
+                endPoint: usersEndPoints.collection,
+                key: "data",
+            })
+        );
+    }, [dispatch]);
 
     const handleEdit = (id) => {
         const user = users.find((u) => u.id === id);

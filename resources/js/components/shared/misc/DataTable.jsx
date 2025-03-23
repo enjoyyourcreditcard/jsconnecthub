@@ -43,16 +43,6 @@ const CustomDataTable = ({
     const [visibleColumns, setVisibleColumns] = useState([]);
 
     useEffect(() => {
-        dispatch(
-            getRecords({
-                type,
-                endPoint: endpoint || `/api/${type}`,
-                key: "data",
-            })
-        );
-    }, [dispatch, type, endpoint]);
-
-    useEffect(() => {
         if (collection.length > 0) {
             const allColumns = generateColumns();
             const defaultHidden = [
@@ -75,7 +65,7 @@ const CustomDataTable = ({
     const handleDelete = (event, id) => {
         confirmPopup({
             target: event.currentTarget,
-            message: `Do you want to delete this ${type} (ID: ${id})?`,
+            message: `Do you want to delete this ${type}?`,
             icon: "pi pi-info-circle",
             acceptClassName: "p-button-danger",
             accept: () => {
@@ -280,8 +270,6 @@ const CustomDataTable = ({
                   : "",
           }))
         : [];
-
-    console.log(formattedData);
 
     const generateColumns = () => {
         if (!collection.length) return [];

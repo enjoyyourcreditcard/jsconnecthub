@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useIsAuthenticated } from "react-auth-kit";
-import { getRecords, createRecord, updateRecord } from "../store/global-slice";
+import { getRecords, createRecord, updateRecord, setStateData } from "../store/global-slice";
 import Header from "../shared/layout/Header";
 import DataTable from "../shared/misc/DataTable";
 import { Card } from "primereact/card";
@@ -23,8 +23,37 @@ function ManageClass() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const {
-        class: { data: classes = [] },
+        class: { data: classes = [], endPoints: classEndPoints },
     } = useSelector((state) => state.global);
+
+    useEffect(() => {
+        dispatch(
+            getRecords({
+                type: "class",
+                endPoint: classEndPoints.collection,
+                key: "data",
+            })
+        ).then((d) => {
+            if (d) {
+                const formattedClasses = d.map((i) => ({
+                    id: i.id,
+                    level: i.level?.name || "N/A",
+                    name: i.name,
+                    // level_id: i.level_id,
+                    created_at: i.created_at,
+                    updated_at: i.updated_at,
+                }));
+                dispatch(
+                    setStateData({
+                        type: "class",
+                        data: formattedClasses,
+                        key: "data",
+                        isMerge: false,
+                    })
+                );
+            }
+        });
+    }, [dispatch]);
 
     const handleEdit = (id) => {
         const iClass = classes.find((u) => u.id === id);
