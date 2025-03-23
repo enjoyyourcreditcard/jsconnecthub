@@ -22,8 +22,22 @@ function ManageFacility() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const {
-        facilities: { data: facilities = [] },
+        facilities: { data: facilities = [], endPoints: facilityEndPoints },
     } = useSelector((state) => state.global);
+
+    const myFetch = () => {
+        dispatch(
+            getRecords({
+                type: "facilities",
+                endPoint: facilityEndPoints.collection,
+                key: "data",
+            })
+        );
+    };
+
+    useEffect(() => {
+        myFetch();
+    }, [dispatch]);
 
     const handleEdit = (id) => {
         const facility = facilities.find((u) => u.id === id);
@@ -57,39 +71,27 @@ function ManageFacility() {
                 const success = dispatch(
                     createRecord({
                         type: "facilities",
-                        endPoint: "/api/facilities",
+                        endPoint: facilityEndPoints.store,
                         data: formData,
                     })
                 );
                 if (success) {
                     setFormData({ name: "" });
                     setVisible(false);
-                    dispatch(
-                        getRecords({
-                            type: "facilities",
-                            endPoint: "/api/facilities",
-                            key: "data",
-                        })
-                    );
+                    myFetch();
                 }
             } else {
                 const success = dispatch(
                     updateRecord({
                         type: "facilities",
-                        endPoint: `/api/facilities/${editId}`,
+                        endPoint: `${facilityEndPoints.update}${editId}`,
                         data: formData,
                     })
                 );
                 if (success) {
                     setFormData({ name: "" });
                     setVisible(false);
-                    dispatch(
-                        getRecords({
-                            type: "facilities",
-                            endPoint: "/api/facilities",
-                            key: "data",
-                        })
-                    );
+                    myFetch();
                 }
             }
         } catch (err) {
@@ -109,9 +111,10 @@ function ManageFacility() {
                             <DataTable
                                 type="facilities"
                                 identifier="id"
-                                onEdit={handleEdit}
+                                hasImport={true}
+                                onFetch={myFetch}
                                 onAdd={handleAdd}
-                                endpoint="/api/facilities"
+                                onEdit={handleEdit}
                                 title="Facility"
                             />
                             <Dialog

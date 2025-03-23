@@ -14,7 +14,7 @@ import { InputIcon } from "primereact/inputicon";
 import { MultiSelect } from "primereact/multiselect";
 import { OverlayPanel } from "primereact/overlaypanel";
 import { FileUpload } from "primereact/fileupload";
-import { getRecords, deleteRecord } from "../../store/global-slice";
+import { deleteRecord } from "../../store/global-slice";
 import PropTypes from "prop-types";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -24,32 +24,27 @@ const CustomDataTable = ({
     title,
     type,
     identifier = "id",
+    hasImport,
+    onFetch = () => {},
+    onAdd = () => {},
     onEdit = () => {},
     onDelete = null,
-    onAdd = () => {},
-    endpoint = "",
 }) => {
     const dispatch = useDispatch();
     const toast = useRef(null);
     const dt = useRef(null);
     const overlayPanelRef = useRef(null);
-    const { [type]: { data: collection = [], spinner } = {} } = useSelector(
-        (state) => state.global
-    );
+    const {
+        [type]: {
+            data: collection = [],
+            spinner,
+            endPoints: dataEndPoints,
+        } = {},
+    } = useSelector((state) => state.global);
     const [selectedRecords, setSelectedRecords] = useState(null);
     const [deleteRecordsDialog, setDeleteRecordsDialog] = useState(false);
     const [globalFilter, setGlobalFilter] = useState("");
     const [visibleColumns, setVisibleColumns] = useState([]);
-
-    useEffect(() => {
-        dispatch(
-            getRecords({
-                type,
-                endPoint: endpoint || `/api/${type}`,
-                key: "data",
-            })
-        );
-    }, [dispatch, type, endpoint]);
 
     useEffect(() => {
         if (collection.length > 0) {
@@ -60,10 +55,12 @@ const CustomDataTable = ({
                 "created_at",
                 "updated_at",
             ];
+            const isHiddenField = (field) => {
+                if (defaultHidden.includes(field)) return true;
+                return field.endsWith("_id");
+            };
             const initialVisible = allColumns.filter(
-                (col) =>
-                    !defaultHidden.includes(col.field) &&
-                    col.field !== "actions"
+                (col) => !isHiddenField(col.field) && col.field !== "actions"
             );
             setVisibleColumns(initialVisible);
         }
@@ -74,7 +71,7 @@ const CustomDataTable = ({
     const handleDelete = (event, id) => {
         confirmPopup({
             target: event.currentTarget,
-            message: `Do you want to delete this ${type} (ID: ${id})?`,
+            message: `Do you want to delete this ${type}?`,
             icon: "pi pi-info-circle",
             acceptClassName: "p-button-danger",
             accept: () => {
@@ -82,7 +79,9 @@ const CustomDataTable = ({
                     onDelete(id);
                 } else {
                     dispatch(
-                        deleteRecord({ endPoint: `/api/${type}/${id}` })
+                        deleteRecord({
+                            endPoint: `${dataEndPoints.delete}${id}`,
+                        })
                     ).then((success) => {
                         if (success) {
                             toast.current.show({
@@ -91,13 +90,7 @@ const CustomDataTable = ({
                                 detail: `${capitalize(type)} deleted`,
                                 life: 3000,
                             });
-                            dispatch(
-                                getRecords({
-                                    type,
-                                    endPoint: endpoint || `/api/${type}`,
-                                    key: "data",
-                                })
-                            );
+                            onFetch();
                         }
                     });
                 }
@@ -119,7 +112,7 @@ const CustomDataTable = ({
                 selectedRecords.map((record) =>
                     dispatch(
                         deleteRecord({
-                            endPoint: `/api/${type}/${record[identifier]}`,
+                            endPoint: `${dataEndPoints.delete}${record[identifier]}`,
                         })
                     )
                 )
@@ -131,13 +124,7 @@ const CustomDataTable = ({
                         detail: `${selectedRecords.length} ${type} deleted`,
                         life: 3000,
                     });
-                    dispatch(
-                        getRecords({
-                            type,
-                            endPoint: endpoint || `/api/${type}`,
-                            key: "data",
-                        })
-                    );
+                    onFetch();
                 }
             });
         }
@@ -174,7 +161,7 @@ const CustomDataTable = ({
         formData.append("file", file);
 
         try {
-            const response = await fetch(`/api/${type}/import`, {
+            const response = await fetch(dataEndPoints.import, {
                 method: "POST",
                 body: formData,
                 headers: {},
@@ -189,13 +176,7 @@ const CustomDataTable = ({
                 life: 3000,
             });
 
-            dispatch(
-                getRecords({
-                    type,
-                    endPoint: endpoint || `/api/${type}`,
-                    key: "data",
-                })
-            );
+            onFetch();
         } catch (error) {
             toast.current.show({
                 severity: "error",
@@ -241,12 +222,14 @@ const CustomDataTable = ({
                 severity="warning"
                 onClick={exportPDF}
             />
-            <Button
-                label="Import"
-                icon="pi pi-upload"
-                severity="info"
-                onClick={(e) => overlayPanelRef.current.toggle(e)}
-            />
+            {hasImport && (
+                <Button
+                    label="Import"
+                    icon="pi pi-upload"
+                    severity="info"
+                    onClick={(e) => overlayPanelRef.current.toggle(e)}
+                />
+            )}
         </div>
     );
 
@@ -400,7 +383,7 @@ const CustomDataTable = ({
                 globalFilter={globalFilter}
                 paginator
                 rows={10}
-                rowsPerPageOptions={[5, 10, 20, 100]}
+                rowsPerPageOptions={[10, 20, 50, 100]}
                 tableStyle={{ minWidth: "50rem" }}
                 dataKey={identifier}
                 stripedRows
@@ -458,7 +441,6 @@ const CustomDataTable = ({
             >
                 <FileUpload
                     name="file"
-                    url={`/api/${type}/import`}
                     accept=".csv, .xlsx"
                     maxFileSize={10000000}
                     emptyTemplate={
@@ -476,13 +458,7 @@ const CustomDataTable = ({
                             )} data imported successfully`,
                             life: 3000,
                         });
-                        dispatch(
-                            getRecords({
-                                type,
-                                endPoint: endpoint || `/api/${type}`,
-                                key: "data",
-                            })
-                        );
+                        onFetch();
                         overlayPanelRef.current.hide();
                     }}
                     onError={(e) => {
@@ -493,7 +469,6 @@ const CustomDataTable = ({
                             life: 3000,
                         });
                     }}
-                    // auto
                     customUpload
                     uploadHandler={handleFileUpload}
                 />
@@ -506,10 +481,11 @@ CustomDataTable.propTypes = {
     title: PropTypes.string,
     type: PropTypes.string.isRequired,
     identifier: PropTypes.string,
+    hasImport: PropTypes.bool,
+    onFetch: PropTypes.func,
+    onAdd: PropTypes.func,
     onEdit: PropTypes.func,
     onDelete: PropTypes.func,
-    onAdd: PropTypes.func,
-    endpoint: PropTypes.string,
 };
 
 export default CustomDataTable;

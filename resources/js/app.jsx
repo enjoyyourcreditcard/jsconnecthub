@@ -41,9 +41,6 @@ const AppWrapper = () => {
     useEffect(() => {
         if (toastMessage) {
             toast.current.show(toastMessage);
-            setTimeout(() => {
-                toast.current.clear();
-            }, 3000);
         }
     }, [toastMessage]);
 

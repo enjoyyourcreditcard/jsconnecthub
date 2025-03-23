@@ -32,16 +32,16 @@ class MasterService
     {
         $q = $this->getModel($type);
         if ($type === config('constants.MASTER_TYPE_ARRAY.LEVEL_MASTER_TYPE')) {
-            $q->with('classes');
+            return $q->with('classes')->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.CLASS_MASTER_TYPE')) {
-            $q->with('level');
+            return $q->with('level')->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.STUDENT_MASTER_TYPE')) {
-            $q->with('class.level');
+            return $q->with('class.level')->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.CHECKIN_MASTER_TYPE')) {
-            $q->with(['student.class.level', 'activity']);
+            return $q->with(['student.class.level', 'activity'])->get();
         }
         return $q->get();
     }

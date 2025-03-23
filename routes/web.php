@@ -17,6 +17,6 @@ Route::get('/{path?}', function () {
 //     return view('app');
 // })->where('path', '^(?!api|ui-broken).*?');
 
-// Route::get('/ui-broken', function () {
-//     return view('ui-broken');
-// })->name('ui-broken');
+Route::get('/ui-broken', function () {
+    return view('ui-broken');
+})->name('ui-broken');

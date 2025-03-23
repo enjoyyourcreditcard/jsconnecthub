@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useIsAuthenticated } from "react-auth-kit";
-import { getRecords, createRecord, updateRecord } from "../store/global-slice";
+import {
+    getRecords,
+    createRecord,
+    updateRecord,
+    setStateData,
+} from "../store/global-slice";
 import Header from "../shared/layout/Header";
 import DataTable from "../shared/misc/DataTable";
 import { Card } from "primereact/card";
@@ -22,8 +27,38 @@ function ManageLevel() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const {
-        levels: { data: levels = [] },
+        levels: { data: levels = [], endPoints: levelEndPoints },
     } = useSelector((state) => state.global);
+
+    const myFetch = () => {
+        dispatch(
+            getRecords({
+                type: "levels",
+                endPoint: levelEndPoints.collection,
+            })
+        ).then((d) => {
+            if (d) {
+                const formattedLevels = d.map((i) => ({
+                    id: i.id,
+                    name: i.name,
+                    created_at: i.created_at,
+                    updated_at: i.updated_at,
+                }));
+                dispatch(
+                    setStateData({
+                        type: "levels",
+                        data: formattedLevels,
+                        key: "data",
+                        isMerge: false,
+                    })
+                );
+            }
+        });
+    };
+
+    useEffect(() => {
+        myFetch();
+    }, [dispatch]);
 
     const handleEdit = (id) => {
         const level = levels.find((u) => u.id === id);
@@ -57,39 +92,27 @@ function ManageLevel() {
                 const success = dispatch(
                     createRecord({
                         type: "levels",
-                        endPoint: "/api/levels",
+                        endPoint: levelEndPoints.store,
                         data: formData,
                     })
                 );
                 if (success) {
                     setFormData({ name: "" });
                     setVisible(false);
-                    dispatch(
-                        getRecords({
-                            type: "levels",
-                            endPoint: "/api/levels",
-                            key: "data",
-                        })
-                    );
+                    myFetch();
                 }
             } else {
                 const success = dispatch(
                     updateRecord({
                         type: "levels",
-                        endPoint: `/api/levels/${editId}`,
+                        endPoint: `${levelEndPoints.update}${editId}`,
                         data: formData,
                     })
                 );
                 if (success) {
                     setFormData({ name: "" });
                     setVisible(false);
-                    dispatch(
-                        getRecords({
-                            type: "levels",
-                            endPoint: "/api/levels",
-                            key: "data",
-                        })
-                    );
+                    myFetch();
                 }
             }
         } catch (err) {
@@ -109,9 +132,10 @@ function ManageLevel() {
                             <DataTable
                                 type="levels"
                                 identifier="id"
-                                onEdit={handleEdit}
+                                hasImport={true}
+                                onFetch={myFetch}
                                 onAdd={handleAdd}
-                                endpoint="/api/levels"
+                                onEdit={handleEdit}
                                 title="level"
                             />
                             <Dialog

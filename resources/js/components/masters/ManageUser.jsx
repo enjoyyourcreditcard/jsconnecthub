@@ -23,10 +23,23 @@ function ManageUser() {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-
     const {
-        users: { data: users = [] },
+        users: { data: users = [], endPoints: userEndPoints },
     } = useSelector((state) => state.global);
+
+    const myFetch = () => {
+        dispatch(
+            getRecords({
+                type: "users",
+                endPoint: userEndPoints.collection,
+                key: "data",
+            })
+        );
+    };
+
+    useEffect(() => {
+        myFetch();
+    }, [dispatch]);
 
     const handleEdit = (id) => {
         const user = users.find((u) => u.id === id);
@@ -62,39 +75,27 @@ function ManageUser() {
                 const success = dispatch(
                     createRecord({
                         type: "users",
-                        endPoint: "/api/users",
+                        endPoint: userEndPoints.store,
                         data: formData,
                     })
                 );
                 if (success) {
                     setFormData({ name: "", email: "", password: "" });
                     setVisible(false);
-                    dispatch(
-                        getRecords({
-                            type: "users",
-                            endPoint: "/api/users",
-                            key: "data",
-                        })
-                    );
+                    myFetch();
                 }
             } else {
                 const success = dispatch(
                     updateRecord({
                         type: "users",
-                        endPoint: `/api/users/${editId}`,
+                        endPoint: `${userEndPoints.update}${editId}`,
                         data: formData,
                     })
                 );
                 if (success) {
                     setFormData({ name: "", email: "", password: "" });
                     setVisible(false);
-                    dispatch(
-                        getRecords({
-                            type: "users",
-                            endPoint: "/api/users",
-                            key: "data",
-                        })
-                    );
+                    myFetch();
                 }
             }
         } catch (err) {
@@ -114,9 +115,10 @@ function ManageUser() {
                             <DataTable
                                 type="users"
                                 identifier="id"
-                                onEdit={handleEdit}
+                                hasImport={true}
+                                onFetch={myFetch}
                                 onAdd={handleAdd}
-                                endpoint="/api/users"
+                                onEdit={handleEdit}
                                 title="User"
                             />
                             <Dialog
