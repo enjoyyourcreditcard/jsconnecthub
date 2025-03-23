@@ -1,1 +1,6 @@
-export const ROLE_STATE = { data: [], spinner: { show: false, text: "" }, alert: {} };
+export const ROLE_STATE = {
+    data: [],
+    spinner: { show: false, text: "" },
+    toastMessage: null,
+    alert: {},
+};

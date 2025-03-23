@@ -23,8 +23,22 @@ function ManageActivity() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const {
-        activities: { data: activities = [] },
+        activities: { data: activities = [], endPoints: activityEndPoints },
     } = useSelector((state) => state.global);
+
+    const myFetch = () => {
+        dispatch(
+            getRecords({
+                type: "activities",
+                endPoint: activityEndPoints.collection,
+                key: "data",
+            })
+        );
+    };
+
+    useEffect(() => {
+        myFetch();
+    }, [dispatch]);
 
     const handleEdit = (id) => {
         const activity = activities.find((u) => u.id === id);
@@ -59,39 +73,27 @@ function ManageActivity() {
                 const success = dispatch(
                     createRecord({
                         type: "activities",
-                        endPoint: "/api/activities",
+                        endPoint: activityEndPoints.store,
                         data: formData,
                     })
                 );
                 if (success) {
                     setFormData({ name: "", description: "" });
                     setVisible(false);
-                    dispatch(
-                        getRecords({
-                            type: "activities",
-                            endPoint: "/api/activities",
-                            key: "data",
-                        })
-                    );
+                    myFetch();
                 }
             } else {
                 const success = dispatch(
                     updateRecord({
                         type: "activities",
-                        endPoint: `/api/activities/${editId}`,
+                        endPoint: `${activityEndPoints.update}${editId}`,
                         data: formData,
                     })
                 );
                 if (success) {
                     setFormData({ name: "", description: "" });
                     setVisible(false);
-                    dispatch(
-                        getRecords({
-                            type: "activities",
-                            endPoint: "/api/activities",
-                            key: "data",
-                        })
-                    );
+                    myFetch();
                 }
             }
         } catch (err) {
@@ -112,9 +114,9 @@ function ManageActivity() {
                                 type="activities"
                                 identifier="id"
                                 hasImport={true}
-                                onEdit={handleEdit}
+                                onFetch={myFetch}
                                 onAdd={handleAdd}
-                                endpoint="/api/activities"
+                                onEdit={handleEdit}
                                 title="Activity"
                             />
                             <Dialog

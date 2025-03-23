@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useIsAuthenticated } from "react-auth-kit";
-import { getRecords, createRecord, updateRecord, setStateData } from "../store/global-slice";
+import {
+    getRecords,
+    createRecord,
+    updateRecord,
+    setStateData,
+} from "../store/global-slice";
 import Header from "../shared/layout/Header";
 import DataTable from "../shared/misc/DataTable";
 import { Card } from "primereact/card";
 import { Dialog } from "primereact/dialog";
 import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
+import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
 
 function ManageClass() {
@@ -17,21 +23,21 @@ function ManageClass() {
     const [mode, setMode] = useState("create");
     const [editId, setEditId] = useState(null);
     const [formData, setFormData] = useState({
-        level_id: "",
+        level_id: null,
         name: "",
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const {
         class: { data: classes = [], endPoints: classEndPoints },
+        levels: { data: levels = [], endPoints: levelEndPoints },
     } = useSelector((state) => state.global);
 
-    useEffect(() => {
+    const myFetch = () => {
         dispatch(
             getRecords({
                 type: "class",
                 endPoint: classEndPoints.collection,
-                key: "data",
             })
         ).then((d) => {
             if (d) {
@@ -39,7 +45,7 @@ function ManageClass() {
                     id: i.id,
                     level: i.level?.name || "N/A",
                     name: i.name,
-                    // level_id: i.level_id,
+                    level_id: i.level_id,
                     created_at: i.created_at,
                     updated_at: i.updated_at,
                 }));
@@ -53,6 +59,17 @@ function ManageClass() {
                 );
             }
         });
+    };
+
+    useEffect(() => {
+        myFetch();
+        dispatch(
+            getRecords({
+                type: "levels",
+                endPoint: levelEndPoints.collection,
+                key: "data",
+            })
+        );
     }, [dispatch]);
 
     const handleEdit = (id) => {
@@ -75,7 +92,7 @@ function ManageClass() {
     };
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value } = e.target ? e.target : e;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
@@ -88,39 +105,27 @@ function ManageClass() {
                 const success = dispatch(
                     createRecord({
                         type: "class",
-                        endPoint: "/api/class",
+                        endPoint: classEndPoints.store,
                         data: formData,
                     })
                 );
                 if (success) {
                     setFormData({ name: "" });
                     setVisible(false);
-                    dispatch(
-                        getRecords({
-                            type: "class",
-                            endPoint: "/api/class",
-                            key: "data",
-                        })
-                    );
+                    myFetch();
                 }
             } else {
                 const success = dispatch(
                     updateRecord({
                         type: "class",
-                        endPoint: `/api/class/${editId}`,
+                        endPoint: `${classEndPoints.update}${editId}`,
                         data: formData,
                     })
                 );
                 if (success) {
                     setFormData({ name: "" });
                     setVisible(false);
-                    dispatch(
-                        getRecords({
-                            type: "class",
-                            endPoint: "/api/class",
-                            key: "data",
-                        })
-                    );
+                    myFetch();
                 }
             }
         } catch (err) {
@@ -129,6 +134,11 @@ function ManageClass() {
             setLoading(false);
         }
     };
+
+    const levelOptions = levels.map((level) => ({
+        label: level.name,
+        value: level.id,
+    }));
 
     return (
         <div>
@@ -143,7 +153,6 @@ function ManageClass() {
                                 hasImport={true}
                                 onEdit={handleEdit}
                                 onAdd={handleAdd}
-                                endpoint="/api/class"
                                 title="Class"
                             />
                             <Dialog
@@ -169,14 +178,18 @@ function ManageClass() {
                                     )}
                                     <div style={{ marginBottom: "2rem" }}>
                                         <FloatLabel>
-                                            <InputText
+                                            <Dropdown
                                                 name="level"
                                                 value={formData.level_id}
+                                                options={levelOptions}
                                                 onChange={handleChange}
+                                                filter
                                                 style={{ width: "100%" }}
                                                 required
+                                                checkmark={true}
                                                 disabled={loading}
-                                                tooltip="Enter class level"
+                                                placeholder="Select a level"
+                                                tooltip="Select class level"
                                                 tooltipOptions={{
                                                     position: "bottom",
                                                     mouseTrack: true,
