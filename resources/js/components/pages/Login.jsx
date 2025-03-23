@@ -102,7 +102,7 @@ const Login = () => {
                         padding: "0",
                     }}
                 />
-                <div className="card flex justify-content-center">
+                <div className="card flex justify-center">
                     <Card title="JS-CONNECT-HUB" className="w-full">
                         <form onSubmit={handleSubmit}>
                             <div style={{ marginBottom: "20px" }}>

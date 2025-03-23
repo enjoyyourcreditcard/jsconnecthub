@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useIsAuthenticated } from "react-auth-kit";
-import { getRecords, createRecord, updateRecord } from "../store/global-slice";
+import {
+    getRecords,
+    createRecord,
+    updateRecord,
+    setStateData,
+} from "../store/global-slice";
 import Header from "../shared/layout/Header";
 import DataTable from "../shared/misc/DataTable";
 import { Card } from "primereact/card";

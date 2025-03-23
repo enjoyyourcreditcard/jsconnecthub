@@ -47,7 +47,21 @@ const CustomDataTable = ({
     const [visibleColumns, setVisibleColumns] = useState([]);
 
     useEffect(() => {
-        if (collection.length > 0) {
+        if (
+            Array.isArray(collection) &&
+            collection.length > 0 &&
+            collection.every(
+                (item) =>
+                    typeof item === "object" &&
+                    item !== null &&
+                    Object.keys(item).length > 0 &&
+                    Object.values(item).every(
+                        (value) =>
+                            !Array.isArray(value) &&
+                            (typeof value !== "object" || value === null)
+                    )
+            )
+        ) {
             const allColumns = generateColumns();
             const defaultHidden = [
                 "id",
