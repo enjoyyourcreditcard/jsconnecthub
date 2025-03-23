@@ -4,4 +4,5 @@ export { ROLE_STATE } from "./Role";
 export { CLASS_STATE } from "./Class";
 export { LEVEL_STATE } from "./Level";
 export { ACTIVITY_STATE } from "./Activity";
+export { STUDENT_STATE } from "./Student";
 export { FACILITY_STATE } from "./Facility";

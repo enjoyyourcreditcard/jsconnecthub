@@ -7,21 +7,19 @@ import {
     CLASS_STATE,
     LEVEL_STATE,
     ACTIVITY_STATE,
+    STUDENT_STATE,
     FACILITY_STATE,
 } from "./state";
 import { stateKey } from "../utils/constants";
 
 const INITIAL_STATE = {
-    [stateKey.app]: {
-        ...APP_STATE,
-        spinner: { show: false, text: "" },
-        toastMessage: null,
-    },
+    [stateKey.app]: APP_STATE,
     [stateKey.users]: USER_STATE,
     [stateKey.roles]: ROLE_STATE,
     [stateKey.class]: CLASS_STATE,
     [stateKey.levels]: LEVEL_STATE,
     [stateKey.activities]: ACTIVITY_STATE,
+    [stateKey.students]: STUDENT_STATE,
     [stateKey.facilities]: FACILITY_STATE,
 };
 
@@ -71,7 +69,7 @@ export const getRecords =
                 data: { show: true, text: "Fetching..." },
             })
         );
-        try {   
+        try {
             const url = endPoint || (type ? `/api/${type}` : "");
             if (!url) throw new Error("No endpoint or type provided");
 
@@ -97,7 +95,7 @@ export const getRecords =
                         severity: "warn",
                         summary: "Warning!",
                         detail: "Authentication required. Retrying after login...",
-                        life: 10000
+                        life: 10000,
                     })
                 );
             } else {

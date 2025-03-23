@@ -259,7 +259,7 @@ const CustomDataTable = ({
                 icon="pi pi-trash"
                 rounded
                 outlined
-                className="ml-2"
+                style={{ marginLeft: "0.5rem" }}
                 severity="danger"
                 onClick={(event) => handleDelete(event, rowData[identifier])}
             />
@@ -328,7 +328,6 @@ const CustomDataTable = ({
                 label="Yes"
                 icon="pi pi-check"
                 severity="danger"
-                className="ml-2"
                 onClick={deleteSelectedRecords}
             />
         </>
@@ -373,7 +372,7 @@ const CustomDataTable = ({
                         value={globalFilter}
                         onChange={(e) => setGlobalFilter(e.target.value)}
                         placeholder="Search..."
-                        className="w-full ml-2"
+                        className="w-full"
                     />
                 </IconField>
             </div>

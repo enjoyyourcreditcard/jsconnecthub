@@ -1,66 +1,61 @@
-@layer tailwind-base, primereact, tailwind-utilities;
+@import "tailwindcss";
 
-@import "primereact/resources/themes/lara-light-cyan/theme.css"
-    layer(primereact);
+@import "primereact/resources/themes/lara-light-cyan/theme.css";
 @import "primereact/resources/primereact.min.css";
 @import "primeicons/primeicons.css";
 
-@layer tailwind-base {
-    @tailwind base;
+body {
+    margin: 0;
+    padding: 0;
 }
 
-@layer tailwind-utilities {
-    @tailwind components;
-    @tailwind utilities;
+/* NotFound Page */
+.not-found-card {
+    transition: padding 0.3s ease;
+}
 
-    /* NotFound Page */
+@media (max-width: 500px) {
     .not-found-card {
-        transition: padding 0.3s ease;
+        padding: 10px;
     }
+}
 
-    @media (max-width: 500px) {
-        .not-found-card {
-            padding: 10px;
-        }
+/* Header Page */
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.logo-text::before {
+    content: attr(data-full);
+}
+
+.header-container .profile-dropdown .p-menubar .p-submenu-list {
+    left: auto !important;
+    right: 0 !important;
+}
+
+@media (max-width: 960px) {
+    .profile-dropdown {
+        width: 8rem;
     }
+}
 
-    /* Header Page */
-    .logo-text {
-        font-size: 1.5rem;
-        font-weight: bold;
-        transition: all 0.3s ease;
-    }
-
+@media (max-width: 768px) {
     .logo-text::before {
-        content: attr(data-full);
+        content: attr(data-short);
     }
-
-    .header-container .profile-dropdown .p-menubar .p-submenu-list {
-        left: auto !important;
-        right: 0 !important;
+    .logo-text {
+        font-size: 1.2rem;
     }
-
-    @media (max-width: 960px) {
-        .profile-dropdown {
-            width: 8rem;
-        }
+    .profile-text {
+        display: none;
     }
+}
 
-    @media (max-width: 768px) {
-        .logo-text::before {
-            content: attr(data-short);
-        }
-        .logo-text {
-            font-size: 1.2rem;
-        }
-        .profile-text {
-            display: none;
-        }
-    }
-
-    @media (max-width: 500px) {
-        .logo-text {
-            font-size: 1rem;
-        }
+@media (max-width: 500px) {
+    .logo-text {
+        font-size: 1rem;
     }
 }

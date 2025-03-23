@@ -1,6 +1,7 @@
 import "./bootstrap";
 import "../css/app.css";
 
+import { PrimeReactProvider } from "primereact/api";
 import React, { useEffect, useState, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -104,16 +105,18 @@ const AppWrapper = () => {
 };
 
 const App = () => (
-    <Provider store={store}>
-        <AuthProvider
-            authType="cookie"
-            authName="_auth"
-            cookieDomain={window.location.hostname}
-            cookieSecure={window.location.protocol === "https:"}
-        >
-            <AppWrapper />
-        </AuthProvider>
-    </Provider>
+    <PrimeReactProvider>
+        <Provider store={store}>
+            <AuthProvider
+                authType="cookie"
+                authName="_auth"
+                cookieDomain={window.location.hostname}
+                cookieSecure={window.location.protocol === "https:"}
+            >
+                <AppWrapper />
+            </AuthProvider>
+        </Provider>
+    </PrimeReactProvider>
 );
 
 const root = createRoot(document.getElementById("app"));

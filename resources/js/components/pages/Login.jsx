@@ -2,8 +2,8 @@ import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSignIn } from "react-auth-kit";
-import { useDispatch } from "react-redux"; // Add Redux dispatch
-import { setStateData } from "../store/global-slice"; // Import to control spinner
+import { useDispatch } from "react-redux";
+import { setStateData } from "../store/global-slice";
 import { Card } from "primereact/card";
 import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
@@ -12,7 +12,7 @@ import { Button } from "primereact/button";
 const Login = () => {
     const navigate = useNavigate();
     const signIn = useSignIn();
-    const dispatch = useDispatch(); // For Redux state updates
+    const dispatch = useDispatch();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
