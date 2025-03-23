@@ -5,5 +5,7 @@ export const stateKey = {
     class: "class",
     levels: "levels",
     activities: "activities",
+    students: "students",
+    checkin: "checkin",
     facilities: "facilities",
 };
