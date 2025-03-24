@@ -157,8 +157,9 @@ function ManageClass() {
                                 type="class"
                                 identifier="id"
                                 hasImport={true}
-                                onEdit={handleEdit}
+                                onFetch={myFetch}
                                 onAdd={handleAdd}
+                                onEdit={handleEdit}
                                 title="Class"
                             />
                             <Dialog

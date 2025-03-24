@@ -146,8 +146,6 @@ function ManageClass() {
         label: i.name,
     }));
 
-    console.log(formData);
-
     return (
         <div>
             <Header />
@@ -159,8 +157,9 @@ function ManageClass() {
                                 type="students"
                                 identifier="id"
                                 hasImport={true}
-                                onEdit={handleEdit}
+                                onFetch={myFetch}
                                 onAdd={handleAdd}
+                                onEdit={handleEdit}
                                 title="Student"
                             />
                             <Dialog

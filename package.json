@@ -10,6 +10,7 @@
         "@tailwindcss/vite": "^4.0.15",
         "jspdf": "^3.0.1",
         "jspdf-autotable": "^5.0.2",
+        "luxon": "^3.5.0",
         "primeicons": "^7.0.0",
         "primereact": "^10.9.3",
         "react": "^18.3.1",

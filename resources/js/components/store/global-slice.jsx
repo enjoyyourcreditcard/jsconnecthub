@@ -108,7 +108,7 @@ export const getRecords =
     };
 
 export const createRecord =
-    ({ type = "", endPoint, data }) =>
+    ({ type = "", endPoint, data, returnData = false }) =>
     async (dispatch) => {
         dispatch(
             setStateData({
@@ -135,6 +135,9 @@ export const createRecord =
                         detail: "Record created successfully",
                     })
                 );
+                if (returnData === true) {
+                    return response.data.result;
+                }
                 return true;
             }
             dispatch(
@@ -161,7 +164,7 @@ export const createRecord =
     };
 
 export const updateRecord =
-    ({ type = "", endPoint, data }) =>
+    ({ type = "", endPoint, data, returnData = false }) =>
     async (dispatch) => {
         dispatch(
             setStateData({
@@ -188,6 +191,9 @@ export const updateRecord =
                         detail: "Record updated successfully",
                     })
                 );
+                if (returnData === true) {
+                    return response.data.result;
+                }
                 return true;
             }
             dispatch(

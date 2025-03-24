@@ -74,7 +74,7 @@ class MasterApiController extends Controller
 
     public function index(Request $request, $type)
     {
-        $data = $this->masterService->getAll($type);
+        $data = $this->masterService->getAll($type, $request);
         if ($data->isNotEmpty()) {
             return response()->json(['status' => true, 'message' => 'Records found', 'result' => $data], Response::HTTP_OK);
         } else {

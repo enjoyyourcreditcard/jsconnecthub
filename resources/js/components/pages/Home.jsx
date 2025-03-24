@@ -14,6 +14,7 @@ import { Toast } from "primereact/toast";
 import { OverlayPanel } from "primereact/overlaypanel";
 import { Checkbox } from "primereact/checkbox";
 import { InputTextarea } from "primereact/inputtextarea";
+import { DateTime } from "luxon";
 import Header from "../shared/layout/Header";
 
 function Home() {
@@ -42,14 +43,12 @@ function Home() {
     const [questLog, setQuestLog] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [formData, setFormData] = useState({
-        student_id: null,
-        activity_id: null,
-        checkin_time: null,
-        checkout_time: null,
-        other_activity: null,
-        reason: null,
-    });
+    const [userTimezone, setUserTimezone] = useState(null);
+
+    useEffect(() => {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        setUserTimezone(timezone);
+    }, []);
 
     useEffect(() => {
         dispatch(
@@ -82,55 +81,80 @@ function Home() {
         );
     }, [dispatch]);
 
-    const startTimer = (activityName) => {
+    const handleToQuest = () => {
+        if (studentId) {
+            fetchCheckinsByStudent();
+        }
+    };
+
+    const fetchCheckinsByStudent = () => {
+        dispatch(
+            getRecords({
+                type: "checkin",
+                endPoint: `${checkinEndPoints.collection}?student_id=${studentId}&time=today`,
+                key: "data",
+            })
+        ).then((result) => {
+            if (result) {
+                const checkins = result;
+                setQuestLog(
+                    checkins.map((checkin) => ({
+                        id: checkin.id,
+                        activityName:
+                            checkin.activity?.name || checkin.other_activity,
+                        status: checkin.checkout_time
+                            ? checkin.reason
+                                ? "Finished (Early)"
+                                : "Finished"
+                            : "Ongoing",
+                        checkInTime: checkin.checkin_time,
+                        checkOutTime: checkin.checkout_time || null,
+                        earlyReason: checkin.reason || null,
+                    }))
+                );
+                const ongoingCheckin = checkins.find(
+                    (c) => !c.checkout_time && c.student_id === studentId
+                );
+                if (ongoingCheckin) {
+                    setIsCheckedIn(true);
+                    setSelectedActivity(
+                        activities.find(
+                            (a) => a.id === ongoingCheckin.activity_id
+                        ) || {
+                            name: ongoingCheckin.other_activity,
+                        }
+                    );
+                    setActivityId(ongoingCheckin.activity_id);
+                    setEditableActivity(
+                        ongoingCheckin.other_activity ||
+                            ongoingCheckin.activity?.name
+                    );
+
+                    const now = DateTime.now().setZone(userTimezone);
+                    const checkinTime = DateTime.fromISO(ongoingCheckin.checkin_time, { zone: "utc" }).setZone(userTimezone);
+                    setTimer(
+                        Math.floor(now.diff(checkinTime, "seconds").seconds)
+                    );
+                    startTimer(
+                        ongoingCheckin.activity?.name ||
+                            ongoingCheckin.other_activity
+                    );
+                }
+            }
+        });
+    };
+
+    const startTimer = () => {
+        if (timerInterval) clearInterval(timerInterval);
         const interval = setInterval(() => {
             setTimer((prev) => prev + 1);
         }, 1000);
         setTimerInterval(interval);
-        const checkInTime = new Date();
-        setQuestLog((prev) => [
-            ...prev,
-            {
-                activityName: activityName || editableActivity,
-                status: "Ongoing",
-                checkInTime,
-                checkOutTime: null,
-                earlyReason: null,
-            },
-        ]);
-        setFormData({
-            student_id: null,
-            activity_id: activityName || null,
-            checkin_time: checkInTime,
-            checkout_time: null,
-            other_activity: editableActivity || null,
-            reason: null,
-        });
     };
 
     const stopTimer = () => {
         clearInterval(timerInterval);
         setTimerInterval(null);
-        const checkOutTime = new Date();
-        setQuestLog((prev) =>
-            prev.map((quest, index) =>
-                index === prev.length - 1
-                    ? {
-                          ...quest,
-                          status: isEarlyCheckout
-                              ? "Finished (Early)"
-                              : "Finished",
-                          checkOutTime,
-                          earlyReason: isEarlyCheckout ? earlyReason : null,
-                      }
-                    : quest
-            )
-        );
-
-        setFormData({
-            checkout_time: checkOutTime,
-            reason: isEarlyCheckout ? earlyReason : null,
-        });
     };
 
     const formatTime = (seconds) => {
@@ -142,66 +166,139 @@ function Home() {
             .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     };
 
-    const handleCheckin = async (e) => {
-        // e.preventDefault();
-        setLoading(true);
-        setError("");
-        try {
-            const success = dispatch(
-                createRecord({
-                    type: "checkin",
-                    endPoint: checkinEndPoints.checkin,
-                    data: formData,
-                })
-            );
-            if (success) {
-                setFormData({
-                    student_id: null,
-                    activity_id: null,
-                    checkin_time: null,
-                    checkout_time: null,
-                    other_activity: null,
-                    reason: null,
-                });
-                setVisible(false);
-                myFetch();
-            }
-        } catch (err) {
-            setError(err.message || "Operation failed");
-        } finally {
-            setLoading(false);
+    const formatDateToLocal = (utcDate) => {
+        if (!utcDate || !userTimezone) return "";
+        const dt = DateTime.fromISO(utcDate, { zone: "utc" });
+        if (!dt.isValid) {
+            console.error("Invalid date:", utcDate);
+            return "";
         }
+        return dt.setZone(userTimezone).toFormat("dd MMMM yyyy, HH:mm:ss z");
     };
 
-    const handleCheckout = async (e) => {
-        // e.preventDefault();
+    const handleCheckin = () => {
         setLoading(true);
         setError("");
-        try {
-            const success = dispatch(
-                createRecord({
-                    type: "checkin",
-                    endPoint: checkinEndPoints.checkout,
-                    data: formData,
-                })
-            );
-            if (success) {
-                setFormData({
-                    student_id: null,
-                    activity_id: null,
-                    checkin_time: null,
+        const checkinData = {
+            student_id: studentId,
+            activity_id: activityId ? selectedActivity?.id : null,
+            other_activity: activityId ? null : editableActivity,
+        };
+        dispatch(
+            createRecord({
+                type: "checkin",
+                endPoint: checkinEndPoints.checkin,
+                data: checkinData,
+                returnData: true,
+            })
+        )
+            .then((response) => {
+                console.log(response.checkin_time);
+                const result = response;
+                const newCheckin = {
+                    id: result.id || Date.now(),
+                    student_id: studentId,
+                    activity_id: activityId ? selectedActivity?.id : null,
+                    checkin_time: result.checkin_time,
                     checkout_time: null,
-                    other_activity: null,
+                    other_activity: activityId ? null : editableActivity,
                     reason: null,
-                });
-                setVisible(false);
-                myFetch();
-            }
-        } catch (err) {
-            setError(err.message || "Operation failed");
-        } finally {
-            setLoading(false);
-        }
+                };
+                setQuestLog((prev) => [
+                    ...prev,
+                    {
+                        id: newCheckin.id,
+                        activityName: activityId
+                            ? selectedActivity?.name
+                            : editableActivity,
+                        status: "Ongoing",
+                        checkInTime: newCheckin.checkin_time,
+                        checkOutTime: null,
+                        earlyReason: null,
+                    },
+                ]);
+                setIsCheckedIn(true);
+                setTimer(0);
+                startTimer(selectedActivity?.name || editableActivity);
+                dispatch(
+                    setToastMessage({
+                        severity: "success",
+                        summary: "Checked In",
+                        detail: "You have started your quest!",
+                    })
+                );
+            })
+            .catch((err) => {
+                setError(err.message || "Check-in failed");
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    };
+
+    const handleCheckout = () => {
+        setLoading(true);
+        setError("");
+        const checkoutData = {
+            student_id: studentId,
+            reason: isEarlyCheckout ? earlyReason : null,
+        };
+        dispatch(
+            createRecord({
+                type: "checkin",
+                endPoint: checkinEndPoints.checkout,
+                data: checkoutData,
+                returnData: true,
+            })
+        )
+            .then((response) => {
+                const result = response;
+                const updatedCheckin = {
+                    student_id: studentId,
+                    checkout_time: result.checkout_time,
+                    reason: isEarlyCheckout ? earlyReason : null,
+                };
+                stopTimer();
+                setQuestLog((prev) =>
+                    prev.map((quest) =>
+                        quest.id === result.id
+                            ? {
+                                  ...quest,
+                                  status: isEarlyCheckout
+                                      ? "Finished (Early)"
+                                      : "Finished",
+                                  checkOutTime: updatedCheckin.checkout_time,
+                                  earlyReason: isEarlyCheckout
+                                      ? earlyReason
+                                      : null,
+                              }
+                            : quest
+                    )
+                );
+                setIsCheckedIn(false);
+                setTimer(0);
+                setSelectedActivity(null);
+                setActivityId(null);
+                setEditableActivity("");
+                setIsEarlyCheckout(false);
+                dispatch(
+                    setToastMessage({
+                        severity: "info",
+                        summary: "Checked Out",
+                        detail: isEarlyCheckout
+                            ? `Early checkout recorded. Reason: ${earlyReason}`
+                            : "You have completed your quest!",
+                    })
+                );
+                setEarlyReason("");
+                overlayRef.current.hide();
+            })
+            .catch((err) => {
+                setError(err.message || "Check-out failed");
+            })
+            .finally(() => {
+                setLoading(false);
+            });
     };
 
     return (
@@ -220,7 +317,7 @@ function Home() {
                                             key={level.id}
                                             label={level.name}
                                             onClick={() => setLevelId(level.id)}
-                                            className={` p-1 sm:p-2 ${
+                                            className={`p-1 sm:p-2 ${
                                                 levelId === level.id
                                                     ? "bg-blue-500 text-white"
                                                     : "bg-gray-200"
@@ -243,7 +340,7 @@ function Home() {
                                         stepperRef.current.nextCallback()
                                     }
                                     disabled={!levelId}
-                                    className=" p-1 sm:p-2"
+                                    className="p-1 sm:p-2"
                                 />
                             </div>
                         </StepperPanel>
@@ -259,7 +356,7 @@ function Home() {
                                                 onClick={() =>
                                                     setClassId(cls.id)
                                                 }
-                                                className={` p-1 sm:p-2 ${
+                                                className={`p-1 sm:p-2 ${
                                                     classId === cls.id
                                                         ? "bg-blue-500 text-white"
                                                         : "bg-gray-200"
@@ -281,7 +378,7 @@ function Home() {
                                     onClick={() =>
                                         stepperRef.current.prevCallback()
                                     }
-                                    className=" p-1 sm:p-2"
+                                    className="p-1 sm:p-2"
                                 />
                                 <Button
                                     label="Next"
@@ -291,7 +388,7 @@ function Home() {
                                         stepperRef.current.nextCallback()
                                     }
                                     disabled={!classId}
-                                    className=" p-1 sm:p-2"
+                                    className="p-1 sm:p-2"
                                 />
                             </div>
                         </StepperPanel>
@@ -307,7 +404,7 @@ function Home() {
                                                 onClick={() =>
                                                     setStudentId(student.id)
                                                 }
-                                                className={` p-1 sm:p-2 ${
+                                                className={`p-1 sm:p-2 ${
                                                     studentId === student.id
                                                         ? "bg-blue-500 text-white"
                                                         : "bg-gray-200"
@@ -329,17 +426,18 @@ function Home() {
                                     onClick={() =>
                                         stepperRef.current.prevCallback()
                                     }
-                                    className=" p-1 sm:p-2"
+                                    className="p-1 sm:p-2"
                                 />
                                 <Button
                                     label="Next"
                                     icon="pi pi-arrow-right"
                                     iconPos="right"
-                                    onClick={() =>
-                                        stepperRef.current.nextCallback()
-                                    }
+                                    onClick={() => {
+                                        handleToQuest();
+                                        stepperRef.current.nextCallback();
+                                    }}
                                     disabled={!studentId}
-                                    className=" p-1 sm:p-2"
+                                    className="p-1 sm:p-2"
                                 />
                             </div>
                         </StepperPanel>
@@ -373,102 +471,94 @@ function Home() {
                                                         )?.name
                                                     }
                                                     ". This is your quest log
-                                                    today:
+                                                    today (Timezone:{" "}
+                                                    {userTimezone}):
                                                 </div>
                                             </div>
                                             <div className="flex-grow grid grid-cols-1 gap-2">
                                                 <Accordion>
-                                                    {questLog
-                                                        .filter((quest) => {
-                                                            const today =
-                                                                new Date();
-                                                            const checkInDate =
-                                                                new Date(
-                                                                    quest.checkInTime
-                                                                );
-                                                            return (
-                                                                checkInDate.getDate() ===
-                                                                    today.getDate() &&
-                                                                checkInDate.getMonth() ===
-                                                                    today.getMonth() &&
-                                                                checkInDate.getFullYear() ===
-                                                                    today.getFullYear()
-                                                            );
-                                                        })
-                                                        .map((quest, index) => (
-                                                            <AccordionTab
-                                                                key={index}
-                                                                header={
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span>
-                                                                            {
-                                                                                quest.activityName
-                                                                            }
-                                                                        </span>
-                                                                        <Badge
-                                                                            value={
-                                                                                quest.status
-                                                                            }
-                                                                            severity={
-                                                                                quest.status ===
-                                                                                "Ongoing"
-                                                                                    ? "info"
-                                                                                    : quest.status ===
-                                                                                      "Finished"
-                                                                                    ? "success"
-                                                                                    : "warning"
-                                                                            }
-                                                                        />
-                                                                    </div>
-                                                                }
-                                                            >
-                                                                <div className="flex flex-col gap-2">
+                                                    {questLog.map((quest) => (
+                                                        <AccordionTab
+                                                            key={quest.id}
+                                                            header={
+                                                                <div className="flex items-center gap-2">
+                                                                    <span>
+                                                                        {
+                                                                            quest.activityName
+                                                                        }
+                                                                    </span>
+                                                                    <Badge
+                                                                        value={
+                                                                            quest.status
+                                                                        }
+                                                                        severity={
+                                                                            quest.status ===
+                                                                            "Ongoing"
+                                                                                ? "info"
+                                                                                : quest.status ===
+                                                                                  "Finished"
+                                                                                ? "success"
+                                                                                : "warning"
+                                                                        }
+                                                                    />
+                                                                </div>
+                                                            }
+                                                        >
+                                                            <div className="flex flex-col gap-2">
+                                                                <p>
+                                                                    <strong>
+                                                                        Check-In
+                                                                        Time:
+                                                                    </strong>{" "}
+                                                                    {formatDateToLocal(
+                                                                        quest.checkInTime
+                                                                    )}
+                                                                </p>
+                                                                {quest.checkOutTime && (
                                                                     <p>
                                                                         <strong>
-                                                                            Check-In
+                                                                            Check-Out
                                                                             Time:
                                                                         </strong>{" "}
-                                                                        {quest.checkInTime?.toLocaleString()}
+                                                                        {formatDateToLocal(
+                                                                            quest.checkOutTime
+                                                                        )}
                                                                     </p>
-                                                                    {quest.checkOutTime && (
-                                                                        <p>
-                                                                            <strong>
-                                                                                Check-Out
-                                                                                Time:
-                                                                            </strong>{" "}
-                                                                            {quest.checkOutTime.toLocaleString()}
-                                                                        </p>
-                                                                    )}
-                                                                    {quest.status ===
-                                                                        "Finished (Early)" && (
-                                                                        <p>
-                                                                            <strong>
-                                                                                Reason:
-                                                                            </strong>{" "}
-                                                                            {
-                                                                                quest.earlyReason
-                                                                            }
-                                                                        </p>
-                                                                    )}
+                                                                )}
+                                                                {quest.status ===
+                                                                    "Finished (Early)" && (
                                                                     <p>
                                                                         <strong>
-                                                                            Duration:
-                                                                        </strong>{" "}
-                                                                        {quest.checkOutTime
-                                                                            ? formatTime(
-                                                                                  Math.floor(
-                                                                                      (quest.checkOutTime -
-                                                                                          quest.checkInTime) /
-                                                                                          1000
-                                                                                  )
-                                                                              )
-                                                                            : formatTime(
-                                                                                  timer
-                                                                              )}
+                                                                            Reason:
+                                                                        </strong>
+                                                                        {
+                                                                            quest.earlyReason
+                                                                        }
                                                                     </p>
-                                                                </div>
-                                                            </AccordionTab>
-                                                        ))}
+                                                                )}
+                                                                <p>
+                                                                    <strong>
+                                                                        Duration:
+                                                                    </strong>{" "}
+                                                                    {quest.checkOutTime
+                                                                        ? formatTime(
+                                                                              Math.floor(
+                                                                                  (new Date(
+                                                                                      quest.checkOutTime
+                                                                                  ) -
+                                                                                      new Date(
+                                                                                          quest.checkInTime
+                                                                                      )) /
+                                                                                      1000
+                                                                              )
+                                                                          )
+                                                                        : formatTime(
+                                                                              timer
+                                                                          )}
+                                                                </p>
+                                                            </div>
+                                                        </AccordionTab>
+                                                    ))}
                                                 </Accordion>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                     {isCheckedIn ? (
@@ -501,7 +591,8 @@ function Home() {
                                                                         null
                                                                 );
                                                                 setEditableActivity(
-                                                                    e.value
+                                                                    e.value ||
+                                                                        ""
                                                                 );
                                                             }}
                                                             optionLabel="name"
@@ -566,26 +657,8 @@ function Home() {
                                                                     message:
                                                                         "Are you sure you want to check in?",
                                                                     icon: "pi pi-exclamation-triangle",
-                                                                    accept: () => {
-                                                                        setIsCheckedIn(
-                                                                            true
-                                                                        );
-                                                                        startTimer(
-                                                                            selectedActivity?.name ||
-                                                                                editableActivity
-                                                                        );
-                                                                        dispatch(
-                                                                            setToastMessage(
-                                                                                {
-                                                                                    severity:
-                                                                                        "success",
-                                                                                    summary:
-                                                                                        "Checked In",
-                                                                                    detail: "You have started your quest!",
-                                                                                }
-                                                                            )
-                                                                        );
-                                                                    },
+                                                                    accept: () =>
+                                                                        handleCheckin(),
                                                                     reject: () => {
                                                                         dispatch(
                                                                             setToastMessage(
@@ -607,8 +680,9 @@ function Home() {
                                                             }
                                                         }}
                                                         disabled={
-                                                            !selectedActivity &&
-                                                            !isCheckedIn
+                                                            (!selectedActivity &&
+                                                                !isCheckedIn) ||
+                                                            loading
                                                         }
                                                         className="p-1 sm:p-2"
                                                     />
@@ -657,12 +731,11 @@ function Home() {
                                     disabled={isCheckedIn}
                                     className="p-1 sm:p-2"
                                 />
-
                                 {error && (
                                     <p
                                         style={{
                                             color: "red",
-                                            marginBottom: "2rem",
+                                            marginLeft: "1rem",
                                         }}
                                     >
                                         {error}
@@ -706,27 +779,7 @@ function Home() {
                                                         : ""
                                                 }?`,
                                                 icon: "pi pi-exclamation-triangle",
-                                                accept: () => {
-                                                    setIsCheckedIn(false);
-                                                    stopTimer();
-                                                    setTimer(0);
-                                                    setSelectedActivity(null);
-                                                    setActivityId(null);
-                                                    setEditableActivity("");
-                                                    setIsEarlyCheckout(false);
-                                                    dispatch(
-                                                        setToastMessage({
-                                                            severity: "info",
-                                                            summary:
-                                                                "Checked Out",
-                                                            detail: isEarlyCheckout
-                                                                ? `Early checkout recorded. Reason: ${earlyReason}`
-                                                                : "You have completed your quest!",
-                                                        })
-                                                    );
-                                                    setEarlyReason("");
-                                                    overlayRef.current.hide();
-                                                },
+                                                accept: () => handleCheckout(),
                                                 reject: () => {
                                                     dispatch(
                                                         setToastMessage({
