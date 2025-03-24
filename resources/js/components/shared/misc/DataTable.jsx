@@ -47,7 +47,21 @@ const CustomDataTable = ({
     const [visibleColumns, setVisibleColumns] = useState([]);
 
     useEffect(() => {
-        if (collection.length > 0) {
+        if (
+            Array.isArray(collection) &&
+            collection.length > 0 &&
+            collection.every(
+                (item) =>
+                    typeof item === "object" &&
+                    item !== null &&
+                    Object.keys(item).length > 0 &&
+                    Object.values(item).every(
+                        (value) =>
+                            !Array.isArray(value) &&
+                            (typeof value !== "object" || value === null)
+                    )
+            )
+        ) {
             const allColumns = generateColumns();
             const defaultHidden = [
                 "id",
@@ -134,7 +148,13 @@ const CustomDataTable = ({
 
     const exportCSV = () => dt.current.exportCSV();
     const exportExcel = () => {
-        const worksheet = XLSX.utils.json_to_sheet(collection);
+        const filteredData = collection.map((item) =>
+            visibleColumns.reduce((acc, col) => {
+                acc[col.header] = item[col.field] || "";
+                return acc;
+            }, {})
+        );
+        const worksheet = XLSX.utils.json_to_sheet(filteredData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
         XLSX.writeFile(workbook, `${type}_data.xlsx`);
@@ -245,7 +265,7 @@ const CustomDataTable = ({
                 icon="pi pi-trash"
                 rounded
                 outlined
-                className="ml-2"
+                style={{ marginLeft: "0.5rem" }}
                 severity="danger"
                 onClick={(event) => handleDelete(event, rowData[identifier])}
             />
@@ -314,7 +334,6 @@ const CustomDataTable = ({
                 label="Yes"
                 icon="pi pi-check"
                 severity="danger"
-                className="ml-2"
                 onClick={deleteSelectedRecords}
             />
         </>
@@ -359,7 +378,7 @@ const CustomDataTable = ({
                         value={globalFilter}
                         onChange={(e) => setGlobalFilter(e.target.value)}
                         placeholder="Search..."
-                        className="w-full ml-2"
+                        className="w-full"
                     />
                 </IconField>
             </div>

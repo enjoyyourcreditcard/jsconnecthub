@@ -25,14 +25,14 @@ class RoleSeeder extends Seeder
         Role::insert($roles);
 
         foreach (config('constants.MASTER_TYPE_ARRAY') as $masterType) {
-            Permission::create(['name' => $masterType . ' list']);
+            // Permission::create(['name' => $masterType . ' list']);
             Permission::create(['name' => $masterType . ' create']);
             Permission::create(['name' => $masterType . ' edit']);
             Permission::create(['name' => $masterType . ' delete']);
 
-            Role::findByName('Superadmin')->givePermissionTo([$masterType . ' list', $masterType . ' create', $masterType . ' edit', $masterType . ' delete']);
+            Role::findByName('Superadmin')->givePermissionTo([$masterType . ' create', $masterType . ' edit', $masterType . ' delete']);
 
-            Role::findByName('Admin1')->givePermissionTo([$masterType . ' list']);
+            Role::findByName('Admin1')->givePermissionTo([$masterType . ' create', $masterType . ' edit']);
         }
     }
 }

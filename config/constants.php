@@ -23,7 +23,7 @@ return [
         ],
         'STUDENT_MASTER_VALIDATION' =>
         [
-            'class_id'  => ['required', 'exists:class,id'],
+            'class_id'  => ['required', 'exists:classes,id'],
             'name'          => ['required', 'string', 'max:100'],
         ],
         'ACTIVITY_MASTER_VALIDATION' =>

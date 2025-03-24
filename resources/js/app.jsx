@@ -1,6 +1,7 @@
 import "./bootstrap";
 import "../css/app.css";
 
+import { PrimeReactProvider } from "primereact/api";
 import React, { useEffect, useState, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -21,6 +22,7 @@ import ManageClass from "./components/masters/ManageClass";
 import ManageLevel from "./components/masters/ManageLevel";
 import ManageActivity from "./components/masters/ManageActivity";
 import ManageFacility from "./components/masters/ManageFacility";
+import ManageStudent from "./components/masters/ManageStudent";
 
 const AppWrapper = () => {
     const authHeader = useAuthHeader();
@@ -96,6 +98,7 @@ const AppWrapper = () => {
                 <Route path="/class" element={<ManageClass />} />
                 <Route path="/levels" element={<ManageLevel />} />
                 <Route path="/activities" element={<ManageActivity />} />
+                <Route path="/students" element={<ManageStudent />} />
                 <Route path="/facilities" element={<ManageFacility />} />
                 <Route path="/*" element={<NotFound />} />
             </Routes>
@@ -104,16 +107,18 @@ const AppWrapper = () => {
 };
 
 const App = () => (
-    <Provider store={store}>
-        <AuthProvider
-            authType="cookie"
-            authName="_auth"
-            cookieDomain={window.location.hostname}
-            cookieSecure={window.location.protocol === "https:"}
-        >
-            <AppWrapper />
-        </AuthProvider>
-    </Provider>
+    <PrimeReactProvider>
+        <Provider store={store}>
+            <AuthProvider
+                authType="cookie"
+                authName="_auth"
+                cookieDomain={window.location.hostname}
+                cookieSecure={window.location.protocol === "https:"}
+            >
+                <AppWrapper />
+            </AuthProvider>
+        </Provider>
+    </PrimeReactProvider>
 );
 
 const root = createRoot(document.getElementById("app"));

@@ -20,7 +20,7 @@ class MasterApiController extends Controller
         $this->masterService = $masterService;
 
         foreach (config('constants.MASTER_TYPE_ARRAY') as $masterType) {
-            $this->middleware('permission:' . $masterType . ' list', ['only' => ['index', 'show']]);
+            // $this->middleware('permission:' . $masterType . ' list', ['only' => ['index', 'show']]);
             $this->middleware('permission:' . $masterType . ' create', ['only' => ['store']]);
             $this->middleware('permission:' . $masterType . ' edit', ['only' => ['update']]);
             $this->middleware('permission:' . $masterType . ' delete', ['only' => ['destroy']]);
@@ -74,7 +74,7 @@ class MasterApiController extends Controller
 
     public function index(Request $request, $type)
     {
-        $data = $this->masterService->getAll($type);
+        $data = $this->masterService->getAll($type, $request);
         if ($data->isNotEmpty()) {
             return response()->json(['status' => true, 'message' => 'Records found', 'result' => $data], Response::HTTP_OK);
         } else {

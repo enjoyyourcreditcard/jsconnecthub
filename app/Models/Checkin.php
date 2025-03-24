@@ -50,11 +50,8 @@ class Checkin extends Model
      *
      * @return array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'checkin_time'  => 'datetime:Y-m-d',
-            'checkout_time' => 'datetime:Y-m-d'
-        ];
-    }
+    protected $casts = [
+        'checkin_time' => 'datetime:Y-m-d\TH:i:s.u\Z',
+        'checkout_time' => 'datetime:Y-m-d\TH:i:s.u\Z',
+    ];
 }

@@ -28,7 +28,7 @@ class MasterService
         return new $class;
     }
 
-    public function getAll($type)
+    public function getAll($type, $request)
     {
         $q = $this->getModel($type);
         if ($type === config('constants.MASTER_TYPE_ARRAY.LEVEL_MASTER_TYPE')) {
@@ -41,7 +41,52 @@ class MasterService
             return $q->with('class.level')->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.CHECKIN_MASTER_TYPE')) {
-            return $q->with(['student.class.level', 'activity'])->get();
+            return $q->with(['student.class.level', 'activity'])
+                ->when($request->student_id, function ($q) use ($request) {
+                    return $q->where('student_id', $request->student_id);
+                })
+                ->when($request->time, function ($q) use ($request) {
+                    switch ($request->time) {
+                        case 'today':
+                            return $q->whereDate('checkin_time', today());
+                        case 'week':
+                            return $q->whereBetween('checkin_time', [
+                                now()->startOfWeek(),
+                                now()->endOfWeek(),
+                            ]);
+                        case 'month':
+                            return $q->whereBetween('checkin_time', [
+                                now()->startOfMonth(),
+                                now()->endOfMonth(),
+                            ]);
+                        case 'year':
+                            return $q->whereBetween('checkin_time', [
+                                now()->startOfYear(),
+                                now()->endOfYear(),
+                            ]);
+                        case 'last-year':
+                            return $q->whereBetween('checkin_time', [
+                                now()->subYear()->startOfYear(),
+                                now()->subYear()->endOfYear(),
+                            ]);
+                        default:
+                            return $q;
+                    }
+                })
+                ->when($request->range_time, function ($q) use ($request) {
+                    if (
+                        is_array($request->range_time) &&
+                        isset($request->range_time['start']) &&
+                        isset($request->range_time['end'])
+                    ) {
+                        return $q->whereBetween('checkin_time', [
+                            $request->range_time['start'],
+                            $request->range_time['end'],
+                        ]);
+                    }
+                    return $q;
+                })
+                ->get();
         }
         return $q->get();
     }
