@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Services\MasterService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Validator;
+use App\Services\MasterService;
 use Illuminate\Validation\Rule;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Api\Route;
+use App\Http\Controllers\Controller;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Validator;
 
 class MasterApiController extends Controller
 {
@@ -27,10 +29,9 @@ class MasterApiController extends Controller
         }
     }
 
-    private function doRequestValidation(Request $request, $type)
+    private function getRuleValidationByType($type)
     {
         $rules = [];
-
         if ($type === config('constants.MASTER_TYPE_ARRAY.LEVEL_MASTER_TYPE')) {
             $rules = config('constants.MASTER_VALIDATION_ARRAY.LEVEL_MASTER_VALIDATION');
         }
@@ -60,6 +61,13 @@ class MasterApiController extends Controller
         if ($type === config('constants.MASTER_TYPE_ARRAY.CHECKIN_MASTER_TYPE')) {
             $rules = config('constants.MASTER_VALIDATION_ARRAY.CHECKIN_MASTER_VALIDATION');
         }
+
+        return $rules;
+    }
+
+    private function doRequestValidation(Request $request, $type)
+    {
+        $rules = $this->getRuleValidationByType($type);
 
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
@@ -116,9 +124,94 @@ class MasterApiController extends Controller
         return response()->json(['status' => true, 'message' => "$type updated", 'result' => $result], Response::HTTP_OK);
     }
 
+    public function import(Request $request, $type)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,xlsx|max:10240',
+        ]);
+
+        $file = $request->file('file');
+
+        try {
+            $data = Excel::toArray([], $file)[0];
+            $headers = array_shift($data);
+            $rows = $data;
+
+            if (empty($rows)) {
+                return response()->json(['status' => false, 'message' => 'File is empty'], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $validationRules = $this->getRuleValidationByType($type);
+            $foreignKeys = $this->getForeignKeys($type);
+            $imported = [];
+
+            // DB::beginTransaction();
+
+            foreach ($rows as $index => $row) {
+                $rowData = array_combine($headers, $row);
+
+                foreach ($foreignKeys as $fk => $relatedType) {
+                    if (isset($rowData[$fk]) && !is_numeric($rowData[$fk])) {
+                        $relatedModel = $this->masterService->getByName($relatedType, $rowData[$fk]);
+                        if ($relatedModel) {
+                            $rowData[$fk] = $relatedModel->id;
+                        } else {
+                            throw new \Exception("Invalid $fk: '{$rowData[$fk]}' not found at row " . ($index + 2));
+                        }
+                    }
+                }
+
+                return $rowData;
+                $validator = Validator::make($rowData, $validationRules);
+                if ($validator->fails()) {
+                    throw new \Exception("Validation failed at row " . ($index + 2) . ": " . implode(", ", $validator->errors()->all()));
+                }
+
+                $result = $this->masterService->create($type, $rowData);
+                $imported[] = $result;
+            }
+
+            // DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => ucfirst($type) . " imported successfully",
+                'result' => $imported
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            // DB::rollBack();
+            return response()->json([
+                'status' => false,
+                'message' => 'Import failed: ' . $e->getMessage()
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+
     public function destroy(Request $request, $type, $id)
     {
         $this->masterService->delete($type, $id);
         return response()->json(['status' => true, 'message' => "$type deleted"], Response::HTTP_OK);
+    }
+
+    private function getForeignKeys($type)
+    {
+        $foreignKeys = [
+            'class' => ['Level' => 'levels'],
+            'students' => ['Class' => 'class'],
+            'checkins' => ['Student' => 'students', 'Activity' => 'activities'],
+        ];
+
+        return $foreignKeys[$type] ?? [];
+    }
+
+    private function changeImportHeader($type)
+    {
+        $foreignKeys = [
+            'class' => ['Level' => 'levels'],
+            'students' => ['Class' => 'class'],
+            'checkins' => ['Student' => 'students', 'Activity' => 'activities'],
+        ];
+
+        return $foreignKeys[$type] ?? [];
     }
 }

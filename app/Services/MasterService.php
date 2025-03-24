@@ -96,6 +96,12 @@ class MasterService
         return $this->getModel($type)->find($id);
     }
 
+    public function getByName($type, $name)
+    {
+        $model = $this->getModel($type);
+        return $model::where('name', $name)->first();
+    }
+
     public function create($type, array $data)
     {
         return $this->getModel($type)->create($data);

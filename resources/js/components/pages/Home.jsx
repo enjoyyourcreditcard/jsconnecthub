@@ -316,7 +316,7 @@ function Home() {
     return (
         <div>
             <Header />
-            <div className="min-h-screen flex justify-center items-center px-4">
+            <div className="min-h-screen flex justify-center items-center p-4">
                 <Card className="w-11/12 sm:w-11/12 md:w-10/12 xl:w-1/2">
                     <Toast ref={toast} />
                     <ConfirmPopup />
