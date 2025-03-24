@@ -131,7 +131,10 @@ function Home() {
                     );
 
                     const now = DateTime.now().setZone(userTimezone);
-                    const checkinTime = DateTime.fromISO(ongoingCheckin.checkin_time, { zone: "utc" }).setZone(userTimezone);
+                    const checkinTime = DateTime.fromISO(
+                        ongoingCheckin.checkin_time,
+                        { zone: "utc" }
+                    ).setZone(userTimezone);
                     setTimer(
                         Math.floor(now.diff(checkinTime, "seconds").seconds)
                     );
@@ -140,6 +143,16 @@ function Home() {
                             ongoingCheckin.other_activity
                     );
                 }
+            } else {
+                dispatch(
+                    setToastMessage({
+                        severity: "info",
+                        summary:
+                            "Hi " +
+                            students.find((s) => s.id === studentId)?.name,
+                        detail: "Ready for you first quest today?",
+                    })
+                );
             }
         });
     };
@@ -193,7 +206,6 @@ function Home() {
             })
         )
             .then((response) => {
-                console.log(response.checkin_time);
                 const result = response;
                 const newCheckin = {
                     id: result.id || Date.now(),
@@ -304,7 +316,7 @@ function Home() {
     return (
         <div>
             <Header />
-            <div className="min-h-screen flex justify-center items-center px-4">
+            <div className="min-h-screen flex justify-center items-center p-4">
                 <Card className="w-11/12 sm:w-11/12 md:w-10/12 xl:w-1/2">
                     <Toast ref={toast} />
                     <ConfirmPopup />
@@ -530,7 +542,7 @@ function Home() {
                                                                     <p>
                                                                         <strong>
                                                                             Reason:
-                                                                        </strong>
+                                                                        </strong>{" "}
                                                                         {
                                                                             quest.earlyReason
                                                                         }
@@ -715,6 +727,7 @@ function Home() {
                                                     })
                                                 );
                                                 stepperRef.current.prevCallback();
+                                                setQuestLog([]);
                                             },
                                             reject: () => {
                                                 dispatch(

@@ -36,6 +36,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () use ($types) {
 
 Route::prefix('{type}')->where(['type' => implode('|', $types)])->group(function () {
     Route::get('/', [MasterApiController::class, 'index']);
+    Route::post('/import', [MasterApiController::class, 'import']);
 });
 
 /**

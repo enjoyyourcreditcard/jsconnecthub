@@ -101,7 +101,7 @@ export const getRecords =
                     })
                 );
             } else {
-                console.error("Fetch error:", error.message);
+                // console.error("Fetch error:", error.message);
             }
             return false;
         }
