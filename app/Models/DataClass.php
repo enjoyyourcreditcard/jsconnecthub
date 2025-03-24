@@ -27,7 +27,7 @@ class DataClass extends Model
      */
     public function level(): BelongsTo
     {
-        return $this->belongsTo(level::class);
+        return $this->belongsTo(Level::class);
     }
 
     /**
