@@ -22,6 +22,7 @@ import ManageClass from "./components/masters/ManageClass";
 import ManageLevel from "./components/masters/ManageLevel";
 import ManageActivity from "./components/masters/ManageActivity";
 import ManageFacility from "./components/masters/ManageFacility";
+import ManageStudent from "./components/masters/ManageStudent";
 
 const AppWrapper = () => {
     const authHeader = useAuthHeader();
@@ -97,6 +98,7 @@ const AppWrapper = () => {
                 <Route path="/class" element={<ManageClass />} />
                 <Route path="/levels" element={<ManageLevel />} />
                 <Route path="/activities" element={<ManageActivity />} />
+                <Route path="/students" element={<ManageStudent />} />
                 <Route path="/facilities" element={<ManageFacility />} />
                 <Route path="/*" element={<NotFound />} />
             </Routes>

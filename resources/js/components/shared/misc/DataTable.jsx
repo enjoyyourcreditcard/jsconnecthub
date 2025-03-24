@@ -148,7 +148,13 @@ const CustomDataTable = ({
 
     const exportCSV = () => dt.current.exportCSV();
     const exportExcel = () => {
-        const worksheet = XLSX.utils.json_to_sheet(collection);
+        const filteredData = collection.map((item) =>
+            visibleColumns.reduce((acc, col) => {
+                acc[col.header] = item[col.field] || "";
+                return acc;
+            }, {})
+        );
+        const worksheet = XLSX.utils.json_to_sheet(filteredData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
         XLSX.writeFile(workbook, `${type}_data.xlsx`);

@@ -20,7 +20,7 @@ class MasterApiController extends Controller
         $this->masterService = $masterService;
 
         foreach (config('constants.MASTER_TYPE_ARRAY') as $masterType) {
-            $this->middleware('permission:' . $masterType . ' list', ['only' => ['index', 'show']]);
+            // $this->middleware('permission:' . $masterType . ' list', ['only' => ['index', 'show']]);
             $this->middleware('permission:' . $masterType . ' create', ['only' => ['store']]);
             $this->middleware('permission:' . $masterType . ' edit', ['only' => ['update']]);
             $this->middleware('permission:' . $masterType . ' delete', ['only' => ['destroy']]);

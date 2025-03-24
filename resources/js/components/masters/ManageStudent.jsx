@@ -23,36 +23,36 @@ function ManageClass() {
     const [mode, setMode] = useState("create");
     const [editId, setEditId] = useState(null);
     const [formData, setFormData] = useState({
-        level: "",
+        class: "",
         name: "",
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const {
+        students: { data: students = [], endPoints: studentEndPoints },
         class: { data: classes = [], endPoints: classEndPoints },
-        levels: { data: levels = [], endPoints: levelEndPoints },
     } = useSelector((state) => state.global);
 
     const myFetch = () => {
         dispatch(
             getRecords({
-                type: "class",
-                endPoint: classEndPoints.collection,
+                type: "students",
+                endPoint: studentEndPoints.collection,
             })
         ).then((d) => {
             if (d) {
-                const formattedClasses = d.map((i) => ({
+                const formattedStudents = d.map((i) => ({
                     id: i.id,
-                    level: i.level?.name || "N/A",
+                    class: i.class?.name || "N/A",
                     name: i.name,
-                    level_id: i.level_id,
+                    class_id: i.class_id,
                     created_at: i.created_at,
                     updated_at: i.updated_at,
                 }));
                 dispatch(
                     setStateData({
-                        type: "class",
-                        data: formattedClasses,
+                        type: "students",
+                        data: formattedStudents,
                         key: "data",
                         isMerge: false,
                     })
@@ -65,19 +65,19 @@ function ManageClass() {
         myFetch();
         dispatch(
             getRecords({
-                type: "levels",
-                endPoint: levelEndPoints.collection,
+                type: "class",
+                endPoint: classEndPoints.collection,
                 key: "data",
             })
         );
     }, [dispatch]);
 
     const handleEdit = (id) => {
-        const iClass = classes.find((u) => u.id === id);
-        if (iClass) {
+        const item = students.find((u) => u.id === id);
+        if (item) {
             setFormData({
-                level: levelOptions.find((u) => u.id === iClass.level_id),
-                name: iClass.name,
+                class: classOptions.find((u) => u.id === item.class_id),
+                name: item.name,
             });
             setEditId(id);
             setMode("edit");
@@ -87,7 +87,7 @@ function ManageClass() {
 
     const handleAdd = () => {
         setMode("create");
-        setFormData({ level: "", name: "" });
+        setFormData({ class: "", name: "" });
         setVisible(true);
     };
 
@@ -104,32 +104,32 @@ function ManageClass() {
             if (mode === "create") {
                 const success = dispatch(
                     createRecord({
-                        type: "class",
-                        endPoint: classEndPoints.store,
+                        type: "students",
+                        endPoint: studentEndPoints.store,
                         data: {
-                            level_id: formData.level.id,
+                            class_id: formData.class.id,
                             name: formData.name,
                         },
                     })
                 );
                 if (success) {
-                    setFormData({ level: "", name: "" });
+                    setFormData({ class: "", name: "" });
                     setVisible(false);
                     myFetch();
                 }
             } else {
                 const success = dispatch(
                     updateRecord({
-                        type: "class",
-                        endPoint: `${classEndPoints.update}${editId}`,
+                        type: "students",
+                        endPoint: `${studentEndPoints.update}${editId}`,
                         data: {
-                            level_id: formData.level.id,
+                            class_id: formData.class.id,
                             name: formData.name,
                         },
                     })
                 );
                 if (success) {
-                    setFormData({ level: "", name: "" });
+                    setFormData({ class: "", name: "" });
                     setVisible(false);
                     myFetch();
                 }
@@ -141,10 +141,12 @@ function ManageClass() {
         }
     };
 
-    const levelOptions = levels.map((level) => ({
-        id: level.id,
-        label: level.name,
+    const classOptions = classes.map((i) => ({
+        id: i.id,
+        label: i.name,
     }));
+
+    console.log(formData);
 
     return (
         <div>
@@ -154,18 +156,18 @@ function ManageClass() {
                     {isAuthenticated() ? (
                         <>
                             <DataTable
-                                type="class"
+                                type="students"
                                 identifier="id"
                                 hasImport={true}
                                 onEdit={handleEdit}
                                 onAdd={handleAdd}
-                                title="Class"
+                                title="Student"
                             />
                             <Dialog
                                 header={
                                     mode === "create"
-                                        ? `Add Class`
-                                        : `Edit Class`
+                                        ? `Add Student`
+                                        : `Edit Student`
                                 }
                                 visible={visible}
                                 style={{ width: "400px" }}
@@ -185,24 +187,24 @@ function ManageClass() {
                                     <div style={{ marginBottom: "2rem" }}>
                                         <FloatLabel>
                                             <Dropdown
-                                                name="level"
-                                                value={formData.level}
-                                                options={levelOptions}
+                                                name="class"
+                                                value={formData.class}
+                                                options={classOptions}
                                                 onChange={handleChange}
                                                 filter
                                                 style={{ width: "100%" }}
                                                 required
                                                 checkmark={true}
                                                 disabled={loading}
-                                                placeholder="Select a level"
-                                                tooltip="Select class level"
+                                                placeholder="Select a class"
+                                                tooltip="Select class"
                                                 tooltipOptions={{
                                                     position: "bottom",
                                                     mouseTrack: true,
                                                     mouseTrackTop: 15,
                                                 }}
                                             />
-                                            <label htmlFor="level">Level</label>
+                                            <label htmlFor="class">Class</label>
                                         </FloatLabel>
                                     </div>
                                     <div style={{ marginBottom: "2rem" }}>

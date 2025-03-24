@@ -9,5 +9,9 @@ export const CHECKIN_STATE = {
         update: "/api/checkin/",
         get: "/api/checkin/",
         delete: "/api/checkin/",
+
+        // student
+        checkin: "/api/check-in/",
+        checkout: "/api/check-out/",
     },
 };
