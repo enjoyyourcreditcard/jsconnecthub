@@ -6,7 +6,6 @@ import { Column } from "primereact/column";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { ConfirmPopup, confirmPopup } from "primereact/confirmpopup";
 import { Dialog } from "primereact/dialog";
-import { Toast } from "primereact/toast";
 import { Toolbar } from "primereact/toolbar";
 import { InputText } from "primereact/inputtext";
 import { IconField } from "primereact/iconfield";
@@ -14,7 +13,11 @@ import { InputIcon } from "primereact/inputicon";
 import { MultiSelect } from "primereact/multiselect";
 import { OverlayPanel } from "primereact/overlaypanel";
 import { FileUpload } from "primereact/fileupload";
-import { deleteRecord } from "../../store/global-slice";
+import {
+    deleteRecord,
+    importRecord,
+    setToastMessage,
+} from "../../store/global-slice";
 import PropTypes from "prop-types";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -31,7 +34,6 @@ const CustomDataTable = ({
     onDelete = null,
 }) => {
     const dispatch = useDispatch();
-    const toast = useRef(null);
     const dt = useRef(null);
     const overlayPanelRef = useRef(null);
     const {
@@ -98,12 +100,14 @@ const CustomDataTable = ({
                         })
                     ).then((success) => {
                         if (success) {
-                            toast.current.show({
-                                severity: "success",
-                                summary: "Success",
-                                detail: `${capitalize(type)} deleted`,
-                                life: 3000,
-                            });
+                            dispatch(
+                                setToastMessage({
+                                    severity: "success",
+                                    summary: "Success",
+                                    detail: `${capitalize(type)} deleted`,
+                                    life: 3000,
+                                })
+                            );
                             onFetch();
                         }
                     });
@@ -132,12 +136,14 @@ const CustomDataTable = ({
                 )
             ).then((results) => {
                 if (results.every((success) => success)) {
-                    toast.current.show({
-                        severity: "success",
-                        summary: "Success",
-                        detail: `${selectedRecords.length} ${type} deleted`,
-                        life: 3000,
-                    });
+                    dispatch(
+                        setToastMessage({
+                            severity: "success",
+                            summary: "Success",
+                            detail: `${selectedRecords.length} ${type} deleted`,
+                            life: 3000,
+                        })
+                    );
                     onFetch();
                 }
             });
@@ -172,41 +178,29 @@ const CustomDataTable = ({
         doc.save(`${type}_data.pdf`);
     };
 
-    // File upload handler
-    const handleFileUpload = async (event) => {
+    const handleFileUpload = (event) => {
         const file = event.files[0];
         if (!file) return;
 
-        const formData = new FormData();
-        formData.append("file", file);
-
-        try {
-            const response = await fetch(dataEndPoints.import, {
-                method: "POST",
-                body: formData,
-                headers: {},
+        dispatch(
+            importRecord({
+                type,
+                endPoint: dataEndPoints.import,
+                file,
+                returnData: true,
+            })
+        )
+            .then((result) => {
+                if (result) {
+                    onFetch();
+                }
+            })
+            .catch((error) => {
+                console.error("Import error:", error.message);
+            })
+            .finally(() => {
+                overlayPanelRef.current.hide();
             });
-
-            if (!response.ok) throw new Error("Import failed");
-
-            toast.current.show({
-                severity: "success",
-                summary: "Success",
-                detail: `${capitalize(type)} data imported successfully`,
-                life: 3000,
-            });
-
-            onFetch();
-        } catch (error) {
-            toast.current.show({
-                severity: "error",
-                summary: "Error",
-                detail: error.message || "Failed to import data",
-                life: 3000,
-            });
-        } finally {
-            overlayPanelRef.current.hide();
-        }
     };
 
     const leftToolbarTemplate = () => (
@@ -387,7 +381,6 @@ const CustomDataTable = ({
 
     return (
         <div className="card">
-            <Toast ref={toast} />
             <ConfirmPopup />
             <Toolbar
                 className="mb-6"
@@ -464,30 +457,10 @@ const CustomDataTable = ({
                     maxFileSize={10000000}
                     emptyTemplate={
                         <p className="m-0">
-                            Drag and drop files(csv/excel) here to upload (Max
+                            Drag and drop files (csv/excel) here to upload (Max
                             10Mb).
                         </p>
                     }
-                    onUpload={(e) => {
-                        toast.current.show({
-                            severity: "success",
-                            summary: "Success",
-                            detail: `${capitalize(
-                                type
-                            )} data imported successfully`,
-                            life: 3000,
-                        });
-                        onFetch();
-                        overlayPanelRef.current.hide();
-                    }}
-                    onError={(e) => {
-                        toast.current.show({
-                            severity: "error",
-                            summary: "Error",
-                            detail: "Failed to import data",
-                            life: 3000,
-                        });
-                    }}
                     customUpload
                     uploadHandler={handleFileUpload}
                 />

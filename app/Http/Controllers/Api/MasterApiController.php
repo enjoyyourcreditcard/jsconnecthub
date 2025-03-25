@@ -181,9 +181,9 @@ class MasterApiController extends Controller
 
             return response()->json([
                 'status' => true,
-                'message' => ucfirst($type) . " imported successfully",
+                'message' => count($imported) . ' ' . ($type) . " imported successfully",
                 'result' => $imported
-            ], Response::HTTP_OK);
+            ], Response::HTTP_CREATED);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([

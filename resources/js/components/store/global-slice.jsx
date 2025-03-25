@@ -101,7 +101,7 @@ export const getRecords =
                     })
                 );
             } else {
-                // console.error("Fetch error:", error.message);
+                console.error("Fetch error:", error.message);
             }
             return false;
         }
@@ -261,6 +261,74 @@ export const deleteRecord =
                 })
             );
             return false;
+        }
+    };
+
+export const importRecord =
+    ({ type = "", endPoint, file, returnData = false }) =>
+    async (dispatch) => {
+        dispatch(
+            setStateData({
+                key: "spinner",
+                data: { show: true, text: "Importing..." },
+            })
+        );
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const response = await api.post(endPoint, formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+
+            dispatch(resetStateKeyData({ key: "spinner" }));
+            if (response.data.status) {
+                dispatch(
+                    setStateData({
+                        type,
+                        key: "data",
+                        data: Array.isArray(response.data.result)
+                            ? response.data.result
+                            : [response.data.result],
+                        isMerge: true,
+                    })
+                );
+                dispatch(
+                    setToastMessage({
+                        severity: "success",
+                        summary: "Success",
+                        detail:
+                            response.data.message ||
+                            `${type} imported successfully`,
+                        life: 3000,
+                    })
+                );
+                return returnData ? response.data.result : true;
+            }
+            dispatch(
+                setToastMessage({
+                    severity: "error",
+                    summary: "Error",
+                    detail: response.data.message || "Failed to import data",
+                    life: 5000,
+                })
+            );
+            return false;
+        } catch (error) {
+            dispatch(resetStateKeyData({ key: "spinner" }));
+            const errorMsg =
+                error.response?.data?.message || "Failed to import data";
+            dispatch(
+                setToastMessage({
+                    severity: "error",
+                    summary: "Error",
+                    detail: errorMsg,
+                    life: 5000,
+                })
+            );
+            throw new Error(errorMsg);
         }
     };
 
