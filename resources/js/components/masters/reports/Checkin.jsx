@@ -12,9 +12,11 @@ import DataTable from "../../shared/misc/DataTable";
 import { Card } from "primereact/card";
 import { Dialog } from "primereact/dialog";
 import { FloatLabel } from "primereact/floatlabel";
-import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
+import { Calendar } from "primereact/calendar";
+import { InputText } from "primereact/inputtext";
+import { Checkbox } from "primereact/checkbox";
 
 function Checkin() {
     const dispatch = useDispatch();
@@ -23,11 +25,13 @@ function Checkin() {
     const [mode, setMode] = useState("create");
     const [editId, setEditId] = useState(null);
     const [formData, setFormData] = useState({
-        student: "",
-        activity: "",
-        checkin_time: "",
-        checkout_time: "",
-        other_activity: "",
+        level: null,
+        class: null,
+        student: null,
+        activity: null,
+        checkin_time: null,
+        checkout_time: null,
+        hasReason: false,
         reason: "",
     });
     const [loading, setLoading] = useState(false);
@@ -51,8 +55,8 @@ function Checkin() {
                 const formattedCheckin = d.map((i) => ({
                     id: i.id,
                     student: i.student?.name || "N/A",
-                    level: i.student?.class.level.name || "N/A",
-                    class: i.student?.class.name || "N/A",
+                    level: i.student?.class?.level?.name || "N/A",
+                    class: i.student?.class?.name || "N/A",
                     activity: i.activity?.name || i.other_activity || "N/A",
                     checkin_time: i.checkin_time,
                     checkout_time: i.checkout_time,
@@ -105,13 +109,38 @@ function Checkin() {
     const handleEdit = (id) => {
         const iCheckin = checkin.find((u) => u.id === id);
         if (iCheckin) {
+            const studentData = students.find(
+                (s) => s.name === iCheckin.student
+            );
+            const classData = classes.find((c) => c.name === iCheckin.class);
+            const levelData = levels.find((l) => l.name === iCheckin.level);
+            const activityData = activities.find(
+                (a) => a.name === iCheckin.activity
+            );
+
             setFormData({
-                student: levelOptions.find((u) => u.id === iCheckin.level_id),
-                activity: levelOptions.find((u) => u.id === iCheckin.level_id),
-                checkin_time: iCheckin.checkin_time || null,
-                checkout_time: iCheckin.checkout_time || null,
-                other_activity: iCheckin.reason || null,
-                reason: iCheckin.reason || null,
+                level: levelData
+                    ? { id: levelData.id, label: levelData.name }
+                    : null,
+                class: classData
+                    ? { id: classData.id, label: classData.name }
+                    : null,
+                student: studentData
+                    ? { id: studentData.id, label: studentData.name }
+                    : null,
+                activity: activityData
+                    ? { id: activityData.id, label: activityData.name }
+                    : iCheckin.activity !== "N/A"
+                    ? iCheckin.activity
+                    : null,
+                checkin_time: iCheckin.checkin_time
+                    ? new Date(iCheckin.checkin_time)
+                    : null,
+                checkout_time: iCheckin.checkout_time
+                    ? new Date(iCheckin.checkout_time)
+                    : null,
+                hasReason: !!iCheckin.reason,
+                reason: iCheckin.reason || "",
             });
             setEditId(id);
             setMode("edit");
@@ -122,11 +151,13 @@ function Checkin() {
     const handleAdd = () => {
         setMode("create");
         setFormData({
-            student: "",
-            activity: "",
-            checkin_time: "",
-            checkout_time: "",
-            other_activity: "",
+            level: null,
+            class: null,
+            student: null,
+            activity: null,
+            checkin_time: null,
+            checkout_time: null,
+            hasReason: false,
             reason: "",
         });
         setVisible(true);
@@ -134,65 +165,73 @@ function Checkin() {
 
     const handleChange = (e) => {
         const { name, value } = e.target ? e.target : e;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        setFormData((prev) => {
+            const newData = { ...prev, [name]: value };
+            if (name === "level") {
+                newData.class = null;
+                newData.student = null;
+            } else if (name === "class") {
+                newData.student = null;
+            }
+            return newData;
+        });
+    };
+
+    const formatDateTimeForMySQL = (date) => {
+        if (!date) return null;
+        const pad = (n) => String(n).padStart(2, "0");
+        const year = date.getUTCFullYear();
+        const month = pad(date.getUTCMonth() + 1);
+        const day = pad(date.getUTCDate());
+        const hours = pad(date.getUTCHours());
+        const minutes = pad(date.getUTCMinutes());
+        const seconds = pad(date.getUTCSeconds());
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError("");
+
+        const isCustomActivity =
+            typeof formData.activity === "string" || !formData.activity?.id;
+        const dataToSubmit = {
+            student_id: formData.student?.id,
+            activity_id: isCustomActivity ? null : formData.activity?.id,
+            other_activity:
+                isCustomActivity && formData.activity
+                    ? formData.activity
+                    : null,
+            checkin_time: formatDateTimeForMySQL(formData.checkin_time),
+            checkout_time: formatDateTimeForMySQL(formData.checkout_time),
+            reason: formData.hasReason ? formData.reason : null,
+        };
+
         try {
             if (mode === "create") {
-                const success = dispatch(
+                const result = await dispatch(
                     createRecord({
                         type: "checkin",
                         endPoint: checkinEndPoints.store,
-                        data: {
-                            student: formData.student.id,
-                            activity: formData.activity.id || null,
-                            other_activity: formData.other_activity || null,
-                            checkin_time: formData.checkin_time,
-                            checkout_time: formData.checkout_time,
-                            reason: formData.reason,
-                        },
+                        data: dataToSubmit,
+                        returnData: true,
                     })
                 );
-                if (success) {
-                    setFormData({
-                        student: "",
-                        activity: "",
-                        checkin_time: "",
-                        checkout_time: "",
-                        other_activity: "",
-                        reason: "",
-                    });
+                if (result) {
                     setVisible(false);
                     myFetch();
                 }
             } else {
-                const success = dispatch(
+                const result = await dispatch(
                     updateRecord({
                         type: "checkin",
                         endPoint: `${checkinEndPoints.update}${editId}`,
-                        data: {
-                            student: formData.student.id,
-                            activity: formData.activity.id || null,
-                            other_activity: formData.other_activity || null,
-                            checkin_time: formData.checkin_time,
-                            checkout_time: formData.checkout_time,
-                            reason: formData.reason,
-                        },
+                        data: dataToSubmit,
+                        returnData: true,
                     })
                 );
-                if (success) {
-                    setFormData({
-                        student: "",
-                        activity: "",
-                        checkin_time: "",
-                        checkout_time: "",
-                        other_activity: "",
-                        reason: "",
-                    });
+                if (result) {
                     setVisible(false);
                     myFetch();
                 }
@@ -209,15 +248,23 @@ function Checkin() {
         label: i.name,
     }));
 
-    const classOptions = classes.map((i) => ({
-        id: i.id,
-        label: i.name,
-    }));
+    const classOptions = formData.level
+        ? classes
+              .filter((c) => c.level_id === formData.level.id)
+              .map((i) => ({
+                  id: i.id,
+                  label: i.name,
+              }))
+        : [];
 
-    const studentOptions = students.map((i) => ({
-        id: i.id,
-        label: i.name,
-    }));
+    const studentOptions = formData.class
+        ? students
+              .filter((s) => s.class_id === formData.class.id)
+              .map((i) => ({
+                  id: i.id,
+                  label: i.name,
+              }))
+        : [];
 
     const activityOptions = activities.map((i) => ({
         id: i.id,
@@ -243,8 +290,8 @@ function Checkin() {
                             <Dialog
                                 header={
                                     mode === "create"
-                                        ? `Add Check In`
-                                        : `Edit Check In`
+                                        ? "Add Check In"
+                                        : "Edit Check In"
                                 }
                                 visible={visible}
                                 style={{ width: "400px" }}
@@ -269,17 +316,11 @@ function Checkin() {
                                                 options={levelOptions}
                                                 onChange={handleChange}
                                                 filter
+                                                optionLabel="label"
                                                 style={{ width: "100%" }}
                                                 required
-                                                checkmark={true}
                                                 disabled={loading}
                                                 placeholder="Select a level"
-                                                tooltip="Select class level"
-                                                tooltipOptions={{
-                                                    position: "bottom",
-                                                    mouseTrack: true,
-                                                    mouseTrackTop: 15,
-                                                }}
                                             />
                                             <label htmlFor="level">Level</label>
                                         </FloatLabel>
@@ -292,17 +333,13 @@ function Checkin() {
                                                 options={classOptions}
                                                 onChange={handleChange}
                                                 filter
+                                                optionLabel="label"
                                                 style={{ width: "100%" }}
                                                 required
-                                                checkmark={true}
-                                                disabled={loading}
+                                                disabled={
+                                                    !formData.level || loading
+                                                }
                                                 placeholder="Select a class"
-                                                tooltip="Select a class"
-                                                tooltipOptions={{
-                                                    position: "bottom",
-                                                    mouseTrack: true,
-                                                    mouseTrackTop: 15,
-                                                }}
                                             />
                                             <label htmlFor="class">Class</label>
                                         </FloatLabel>
@@ -315,17 +352,13 @@ function Checkin() {
                                                 options={studentOptions}
                                                 onChange={handleChange}
                                                 filter
+                                                optionLabel="label"
                                                 style={{ width: "100%" }}
                                                 required
-                                                checkmark={true}
-                                                disabled={loading}
+                                                disabled={
+                                                    !formData.class || loading
+                                                }
                                                 placeholder="Select a student"
-                                                tooltip="Select a student"
-                                                tooltipOptions={{
-                                                    position: "bottom",
-                                                    mouseTrack: true,
-                                                    mouseTrackTop: 15,
-                                                }}
                                             />
                                             <label htmlFor="student">
                                                 Student
@@ -340,42 +373,94 @@ function Checkin() {
                                                 options={activityOptions}
                                                 onChange={handleChange}
                                                 filter
+                                                editable
+                                                optionLabel="label"
                                                 style={{ width: "100%" }}
-                                                required
-                                                checkmark={true}
                                                 disabled={loading}
-                                                placeholder="Select a activity"
-                                                tooltip="Select student activity"
-                                                tooltipOptions={{
-                                                    position: "bottom",
-                                                    mouseTrack: true,
-                                                    mouseTrackTop: 15,
-                                                }}
+                                                placeholder="Select or type an activity"
                                             />
                                             <label htmlFor="activity">
                                                 Activity
                                             </label>
                                         </FloatLabel>
                                     </div>
-                                    {/* <div style={{ marginBottom: "2rem" }}>
+                                    <div style={{ marginBottom: "2rem" }}>
                                         <FloatLabel>
-                                            <InputText
-                                                name="name"
-                                                value={formData.name}
+                                            <Calendar
+                                                name="checkin_time"
+                                                value={formData.checkin_time}
                                                 onChange={handleChange}
+                                                showTime
+                                                hourFormat="24"
+                                                dateFormat="yy-mm-dd"
                                                 style={{ width: "100%" }}
                                                 required
                                                 disabled={loading}
-                                                tooltip="Enter class name"
-                                                tooltipOptions={{
-                                                    position: "bottom",
-                                                    mouseTrack: true,
-                                                    mouseTrackTop: 15,
-                                                }}
+                                                placeholder="Select check-in time (UTC)"
                                             />
-                                            <label htmlFor="name">Name</label>
+                                            <label htmlFor="checkin_time">
+                                                Check-In Time (UTC)
+                                            </label>
                                         </FloatLabel>
-                                    </div> */}
+                                    </div>
+                                    <div style={{ marginBottom: "2rem" }}>
+                                        <FloatLabel>
+                                            <Calendar
+                                                name="checkout_time"
+                                                value={formData.checkout_time}
+                                                onChange={handleChange}
+                                                showTime
+                                                hourFormat="24"
+                                                dateFormat="yy-mm-dd"
+                                                style={{ width: "100%" }}
+                                                disabled={loading}
+                                                placeholder="Select check-out time (UTC)"
+                                            />
+                                            <label htmlFor="checkout_time">
+                                                Check-Out Time (UTC)
+                                            </label>
+                                        </FloatLabel>
+                                    </div>
+                                    <div style={{ marginBottom: "2rem" }}>
+                                        <Checkbox
+                                            inputId="hasReason"
+                                            name="hasReason"
+                                            checked={formData.hasReason}
+                                            onChange={(e) =>
+                                                handleChange({
+                                                    name: "hasReason",
+                                                    value: e.checked,
+                                                })
+                                            }
+                                            disabled={loading}
+                                        />
+                                        <label
+                                            htmlFor="hasReason"
+                                            style={{ marginLeft: "8px" }}
+                                        >
+                                            Add Reason
+                                        </label>
+                                    </div>
+                                    {formData.hasReason && (
+                                        <div style={{ marginBottom: "2rem" }}>
+                                            <FloatLabel>
+                                                <InputText
+                                                    name="reason"
+                                                    value={formData.reason}
+                                                    onChange={handleChange}
+                                                    style={{ width: "100%" }}
+                                                    required={
+                                                        formData.hasReason
+                                                    }
+                                                    disabled={loading}
+                                                    placeholder="Enter reason"
+                                                />
+                                                <label htmlFor="reason">
+                                                    Reason
+                                                </label>
+                                            </FloatLabel>
+                                        </div>
+                                    )}
                                     <div
                                         style={{
                                             display: "flex",

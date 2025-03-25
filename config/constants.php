@@ -40,7 +40,10 @@ return [
         [
             'student_id'        => ['required', 'exists:students,id'],
             'activity_id'       => ['nullable', 'required_without:other_activity', 'exists:activities,id'],
-            'other_activity'    => ['nullable', 'required_without:activity_id', 'string', 'max:250']
+            'other_activity'    => ['nullable', 'required_without:activity_id', 'string', 'max:250'],
+            'checkin_time' => ['required', 'date'],
+            'checkout_time' => ['nullable', 'date', 'after_or_equal:checkin_time'],
+            'reason' => ['nullable', 'string', 'max:255']
         ],
     ],
 
