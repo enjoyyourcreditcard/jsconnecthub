@@ -187,12 +187,13 @@ const CustomDataTable = ({
     const exportCSV = () => dt.current.exportCSV();
 
     const exportExcel = () => {
-        const filteredData = formattedData.map((item) =>
-            visibleColumns.reduce((acc, col) => {
-                acc[col.header] = item[col.field] || "";
-                return acc;
-            }, {})
-        );
+        const filteredData = formattedData.map((item) => {
+            const rowData = {};
+            visibleColumns.forEach((col) => {
+                rowData[col.header] = item[col.field] || "";
+            });
+            return rowData;
+        });
         const worksheet = XLSX.utils.json_to_sheet(filteredData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
@@ -342,55 +343,6 @@ const CustomDataTable = ({
             />
         </>
     );
-
-    // const filterDataByTime = (data) => {
-    //     if (!timeFilter && !rangeFilter) return data;
-    //     return data.filter((item) => {
-    //         console.log(item);
-    //         const checkinTime = DateTime.fromISO(item.checkin_time, {
-    //             zone: "utc",
-    //         });
-    //         if (!checkinTime.isValid) return false;
-    //         if (timeFilter) {
-    //             const now = DateTime.local().setZone("utc");
-    //             switch (timeFilter) {
-    //                 case "today":
-    //                     return checkinTime.hasSame(now, "day");
-    //                 case "week":
-    //                     return (
-    //                         checkinTime >= now.startOf("week") &&
-    //                         checkinTime <= now.endOf("week")
-    //                     );
-    //                 case "month":
-    //                     return (
-    //                         checkinTime >= now.startOf("month") &&
-    //                         checkinTime <= now.endOf("month")
-    //                     );
-    //                 case "year":
-    //                     return (
-    //                         checkinTime >= now.startOf("year") &&
-    //                         checkinTime <= now.endOf("year")
-    //                     );
-    //                 case "last-year":
-    //                     return (
-    //                         checkinTime >=
-    //                             now.minus({ years: 1 }).startOf("year") &&
-    //                         checkinTime <= now.minus({ years: 1 }).endOf("year")
-    //                     );
-    //                 default:
-    //                     return true;
-    //             }
-    //         }
-    //         if (rangeFilter && rangeFilter[0] && rangeFilter[1]) {
-    //             const start = DateTime.fromJSDate(rangeFilter[0]).startOf(
-    //                 "day"
-    //             );
-    //             const end = DateTime.fromJSDate(rangeFilter[1]).endOf("day");
-    //             return checkinTime >= start && checkinTime <= end;
-    //         }
-    //         return true;
-    //     });
-    // };
 
     const formattedData = Array.isArray(collection)
         ? collection.map((item) => ({

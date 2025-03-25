@@ -47,6 +47,7 @@ function Checkin() {
     } = useSelector((state) => state.global);
 
     const myFetch = (params = { timeFilter: "today" }) => {
+        console.log(params);
         let url = checkinEndPoints.collection;
         if (params.timeFilter) {
             url += `?time=${params.timeFilter}`;
@@ -57,9 +58,9 @@ function Checkin() {
         ) {
             const start = params.rangeFilter[0].toISOString().split("T")[0];
             const end = params.rangeFilter[1].toISOString().split("T")[0];
-            url += `?start=${start}&end=${end}`;
+            url += `?range_time[start]=${start}&range_time[end]=${end}`;
         }
-
+        console.log(url);
         dispatch(getRecords({ type: "checkin", endPoint: url })).then((d) => {
             if (d) {
                 const formattedCheckin = d.map((i) => ({
@@ -280,20 +281,14 @@ function Checkin() {
                                 type="checkin"
                                 identifier="id"
                                 hasImport={true}
-                                onFetch={myFetch}
+                                onFetch={(params) => myFetch(params)}
                                 onAdd={handleAdd}
                                 onEdit={handleEdit}
                                 title="Check In"
                                 timeFilter={timeFilter}
-                                setTimeFilter={(value) => {
-                                    setTimeFilter(value);
-                                    myFetch({ timeFilter: value });
-                                }}
+                                setTimeFilter={setTimeFilter}
                                 rangeFilter={rangeFilter}
-                                setRangeFilter={(value) => {
-                                    setRangeFilter(value);
-                                    myFetch({ rangeFilter: value });
-                                }}
+                                setRangeFilter={setRangeFilter}
                             />
                             <Dialog
                                 header={
