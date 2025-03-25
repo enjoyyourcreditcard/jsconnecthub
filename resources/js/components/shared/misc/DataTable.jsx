@@ -315,7 +315,13 @@ const CustomDataTable = ({
                                     onChange={(e) => {
                                         setRangeFilter(e.value);
                                         setTimeFilter(null);
-                                        onFetch({ rangeFilter: e.value });
+                                        if (
+                                            e.value &&
+                                            e.value[0] &&
+                                            e.value[1]
+                                        ) {
+                                            onFetch({ rangeFilter: e.value });
+                                        }
                                     }}
                                     selectionMode="range"
                                     dateFormat="yy-mm-dd"
