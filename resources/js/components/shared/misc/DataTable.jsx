@@ -107,7 +107,7 @@ const CustomDataTable = ({
         if (!utcDate || !userTimezone) return "";
         const dt = DateTime.fromISO(utcDate, { zone: "utc" });
         if (!dt.isValid) {
-            console.error("Invalid date:", utcDate);
+            // console.error("Invalid date:", utcDate);
             return "";
         }
         return dt.setZone(userTimezone).toFormat("dd MMMM yyyy, HH:mm:ss z");
@@ -183,7 +183,9 @@ const CustomDataTable = ({
         setSelectedRecords(null);
     };
 
+    // start export
     const exportCSV = () => dt.current.exportCSV();
+
     const exportExcel = () => {
         const filteredData = formattedData.map((item) =>
             visibleColumns.reduce((acc, col) => {
@@ -196,6 +198,7 @@ const CustomDataTable = ({
         XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
         XLSX.writeFile(workbook, `${type}_data.xlsx`);
     };
+
     const exportPDF = () => {
         const doc = new jsPDF();
         autoTable(doc, {
@@ -208,6 +211,7 @@ const CustomDataTable = ({
         });
         doc.save(`${type}_data.pdf`);
     };
+    // end export
 
     const handleFileUpload = (event) => {
         const file = event.files[0];
@@ -294,6 +298,7 @@ const CustomDataTable = ({
                                     onChange={(e) => {
                                         setTimeFilter(e.value);
                                         setRangeFilter(null);
+                                        onFetch({ timeFilter: e.value });
                                     }}
                                     placeholder="Select Time Period"
                                     style={{ width: "200px" }}
@@ -304,6 +309,7 @@ const CustomDataTable = ({
                                     onChange={(e) => {
                                         setRangeFilter(e.value);
                                         setTimeFilter(null);
+                                        onFetch({ rangeFilter: e.value });
                                     }}
                                     selectionMode="range"
                                     dateFormat="yy-mm-dd"
@@ -337,72 +343,66 @@ const CustomDataTable = ({
         </>
     );
 
-    const filterDataByTime = (data) => {
-        if (!timeFilter && !rangeFilter) return data;
+    // const filterDataByTime = (data) => {
+    //     if (!timeFilter && !rangeFilter) return data;
+    //     return data.filter((item) => {
+    //         console.log(item);
+    //         const checkinTime = DateTime.fromISO(item.checkin_time, {
+    //             zone: "utc",
+    //         });
+    //         if (!checkinTime.isValid) return false;
+    //         if (timeFilter) {
+    //             const now = DateTime.local().setZone("utc");
+    //             switch (timeFilter) {
+    //                 case "today":
+    //                     return checkinTime.hasSame(now, "day");
+    //                 case "week":
+    //                     return (
+    //                         checkinTime >= now.startOf("week") &&
+    //                         checkinTime <= now.endOf("week")
+    //                     );
+    //                 case "month":
+    //                     return (
+    //                         checkinTime >= now.startOf("month") &&
+    //                         checkinTime <= now.endOf("month")
+    //                     );
+    //                 case "year":
+    //                     return (
+    //                         checkinTime >= now.startOf("year") &&
+    //                         checkinTime <= now.endOf("year")
+    //                     );
+    //                 case "last-year":
+    //                     return (
+    //                         checkinTime >=
+    //                             now.minus({ years: 1 }).startOf("year") &&
+    //                         checkinTime <= now.minus({ years: 1 }).endOf("year")
+    //                     );
+    //                 default:
+    //                     return true;
+    //             }
+    //         }
+    //         if (rangeFilter && rangeFilter[0] && rangeFilter[1]) {
+    //             const start = DateTime.fromJSDate(rangeFilter[0]).startOf(
+    //                 "day"
+    //             );
+    //             const end = DateTime.fromJSDate(rangeFilter[1]).endOf("day");
+    //             return checkinTime >= start && checkinTime <= end;
+    //         }
+    //         return true;
+    //     });
+    // };
 
-        return data.filter((item) => {
-            console.log(item);
-            const checkinTime = DateTime.fromISO(item.checkin_time, {
-                zone: "utc",
-            });
-            if (!checkinTime.isValid) return false;
-
-            if (timeFilter) {
-                const now = DateTime.local().setZone("utc");
-                switch (timeFilter) {
-                    case "today":
-                        return checkinTime.hasSame(now, "day");
-                    case "week":
-                        return (
-                            checkinTime >= now.startOf("week") &&
-                            checkinTime <= now.endOf("week")
-                        );
-                    case "month":
-                        return (
-                            checkinTime >= now.startOf("month") &&
-                            checkinTime <= now.endOf("month")
-                        );
-                    case "year":
-                        return (
-                            checkinTime >= now.startOf("year") &&
-                            checkinTime <= now.endOf("year")
-                        );
-                    case "last-year":
-                        return (
-                            checkinTime >=
-                                now.minus({ years: 1 }).startOf("year") &&
-                            checkinTime <= now.minus({ years: 1 }).endOf("year")
-                        );
-                    default:
-                        return true;
-                }
-            }
-
-            if (rangeFilter && rangeFilter[0] && rangeFilter[1]) {
-                const start = DateTime.fromJSDate(rangeFilter[0]).startOf(
-                    "day"
-                );
-                const end = DateTime.fromJSDate(rangeFilter[1]).endOf("day");
-                return checkinTime >= start && checkinTime <= end;
-            }
-
-            return true;
-        });
-    };
-
-    const filteredData = Array.isArray(collection)
-        ? filterDataByTime(collection)
+    const formattedData = Array.isArray(collection)
+        ? collection.map((item) => ({
+              ...item,
+              checkin_time: item.checkin_time
+                  ? formatDateToLocal(item.checkin_time)
+                  : "",
+              checkout_time: item.checkout_time
+                  ? formatDateToLocal(item.checkout_time)
+                  : "",
+          }))
         : [];
-
-    const formattedData = filteredData.map((item) => ({
-        ...item,
-        checkin_time: item.checkin_time
-            ? formatDateToLocal(item.checkin_time)
-            : "",
-        checkout_time: item.checkout_time
-            ? formatDateToLocal(item.checkout_time)
-            : "",
-    }));
 
     const generateColumns = () => {
         if (!collection.length) return [];

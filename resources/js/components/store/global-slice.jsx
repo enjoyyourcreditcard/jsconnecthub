@@ -77,18 +77,20 @@ export const getRecords =
 
             const response = await api.get(url);
             dispatch(resetStateKeyData({ key: "spinner" }));
+
             if (response.data.status) {
+                const result = response.data.result || [];
                 dispatch(
                     setStateData({
                         type: type || stateKey.app,
-                        data: response.data.result,
+                        data: result,
                         key,
                         isMerge: false,
                     })
                 );
-                return response.data.result;
+                return result;
             }
-            return false;
+            return [];
         } catch (error) {
             dispatch(resetStateKeyData({ key: "spinner" }));
             if (error.response?.status === 401) {
@@ -100,10 +102,28 @@ export const getRecords =
                         life: 10000,
                     })
                 );
+            } else if (error.response?.request.status === 404) {
+                dispatch(
+                    setStateData({
+                        type: type || stateKey.app,
+                        data: [],
+                        key,
+                        isMerge: false,
+                    })
+                );
+                dispatch(
+                    setToastMessage({
+                        severity: "info",
+                        summary: "Not Found",
+                        detail: "No data found",
+                        life: 3000,
+                    })
+                );
+                return [];
             } else {
-                console.error("Fetch error:", error.message);
+                // console.error("Fetch error:", error.message);
             }
-            return false;
+            return [];
         }
     };
 

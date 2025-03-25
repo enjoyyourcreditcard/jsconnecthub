@@ -183,7 +183,7 @@ function Home() {
         if (!utcDate || !userTimezone) return "";
         const dt = DateTime.fromISO(utcDate, { zone: "utc" });
         if (!dt.isValid) {
-            console.error("Invalid date:", utcDate);
+            // console.error("Invalid date:", utcDate);
             return "";
         }
         return dt.setZone(userTimezone).toFormat("dd MMMM yyyy, HH:mm:ss z");

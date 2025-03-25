@@ -46,13 +46,21 @@ function Checkin() {
         activities: { data: activities = [], endPoints: activityEndPoints },
     } = useSelector((state) => state.global);
 
-    const myFetch = () => {
-        dispatch(
-            getRecords({
-                type: "checkin",
-                endPoint: checkinEndPoints.collection,
-            })
-        ).then((d) => {
+    const myFetch = (params = { timeFilter: "today" }) => {
+        let url = checkinEndPoints.collection;
+        if (params.timeFilter) {
+            url += `?time=${params.timeFilter}`;
+        } else if (
+            params.rangeFilter &&
+            params.rangeFilter[0] &&
+            params.rangeFilter[1]
+        ) {
+            const start = params.rangeFilter[0].toISOString().split("T")[0];
+            const end = params.rangeFilter[1].toISOString().split("T")[0];
+            url += `?start=${start}&end=${end}`;
+        }
+
+        dispatch(getRecords({ type: "checkin", endPoint: url })).then((d) => {
             if (d) {
                 const formattedCheckin = d.map((i) => ({
                     id: i.id,
@@ -277,9 +285,15 @@ function Checkin() {
                                 onEdit={handleEdit}
                                 title="Check In"
                                 timeFilter={timeFilter}
-                                setTimeFilter={setTimeFilter}
+                                setTimeFilter={(value) => {
+                                    setTimeFilter(value);
+                                    myFetch({ timeFilter: value });
+                                }}
                                 rangeFilter={rangeFilter}
-                                setRangeFilter={setRangeFilter}
+                                setRangeFilter={(value) => {
+                                    setRangeFilter(value);
+                                    myFetch({ rangeFilter: value });
+                                }}
                             />
                             <Dialog
                                 header={

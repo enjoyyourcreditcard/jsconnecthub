@@ -86,7 +86,7 @@ class MasterApiController extends Controller
         if ($data->isNotEmpty()) {
             return response()->json(['status' => true, 'message' => 'Records found', 'result' => $data], Response::HTTP_OK);
         } else {
-            return response()->json(['status' => true, 'message' => 'No records found'], Response::HTTP_NOT_FOUND);
+            return response()->json(['status' => false, 'message' => 'No records found'], Response::HTTP_NOT_FOUND);
         }
     }
 
