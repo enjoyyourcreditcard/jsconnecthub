@@ -62,11 +62,16 @@ const CustomDataTable = ({
         class: { value: null },
         activity: { value: null },
     });
+    const [filteredDataState, setFilteredDataState] = useState([]);
 
     useEffect(() => {
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         setUserTimezone(timezone);
     }, []);
+
+    useEffect(() => {
+        setFilteredDataState(formattedData);
+    }, [collection]);
 
     useEffect(() => {
         if (
@@ -187,14 +192,14 @@ const CustomDataTable = ({
     const exportCSV = () => dt.current.exportCSV();
 
     const exportExcel = () => {
-        const filteredData = formattedData.map((item) => {
+        const dataToExport = filteredDataState.map((item) => {
             const rowData = {};
             visibleColumns.forEach((col) => {
                 rowData[col.header] = item[col.field] || "";
             });
             return rowData;
         });
-        const worksheet = XLSX.utils.json_to_sheet(filteredData);
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
         XLSX.writeFile(workbook, `${type}_data.xlsx`);
@@ -204,7 +209,7 @@ const CustomDataTable = ({
         const doc = new jsPDF();
         autoTable(doc, {
             head: [visibleColumns.map((col) => col.header)],
-            body: formattedData.map((item) =>
+            body: filteredDataState.map((item) =>
                 visibleColumns.map((col) => item[col.field] || "")
             ),
             styles: { fontSize: 10 },
@@ -500,6 +505,9 @@ const CustomDataTable = ({
                 stripedRows
                 emptyMessage={`No ${type} found.`}
                 header={header}
+                onValueChange={(filteredData) =>
+                    setFilteredDataState(filteredData)
+                }
             >
                 <Column
                     selectionMode="multiple"

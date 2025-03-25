@@ -47,7 +47,6 @@ function Checkin() {
     } = useSelector((state) => state.global);
 
     const myFetch = (params = { timeFilter: "today" }) => {
-        console.log(params);
         let url = checkinEndPoints.collection;
         if (params.timeFilter) {
             url += `?time=${params.timeFilter}`;
@@ -60,7 +59,6 @@ function Checkin() {
             const end = params.rangeFilter[1].toISOString().split("T")[0];
             url += `?range_time[start]=${start}&range_time[end]=${end}`;
         }
-        console.log(url);
         dispatch(getRecords({ type: "checkin", endPoint: url })).then((d) => {
             if (d) {
                 const formattedCheckin = d.map((i) => ({
