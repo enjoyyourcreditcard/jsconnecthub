@@ -22,6 +22,7 @@ import PropTypes from "prop-types";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { DateTime } from "luxon";
 
 const CustomDataTable = ({
     title,
@@ -47,6 +48,12 @@ const CustomDataTable = ({
     const [deleteRecordsDialog, setDeleteRecordsDialog] = useState(false);
     const [globalFilter, setGlobalFilter] = useState("");
     const [visibleColumns, setVisibleColumns] = useState([]);
+    const [userTimezone, setUserTimezone] = useState(null);
+
+    useEffect(() => {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        setUserTimezone(timezone);
+    }, []);
 
     useEffect(() => {
         if (
@@ -67,6 +74,7 @@ const CustomDataTable = ({
             const allColumns = generateColumns();
             const defaultHidden = [
                 "id",
+                "reason",
                 "email_verified_at",
                 "created_at",
                 "updated_at",
@@ -81,6 +89,16 @@ const CustomDataTable = ({
             setVisibleColumns(initialVisible);
         }
     }, [collection]);
+
+    const formatDateToLocal = (utcDate) => {
+        if (!utcDate || !userTimezone) return "";
+        const dt = DateTime.fromISO(utcDate, { zone: "utc" });
+        if (!dt.isValid) {
+            console.error("Invalid date:", utcDate);
+            return "";
+        }
+        return dt.setZone(userTimezone).toFormat("dd MMMM yyyy, HH:mm:ss z");
+    };
 
     const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
@@ -269,8 +287,18 @@ const CustomDataTable = ({
     const formattedData = Array.isArray(collection)
         ? collection.map((item) => ({
               ...item,
-              date: item.date
-                  ? new Date(item.date).toLocaleDateString("en-US")
+              //   date: item.date ? formatDateToLocal(item.date) : "",
+              created_at: item.created_at
+                  ? formatDateToLocal(item.created_at)
+                  : "",
+              updated_at: item.updated_at
+                  ? formatDateToLocal(item.updated_at)
+                  : "",
+              checkin_time: item.checkin_time
+                  ? formatDateToLocal(item.checkin_time)
+                  : "",
+              checkout_time: item.checkout_time
+                  ? formatDateToLocal(item.checkout_time)
                   : "",
           }))
         : [];

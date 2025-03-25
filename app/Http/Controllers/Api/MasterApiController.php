@@ -23,8 +23,7 @@ class MasterApiController extends Controller
 
         foreach (config('constants.MASTER_TYPE_ARRAY') as $masterType) {
             // $this->middleware('permission:' . $masterType . ' list', ['only' => ['index', 'show']]);
-            // $this->middleware('permission:' . $masterType . ' create', ['only' => ['store', 'import']]);
-            $this->middleware('permission:' . $masterType . ' create', ['only' => ['store']]);
+            $this->middleware('permission:' . $masterType . ' create', ['only' => ['store', 'import']]);
             $this->middleware('permission:' . $masterType . ' edit', ['only' => ['update']]);
             $this->middleware('permission:' . $masterType . ' delete', ['only' => ['destroy']]);
         }
@@ -173,8 +172,16 @@ class MasterApiController extends Controller
                     throw new \Exception("Validation failed at row " . ($index + 2) . ": " . implode(", ", $validator->errors()->all()));
                 }
 
-                $result = $this->masterService->create($type, $rowData);
-                $imported[] = $result;
+                try {
+                    $result = $this->masterService->create($type, $rowData);
+                    $imported[] = $result;
+                } catch (\Illuminate\Database\QueryException $e) {
+                    if ($e->getCode() === '23000') {
+                        $field = $this->extractFieldFromUniqueError($e->getMessage(), $type);
+                        throw new \Exception("Duplicate entry for $field: '{$rowData[$field]}' at row " . ($index + 2));
+                    }
+                    throw new \Exception("Error at row " . ($index + 2) . ": Unable to save record");
+                }
             }
 
             DB::commit();
@@ -218,5 +225,22 @@ class MasterApiController extends Controller
             'students' => ['class_id' => 'class'],
             'checkins' => ['student_id' => 'students', 'activity_id' => 'activities'],
         ][$type] ?? [];
+    }
+
+    private function extractFieldFromUniqueError($errorMessage, $type)
+    {
+        $uniqueFields = [
+            'class' => 'name',
+            'levels' => 'name',
+            'activities' => 'name',
+        ];
+
+        $field = $uniqueFields[$type] ?? 'name';
+
+        if (preg_match("/for key '.*\.([^.]+)_unique'/", $errorMessage, $matches)) {
+            $field = $matches[1];
+        }
+
+        return $field;
     }
 }

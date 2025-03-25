@@ -29,6 +29,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () use ($types) {
     Route::prefix('{type}')->where(['type' => implode('|', $types)])->group(function () {
         Route::get('/{id}', [MasterApiController::class, 'show']);
         Route::post('/', [MasterApiController::class, 'store']);
+        Route::post('/import', [MasterApiController::class, 'import']);
         Route::put('/{id}', [MasterApiController::class, 'update']);
         Route::delete('/{id}', [MasterApiController::class, 'destroy']);
     });
@@ -36,7 +37,6 @@ Route::group(['middleware' => 'auth:sanctum'], function () use ($types) {
 
 Route::prefix('{type}')->where(['type' => implode('|', $types)])->group(function () {
     Route::get('/', [MasterApiController::class, 'index']);
-    Route::post('/import', [MasterApiController::class, 'import']);
 });
 
 /**

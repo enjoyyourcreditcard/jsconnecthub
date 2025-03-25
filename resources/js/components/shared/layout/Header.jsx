@@ -57,7 +57,7 @@ const Header = () => {
 
     const reportItem = {
         label: "Report",
-        command: () => navigate("/"),
+        items: [{ label: "Checkin", command: () => navigate("/checkin") }],
     };
 
     const centerItems = auth()
