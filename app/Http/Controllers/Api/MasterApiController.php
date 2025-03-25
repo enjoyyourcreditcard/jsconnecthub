@@ -23,6 +23,7 @@ class MasterApiController extends Controller
 
         foreach (config('constants.MASTER_TYPE_ARRAY') as $masterType) {
             // $this->middleware('permission:' . $masterType . ' list', ['only' => ['index', 'show']]);
+            // $this->middleware('permission:' . $masterType . ' create', ['only' => ['store', 'import']]);
             $this->middleware('permission:' . $masterType . ' create', ['only' => ['store']]);
             $this->middleware('permission:' . $masterType . ' edit', ['only' => ['update']]);
             $this->middleware('permission:' . $masterType . ' delete', ['only' => ['destroy']]);
@@ -141,14 +142,18 @@ class MasterApiController extends Controller
                 return response()->json(['status' => false, 'message' => 'File is empty'], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
-            $validationRules = $this->getRuleValidationByType($type);
-            $foreignKeys = $this->getForeignKeys($type);
-            $imported = [];
+            $headerMapping = $this->changeImportHeader($type);
+            $transformedHeaders = array_map(function ($header) use ($headerMapping) {
+                return $headerMapping[strtolower($header)] ?? strtolower($header);
+            }, $headers);
 
-            // DB::beginTransaction();
+            $foreignKeys = $this->getForeignKeys($type);
+
+            $imported = [];
+            DB::beginTransaction();
 
             foreach ($rows as $index => $row) {
-                $rowData = array_combine($headers, $row);
+                $rowData = array_combine($transformedHeaders, $row);
 
                 foreach ($foreignKeys as $fk => $relatedType) {
                     if (isset($rowData[$fk]) && !is_numeric($rowData[$fk])) {
@@ -161,8 +166,9 @@ class MasterApiController extends Controller
                     }
                 }
 
-                return $rowData;
+                $validationRules = $this->getRuleValidationByType($type);
                 $validator = Validator::make($rowData, $validationRules);
+
                 if ($validator->fails()) {
                     throw new \Exception("Validation failed at row " . ($index + 2) . ": " . implode(", ", $validator->errors()->all()));
                 }
@@ -171,7 +177,7 @@ class MasterApiController extends Controller
                 $imported[] = $result;
             }
 
-            // DB::commit();
+            DB::commit();
 
             return response()->json([
                 'status' => true,
@@ -179,7 +185,7 @@ class MasterApiController extends Controller
                 'result' => $imported
             ], Response::HTTP_OK);
         } catch (\Exception $e) {
-            // DB::rollBack();
+            DB::rollBack();
             return response()->json([
                 'status' => false,
                 'message' => 'Import failed: ' . $e->getMessage()
@@ -187,31 +193,30 @@ class MasterApiController extends Controller
         }
     }
 
+
+
     public function destroy(Request $request, $type, $id)
     {
         $this->masterService->delete($type, $id);
         return response()->json(['status' => true, 'message' => "$type deleted"], Response::HTTP_OK);
     }
 
-    private function getForeignKeys($type)
-    {
-        $foreignKeys = [
-            'class' => ['Level' => 'levels'],
-            'students' => ['Class' => 'class'],
-            'checkins' => ['Student' => 'students', 'Activity' => 'activities'],
-        ];
-
-        return $foreignKeys[$type] ?? [];
-    }
-
+    // misc
     private function changeImportHeader($type)
     {
-        $foreignKeys = [
-            'class' => ['Level' => 'levels'],
-            'students' => ['Class' => 'class'],
-            'checkins' => ['Student' => 'students', 'Activity' => 'activities'],
-        ];
+        return [
+            'class' => ['level' => 'level_id'],
+            'students' => ['class' => 'class_id'],
+            'checkins' => ['student' => 'student_id', 'activity' => 'activity_id'],
+        ][$type] ?? [];
+    }
 
-        return $foreignKeys[$type] ?? [];
+    private function getForeignKeys($type)
+    {
+        return [
+            'class' => ['level_id' => 'levels'],
+            'students' => ['class_id' => 'class'],
+            'checkins' => ['student_id' => 'students', 'activity_id' => 'activities'],
+        ][$type] ?? [];
     }
 }

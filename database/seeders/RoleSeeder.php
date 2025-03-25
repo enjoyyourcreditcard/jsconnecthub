@@ -19,20 +19,19 @@ class RoleSeeder extends Seeder
             ['name' => 'Admin1', 'guard_name' => 'web'],
             ['name' => 'Admin2', 'guard_name' => 'web'],
             ['name' => 'Admin3', 'guard_name' => 'web'],
-            ['name' => 'Student', 'guard_name' => 'web']
+            // ['name' => 'Student', 'guard_name' => 'web']
         ];
 
         Role::insert($roles);
 
         foreach (config('constants.MASTER_TYPE_ARRAY') as $masterType) {
-            // Permission::create(['name' => $masterType . ' list']);
             Permission::create(['name' => $masterType . ' create']);
             Permission::create(['name' => $masterType . ' edit']);
             Permission::create(['name' => $masterType . ' delete']);
 
             Role::findByName('Superadmin')->givePermissionTo([$masterType . ' create', $masterType . ' edit', $masterType . ' delete']);
-
-            Role::findByName('Admin1')->givePermissionTo([$masterType . ' create', $masterType . ' edit']);
         }
+
+        Role::findByName('Admin1')->givePermissionTo(['checkin' . ' create', 'checkin' . ' edit', 'checkin' . ' delete']);
     }
 }
