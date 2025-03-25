@@ -13,6 +13,8 @@ import { InputIcon } from "primereact/inputicon";
 import { MultiSelect } from "primereact/multiselect";
 import { OverlayPanel } from "primereact/overlaypanel";
 import { FileUpload } from "primereact/fileupload";
+import { Dropdown } from "primereact/dropdown";
+import { Calendar } from "primereact/calendar";
 import {
     deleteRecord,
     importRecord,
@@ -33,10 +35,15 @@ const CustomDataTable = ({
     onAdd = () => {},
     onEdit = () => {},
     onDelete = null,
+    timeFilter,
+    setTimeFilter,
+    rangeFilter,
+    setRangeFilter,
 }) => {
     const dispatch = useDispatch();
     const dt = useRef(null);
     const overlayPanelRef = useRef(null);
+    const timeFilterRef = useRef(null);
     const {
         [type]: {
             data: collection = [],
@@ -49,6 +56,12 @@ const CustomDataTable = ({
     const [globalFilter, setGlobalFilter] = useState("");
     const [visibleColumns, setVisibleColumns] = useState([]);
     const [userTimezone, setUserTimezone] = useState(null);
+    const [filters, setFilters] = useState({
+        student: { value: null },
+        level: { value: null },
+        class: { value: null },
+        activity: { value: null },
+    });
 
     useEffect(() => {
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -172,7 +185,7 @@ const CustomDataTable = ({
 
     const exportCSV = () => dt.current.exportCSV();
     const exportExcel = () => {
-        const filteredData = collection.map((item) =>
+        const filteredData = formattedData.map((item) =>
             visibleColumns.reduce((acc, col) => {
                 acc[col.header] = item[col.field] || "";
                 return acc;
@@ -187,7 +200,7 @@ const CustomDataTable = ({
         const doc = new jsPDF();
         autoTable(doc, {
             head: [visibleColumns.map((col) => col.header)],
-            body: collection.map((item) =>
+            body: formattedData.map((item) =>
                 visibleColumns.map((col) => item[col.field] || "")
             ),
             styles: { fontSize: 10 },
@@ -209,16 +222,10 @@ const CustomDataTable = ({
             })
         )
             .then((result) => {
-                if (result) {
-                    onFetch();
-                }
+                if (result) onFetch();
             })
-            .catch((error) => {
-                console.error("Import error:", error.message);
-            })
-            .finally(() => {
-                overlayPanelRef.current.hide();
-            });
+            .catch((error) => console.error("Import error:", error.message))
+            .finally(() => overlayPanelRef.current.hide());
     };
 
     const leftToolbarTemplate = () => (
@@ -239,31 +246,77 @@ const CustomDataTable = ({
         </div>
     );
 
-    const rightToolbarTemplate = () => (
-        <div className="flex flex-wrap gap-2">
-            <Button label="CSV" icon="pi pi-file" onClick={exportCSV} />
-            <Button
-                label="Excel"
-                icon="pi pi-file-excel"
-                severity="success"
-                onClick={exportExcel}
-            />
-            <Button
-                label="PDF"
-                icon="pi pi-file-pdf"
-                severity="warning"
-                onClick={exportPDF}
-            />
-            {hasImport && (
+    const rightToolbarTemplate = () => {
+        const timeOptions = [
+            { label: "Today", value: "today" },
+            { label: "This Week", value: "week" },
+            { label: "This Month", value: "month" },
+            { label: "This Year", value: "year" },
+            { label: "Last Year", value: "last-year" },
+        ];
+
+        return (
+            <div className="flex flex-wrap gap-2">
+                <Button label="CSV" icon="pi pi-file" onClick={exportCSV} />
                 <Button
-                    label="Import"
-                    icon="pi pi-upload"
-                    severity="info"
-                    onClick={(e) => overlayPanelRef.current.toggle(e)}
+                    label="Excel"
+                    icon="pi pi-file-excel"
+                    severity="success"
+                    onClick={exportExcel}
                 />
-            )}
-        </div>
-    );
+                <Button
+                    label="PDF"
+                    icon="pi pi-file-pdf"
+                    severity="warning"
+                    onClick={exportPDF}
+                />
+                {hasImport && (
+                    <Button
+                        label="Import"
+                        icon="pi pi-upload"
+                        severity="info"
+                        onClick={(e) => overlayPanelRef.current.toggle(e)}
+                    />
+                )}
+                {type === "checkin" && (
+                    <>
+                        <Button
+                            label="Select"
+                            icon="pi pi-calendar"
+                            severity="secondary"
+                            onClick={(e) => timeFilterRef.current.toggle(e)}
+                        />
+                        <OverlayPanel ref={timeFilterRef}>
+                            <div className="flex flex-column gap-2">
+                                <Dropdown
+                                    value={timeFilter}
+                                    options={timeOptions}
+                                    onChange={(e) => {
+                                        setTimeFilter(e.value);
+                                        setRangeFilter(null);
+                                    }}
+                                    placeholder="Select Time Period"
+                                    style={{ width: "200px" }}
+                                    showClear
+                                />
+                                <Calendar
+                                    value={rangeFilter}
+                                    onChange={(e) => {
+                                        setRangeFilter(e.value);
+                                        setTimeFilter(null);
+                                    }}
+                                    selectionMode="range"
+                                    dateFormat="yy-mm-dd"
+                                    placeholder="Select Date Range"
+                                    style={{ width: "200px" }}
+                                />
+                            </div>
+                        </OverlayPanel>
+                    </>
+                )}
+            </div>
+        );
+    };
 
     const actionsTemplate = (rowData) => (
         <>
@@ -284,24 +337,72 @@ const CustomDataTable = ({
         </>
     );
 
-    const formattedData = Array.isArray(collection)
-        ? collection.map((item) => ({
-              ...item,
-              //   date: item.date ? formatDateToLocal(item.date) : "",
-              created_at: item.created_at
-                  ? formatDateToLocal(item.created_at)
-                  : "",
-              updated_at: item.updated_at
-                  ? formatDateToLocal(item.updated_at)
-                  : "",
-              checkin_time: item.checkin_time
-                  ? formatDateToLocal(item.checkin_time)
-                  : "",
-              checkout_time: item.checkout_time
-                  ? formatDateToLocal(item.checkout_time)
-                  : "",
-          }))
+    const filterDataByTime = (data) => {
+        if (!timeFilter && !rangeFilter) return data;
+
+        return data.filter((item) => {
+            console.log(item);
+            const checkinTime = DateTime.fromISO(item.checkin_time, {
+                zone: "utc",
+            });
+            if (!checkinTime.isValid) return false;
+
+            if (timeFilter) {
+                const now = DateTime.local().setZone("utc");
+                switch (timeFilter) {
+                    case "today":
+                        return checkinTime.hasSame(now, "day");
+                    case "week":
+                        return (
+                            checkinTime >= now.startOf("week") &&
+                            checkinTime <= now.endOf("week")
+                        );
+                    case "month":
+                        return (
+                            checkinTime >= now.startOf("month") &&
+                            checkinTime <= now.endOf("month")
+                        );
+                    case "year":
+                        return (
+                            checkinTime >= now.startOf("year") &&
+                            checkinTime <= now.endOf("year")
+                        );
+                    case "last-year":
+                        return (
+                            checkinTime >=
+                                now.minus({ years: 1 }).startOf("year") &&
+                            checkinTime <= now.minus({ years: 1 }).endOf("year")
+                        );
+                    default:
+                        return true;
+                }
+            }
+
+            if (rangeFilter && rangeFilter[0] && rangeFilter[1]) {
+                const start = DateTime.fromJSDate(rangeFilter[0]).startOf(
+                    "day"
+                );
+                const end = DateTime.fromJSDate(rangeFilter[1]).endOf("day");
+                return checkinTime >= start && checkinTime <= end;
+            }
+
+            return true;
+        });
+    };
+
+    const filteredData = Array.isArray(collection)
+        ? filterDataByTime(collection)
         : [];
+
+    const formattedData = filteredData.map((item) => ({
+        ...item,
+        checkin_time: item.checkin_time
+            ? formatDateToLocal(item.checkin_time)
+            : "",
+        checkout_time: item.checkout_time
+            ? formatDateToLocal(item.checkout_time)
+            : "",
+    }));
 
     const generateColumns = () => {
         if (!collection.length) return [];
@@ -309,14 +410,30 @@ const CustomDataTable = ({
         const firstItem = collection[0];
         const properties = Object.keys(firstItem);
 
-        const dynamicColumns = properties.map((prop) => ({
-            field: prop,
-            header: prop
-                .split("_")
-                .map((word) => capitalize(word))
-                .join(" "),
-            sortable: true,
-        }));
+        const dynamicColumns = properties.map((prop) => {
+            const column = {
+                field: prop,
+                header: prop
+                    .split("_")
+                    .map((word) => capitalize(word))
+                    .join(" "),
+                sortable: true,
+            };
+
+            if (type === "checkin") {
+                if (prop === "student") {
+                    column.filter = true;
+                } else if (prop === "level") {
+                    column.filter = true;
+                } else if (prop === "class") {
+                    column.filter = true;
+                } else if (prop === "activity") {
+                    column.filter = true;
+                }
+            }
+
+            return column;
+        });
 
         return [
             ...dynamicColumns,
@@ -421,6 +538,8 @@ const CustomDataTable = ({
                 selection={selectedRecords}
                 onSelectionChange={(e) => setSelectedRecords(e.value)}
                 globalFilter={globalFilter}
+                filters={type === "checkin" ? filters : null}
+                filterDisplay={type === "checkin" ? "row" : undefined}
                 paginator
                 rows={10}
                 rowsPerPageOptions={[10, 20, 50, 100]}
@@ -450,6 +569,8 @@ const CustomDataTable = ({
                         body={col.body}
                         exportable={col.exportable !== false}
                         headerStyle={col.headerStyle}
+                        filter={col.filter}
+                        filterElement={col.filterElement}
                     />
                 ))}
                 <Column
@@ -506,6 +627,10 @@ CustomDataTable.propTypes = {
     onAdd: PropTypes.func,
     onEdit: PropTypes.func,
     onDelete: PropTypes.func,
+    timeFilter: PropTypes.string,
+    setTimeFilter: PropTypes.func,
+    rangeFilter: PropTypes.array,
+    setRangeFilter: PropTypes.func,
 };
 
 export default CustomDataTable;

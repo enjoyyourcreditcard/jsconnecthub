@@ -36,6 +36,8 @@ function Checkin() {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [timeFilter, setTimeFilter] = useState(null);
+    const [rangeFilter, setRangeFilter] = useState(null);
     const {
         checkin: { data: checkin = [], endPoints: checkinEndPoints },
         levels: { data: levels = [], endPoints: levelEndPoints },
@@ -243,29 +245,17 @@ function Checkin() {
         }
     };
 
-    const levelOptions = levels.map((i) => ({
-        id: i.id,
-        label: i.name,
-    }));
-
+    const levelOptions = levels.map((i) => ({ id: i.id, label: i.name }));
     const classOptions = formData.level
         ? classes
               .filter((c) => c.level_id === formData.level.id)
-              .map((i) => ({
-                  id: i.id,
-                  label: i.name,
-              }))
+              .map((i) => ({ id: i.id, label: i.name }))
         : [];
-
     const studentOptions = formData.class
         ? students
               .filter((s) => s.class_id === formData.class.id)
-              .map((i) => ({
-                  id: i.id,
-                  label: i.name,
-              }))
+              .map((i) => ({ id: i.id, label: i.name }))
         : [];
-
     const activityOptions = activities.map((i) => ({
         id: i.id,
         label: i.name,
@@ -286,6 +276,10 @@ function Checkin() {
                                 onAdd={handleAdd}
                                 onEdit={handleEdit}
                                 title="Check In"
+                                timeFilter={timeFilter}
+                                setTimeFilter={setTimeFilter}
+                                rangeFilter={rangeFilter}
+                                setRangeFilter={setRangeFilter}
                             />
                             <Dialog
                                 header={
@@ -396,10 +390,10 @@ function Checkin() {
                                                 style={{ width: "100%" }}
                                                 required
                                                 disabled={loading}
-                                                placeholder="Select check-in time (UTC)"
+                                                placeholder="Select check-in time"
                                             />
                                             <label htmlFor="checkin_time">
-                                                Check-In Time (UTC)
+                                                Check-In Time
                                             </label>
                                         </FloatLabel>
                                     </div>
@@ -414,10 +408,10 @@ function Checkin() {
                                                 dateFormat="yy-mm-dd"
                                                 style={{ width: "100%" }}
                                                 disabled={loading}
-                                                placeholder="Select check-out time (UTC)"
+                                                placeholder="Select check-out time"
                                             />
                                             <label htmlFor="checkout_time">
-                                                Check-Out Time (UTC)
+                                                Check-Out Time
                                             </label>
                                         </FloatLabel>
                                     </div>
