@@ -6,6 +6,7 @@ namespace Database\Seeders;
 
 use Database\Seeders\ActivitySeeder;
 use Database\Seeders\ClassSeeder;
+use Database\Seeders\FacilitySeeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\StudentSeeder;
 use Database\Seeders\UserSeeder;
@@ -26,5 +27,6 @@ class DatabaseSeeder extends Seeder
         $this->call(ClassSeeder::class);
         $this->call(StudentSeeder::class);
         $this->call(ActivitySeeder::class);
+        $this->call(FacilitySeeder::class);
     }
 }
