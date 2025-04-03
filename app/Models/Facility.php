@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Facility extends Model
 {
@@ -16,4 +17,14 @@ class Facility extends Model
     protected $fillable = [
         'name',
     ];
+
+    /**
+     * Get all of the bookings for the facility
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
 }

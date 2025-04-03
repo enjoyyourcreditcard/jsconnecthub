@@ -9,7 +9,8 @@ return [
         'STUDENT_MASTER_TYPE' => 'students',
         'ACTIVITY_MASTER_TYPE' => 'activities',
         'ROLE_MASTER_TYPE' => 'roles',
-        'CHECKIN_MASTER_TYPE' => 'checkin'
+        'CHECKIN_MASTER_TYPE' => 'checkin',
+        'BOOKING_MASTER_TYPE' => 'bookings'
     ],
 
     'MASTER_VALIDATION_ARRAY' => [

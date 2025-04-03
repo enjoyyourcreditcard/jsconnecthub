@@ -1,8 +1,10 @@
 <?php
 
 namespace App\Models;
+use App\Models\Booking;
 use App\Models\DataClass;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Student extends Model
@@ -27,5 +29,15 @@ class Student extends Model
     public function class(): BelongsTo
     {
         return $this->belongsTo(DataClass::class);
+    }
+
+    /**
+     * Get all of the bookings for the student
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
     }
 }

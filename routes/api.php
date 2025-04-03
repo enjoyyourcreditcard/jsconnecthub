@@ -1,9 +1,10 @@
 <?php
 
-use App\Http\Controllers\Api\MasterApiController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Api\CheckinController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\MasterApiController;
 
 /**
  * References
@@ -44,3 +45,12 @@ Route::prefix('{type}')->where(['type' => implode('|', $types)])->group(function
  */
 Route::post('/check-in', [CheckinController::class, 'checkin']);
 Route::post('/check-out', [CheckinController::class, 'checkout']);
+
+/**
+ * Booking
+ */
+Route::post('/booking', [BookingController::class, 'store']);
+Route::group(['middleware' => 'auth:sanctum'], function () use ($types) {
+    Route::post('/booking/{id}/confirm', [BookingController::class, 'confirm']);
+});
+Route::post('/booking/{id}/cancel', [BookingController::class, 'cancel']);
