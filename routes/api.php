@@ -5,6 +5,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Api\CheckinController;
 use App\Http\Controllers\Api\MasterApiController;
+use App\Http\Controllers\CounselController;
 
 /**
  * References
@@ -54,3 +55,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () use ($types) {
     Route::post('/booking/{id}/confirm', [BookingController::class, 'confirm']);
 });
 Route::post('/booking/{id}/cancel', [BookingController::class, 'cancel']);
+
+/**
+ * Ms Vi Counsellor
+ */
+Route::post('/counsel', [CounselController::class, 'submit']);

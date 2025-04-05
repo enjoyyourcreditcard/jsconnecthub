@@ -23,7 +23,7 @@ import ManageLevel from "./components/masters/ManageLevel";
 import ManageActivity from "./components/masters/ManageActivity";
 import ManageFacility from "./components/masters/ManageFacility";
 import ManageStudent from "./components/masters/ManageStudent";
-import Checkin from "./components/masters/reports/checkin";
+import Checkin from "./components/masters/reports/Checkin";
 
 const AppWrapper = () => {
     const authHeader = useAuthHeader();
