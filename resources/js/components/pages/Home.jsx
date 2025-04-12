@@ -488,11 +488,11 @@ function Home() {
                         {activeButton === "activities" && (
                             <StepperPanel header="Activities">
                                 <div className="flex flex-col h-full">
-                                    <div className="flex-grow grid grid-cols-1 justify-start items-center gap-2">
+                                    <div className="flex-grow grid grid-cols-1 items-center gap-2">
                                         {studentId ? (
                                             <>
-                                                <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 p-5 flex-grow flex flex-wrap justify-start items-center">
-                                                    <div>
+                                                <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 p-5 flex-grow flex flex-wrap items-center">
+                                                    <div className="justify-start mb-4">
                                                         Hi "
                                                         {
                                                             students.find(
@@ -522,9 +522,7 @@ function Home() {
                                                         (Timezone:{" "}
                                                         {userTimezone}):
                                                     </div>
-                                                </div>
-                                                <div className="flex-grow grid grid-cols-1 gap-2">
-                                                    <Accordion>
+                                                    <Accordion className="w-full">
                                                         {questLog.map(
                                                             (quest) => (
                                                                 <AccordionTab
@@ -612,7 +610,9 @@ function Home() {
                                                             )
                                                         )}
                                                     </Accordion>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                </div>
+                                                <div className="flex-grow grid grid-cols-1 gap-2">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 overflow-y-auto">
                                                         {isCheckedIn ? (
                                                             <Button
                                                                 label={`${
@@ -627,128 +627,37 @@ function Home() {
                                                                 className="w-full mt-1  text-xs sm:text-sm md:text-base"
                                                             />
                                                         ) : (
-                                                            <Dropdown
-                                                                editable
-                                                                showClear
-                                                                value={
-                                                                    selectedActivity
-                                                                }
-                                                                options={
-                                                                    activities
-                                                                }
-                                                                onChange={(
-                                                                    e
-                                                                ) => {
-                                                                    setSelectedActivity(
-                                                                        e.value
-                                                                    );
-                                                                    setActivityId(
-                                                                        e.value
-                                                                            ?.id ||
-                                                                            null
-                                                                    );
-                                                                    setEditableActivity(
-                                                                        e.value ||
-                                                                            ""
-                                                                    );
-                                                                }}
-                                                                optionLabel="name"
-                                                                filter
-                                                                placeholder="Pick or create your quest!"
-                                                                className="w-full mt-1"
-                                                                itemTemplate={(
-                                                                    option
-                                                                ) => (
-                                                                    <div className="max-w-[200px] sm:max-w-[250px] md:max-w-[300px]">
-                                                                        <span className="font-bold text-wrap">
-                                                                            {
-                                                                                option.name
-                                                                            }
-                                                                        </span>
-                                                                        <br />
-                                                                        <span className="text-[10px] sm:text-xs md:text-sm text-gray-600 text-wrap">
-                                                                            {
-                                                                                option.description
-                                                                            }
-                                                                        </span>
-                                                                    </div>
-                                                                )}
-                                                                valueTemplate={(
-                                                                    option
-                                                                ) =>
-                                                                    option ? (
-                                                                        <div className="max-w-[200px] sm:max-w-[250px] md:max-w-[300px]">
-                                                                            <span className="font-bold text-wrap">
-                                                                                {
-                                                                                    option.name
-                                                                                }
-                                                                            </span>
-                                                                        </div>
-                                                                    ) : (
-                                                                        "Pick or create your quest!"
-                                                                    )
-                                                                }
-                                                            />
-                                                        )}
-                                                        <Button
-                                                            label={
-                                                                isCheckedIn
-                                                                    ? "Check Out"
-                                                                    : "Check In"
-                                                            }
-                                                            icon={
-                                                                isCheckedIn
-                                                                    ? "pi pi-sign-out"
-                                                                    : "pi pi-sign-in"
-                                                            }
-                                                            iconPos="right"
-                                                            severity={
-                                                                isCheckedIn
-                                                                    ? "warning"
-                                                                    : undefined
-                                                            }
-                                                            size="small"
-                                                            onClick={(
-                                                                event
-                                                            ) => {
-                                                                if (
-                                                                    !isCheckedIn
-                                                                ) {
-                                                                    confirmPopup(
-                                                                        {
-                                                                            target: event.currentTarget,
-                                                                            message:
-                                                                                "Are you sure you want to check in?",
-                                                                            icon: "pi pi-exclamation-triangle",
-                                                                            accept: () =>
-                                                                                handleCheckin(),
-                                                                            reject: () => {
-                                                                                dispatch(
-                                                                                    setToastMessage(
-                                                                                        {
-                                                                                            severity:
-                                                                                                "warn",
-                                                                                            summary:
-                                                                                                "Action Cancelled",
-                                                                                            detail: "You stayed checked out.",
-                                                                                        }
-                                                                                    )
-                                                                                );
-                                                                            },
+                                                            activities.map(
+                                                                (activity) => (
+                                                                    <Button
+                                                                        key={
+                                                                            activity.id
                                                                         }
-                                                                    );
-                                                                } else {
-                                                                    overlayRef.current.toggle(
-                                                                        event
-                                                                    );
-                                                                }
-                                                            }}
-                                                            disabled={
-                                                                (!selectedActivity &&
-                                                                    !isCheckedIn) ||
-                                                                loading
-                                                            }
-                                                        />
+                                                                        label={
+                                                                            activity.name
+                                                                        }
+                                                                        onClick={() =>
+                                                                            setActivityId(
+                                                                                activity.id
+                                                                            )
+                                                                        }
+                                                                        className={` ${
+                                                                            activityId ===
+                                                                            activity.id
+                                                                                ? "bg-blue-500 text-white"
+                                                                                : "bg-gray-200"
+                                                                        }`}
+                                                                        size="small"
+                                                                        icon={
+                                                                            activityId ===
+                                                                            activity.id
+                                                                                ? "pi pi-check"
+                                                                                : null
+                                                                        }
+                                                                    />
+                                                                )
+                                                            )
+                                                        )}
                                                     </div>
                                                 </div>
                                             </>
@@ -757,7 +666,7 @@ function Home() {
                                         )}
                                     </div>
                                 </div>
-                                <div className="flex pt-2 sm:pt-4 justify-start">
+                                <div className="flex pt-2 sm:pt-4 justify-between">
                                     <Button
                                         label="Back"
                                         severity="secondary"
@@ -805,6 +714,55 @@ function Home() {
                                             {error}
                                         </p>
                                     )}
+                                    <Button
+                                        label={
+                                            isCheckedIn
+                                                ? "Check Out"
+                                                : "Check In"
+                                        }
+                                        icon={
+                                            isCheckedIn
+                                                ? "pi pi-sign-out"
+                                                : "pi pi-sign-in"
+                                        }
+                                        iconPos="right"
+                                        severity={
+                                            isCheckedIn ? "warning" : undefined
+                                        }
+                                        size="small"
+                                        onClick={(event) => {
+                                            if (!isCheckedIn) {
+                                                confirmPopup({
+                                                    target: event.currentTarget,
+                                                    message:
+                                                        "Are you sure you want to check in?",
+                                                    icon: "pi pi-exclamation-triangle",
+                                                    accept: () =>
+                                                        handleCheckin(),
+                                                    reject: () => {
+                                                        dispatch(
+                                                            setToastMessage({
+                                                                severity:
+                                                                    "warn",
+                                                                summary:
+                                                                    "Action Cancelled",
+                                                                detail: "You stayed checked out.",
+                                                            })
+                                                        );
+                                                    },
+                                                });
+                                            } else {
+                                                overlayRef.current.toggle(
+                                                    event
+                                                );
+                                            }
+                                        }}
+                                        disabled={
+                                            (!selectedActivity &&
+                                                !isCheckedIn) ||
+                                            loading
+                                        }
+                                    />
                                 </div>
                                 <OverlayPanel ref={overlayRef} showCloseIcon>
                                     <div className="flex flex-col gap-4">
