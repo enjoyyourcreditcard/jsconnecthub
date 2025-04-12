@@ -43,17 +43,23 @@ const Header = () => {
         },
     ];
 
-    const masterItem = {
-        label: "Master",
-        items: [
-            { label: "Student", command: () => navigate("/students") },
-            { label: "User", command: () => navigate("/users") },
-            { label: "Class", command: () => navigate("/class") },
-            { label: "Level", command: () => navigate("/levels") },
-            { label: "Activity", command: () => navigate("/activities") },
-            { label: "Facility", command: () => navigate("/facilities") },
-        ],
-    };
+    const masterItem = [
+        {
+            label: "Dashboard",
+            command: () => navigate("/dashboard")
+        },
+        {
+            label: "Master",
+            items: [
+                { label: "Student", command: () => navigate("/students") },
+                { label: "User", command: () => navigate("/users") },
+                { label: "Class", command: () => navigate("/class") },
+                { label: "Level", command: () => navigate("/levels") },
+                { label: "Activity", command: () => navigate("/activities") },
+                { label: "Facility", command: () => navigate("/facilities") },
+            ],
+        }
+    ];
 
     const reportItem = {
         label: "Report",
@@ -61,7 +67,7 @@ const Header = () => {
     };
 
     const centerItems = auth()
-        ? [...baseItems, masterItem, reportItem]
+        ? [...baseItems, ...masterItem, reportItem]
         : baseItems;
 
     const profileItems = [

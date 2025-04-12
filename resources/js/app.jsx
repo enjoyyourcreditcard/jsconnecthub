@@ -24,6 +24,7 @@ import ManageActivity from "./components/masters/ManageActivity";
 import ManageFacility from "./components/masters/ManageFacility";
 import ManageStudent from "./components/masters/ManageStudent";
 import Checkin from "./components/masters/reports/Checkin";
+import Dashboard from "./components/pages/Dashboard";
 
 const AppWrapper = () => {
     const authHeader = useAuthHeader();
@@ -94,6 +95,7 @@ const AppWrapper = () => {
                 <Route path="/login" element={<Login />} />
                 <Route path="/" element={<Home />} />
                 <Route path="/home" element={<Home />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/users" element={<ManageUser />} />
                 <Route path="/class" element={<ManageClass />} />

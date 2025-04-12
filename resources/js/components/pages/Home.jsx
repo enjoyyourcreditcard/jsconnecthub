@@ -9,7 +9,7 @@ import { StepperPanel } from "primereact/stepperpanel";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { ConfirmPopup, confirmPopup } from "primereact/confirmpopup";
-import { Dropdown } from "primereact/dropdown";
+import { InputText } from "primereact/inputtext";
 import { Toast } from "primereact/toast";
 import { OverlayPanel } from "primereact/overlaypanel";
 import { Checkbox } from "primereact/checkbox";
@@ -36,6 +36,8 @@ function Home() {
     const [activityId, setActivityId] = useState(null);
     const [selectedActivity, setSelectedActivity] = useState(null);
     const [editableActivity, setEditableActivity] = useState("");
+    const [showCustomActivityInput, setShowCustomActivityInput] =
+        useState(false);
     const [isCheckedIn, setIsCheckedIn] = useState(false);
     const [timer, setTimer] = useState(0);
     const [timerInterval, setTimerInterval] = useState(null);
@@ -151,7 +153,7 @@ function Home() {
                         summary:
                             "Hi " +
                             students.find((s) => s.id === studentId)?.name,
-                        detail: "Ready for you first quest today?",
+                        detail: "Ready for your first quest today?",
                     })
                 );
             }
@@ -184,7 +186,6 @@ function Home() {
         if (!utcDate || !userTimezone) return "";
         const dt = DateTime.fromISO(utcDate, { zone: "utc" });
         if (!dt.isValid) {
-            // console.error("Invalid date:", utcDate);
             return "";
         }
         return dt.setZone(userTimezone).toFormat("dd MMMM yyyy, HH:mm:ss z");
@@ -240,6 +241,7 @@ function Home() {
                         detail: "You have started your quest!",
                     })
                 );
+                setShowCustomActivityInput(false);
             })
             .catch((err) => {
                 setError(err.message || "Check-in failed");
@@ -318,7 +320,7 @@ function Home() {
         <div>
             <Header />
             <div className="min-h-screen flex flex-col gap-6 justify-center items-center p-4">
-                <div className="flex flex-row justify-center md:justify-start gap-4 w-11/12 sm:w-11/12 md:w-10/12 xl:w-4/12">
+                <div className="flex flex-row justify-center md:justify-start gap-4 w-11/12 sm:w-11/12 md:w-10/12 xl:w-1/2">
                     <Button
                         label="Activities"
                         icon={
@@ -351,13 +353,13 @@ function Home() {
                     <Stepper ref={stepperRef} className="w-full" linear>
                         <StepperPanel header="Level">
                             <div className="flex flex-col h-full">
-                                <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto p-3">
+                                <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-32">
                                     {levels.map((level) => (
                                         <Button
                                             key={level.id}
                                             label={level.name}
                                             onClick={() => setLevelId(level.id)}
-                                            className={` ${
+                                            className={`${
                                                 levelId === level.id
                                                     ? "bg-blue-500 text-white"
                                                     : "bg-gray-200"
@@ -387,7 +389,7 @@ function Home() {
                         </StepperPanel>
                         <StepperPanel header="Class">
                             <div className="flex flex-col h-full">
-                                <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto">
+                                <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-32">
                                     {classes
                                         .filter((c) => c.level_id === levelId)
                                         .map((cls) => (
@@ -397,12 +399,12 @@ function Home() {
                                                 onClick={() =>
                                                     setClassId(cls.id)
                                                 }
-                                                size="small"
-                                                className={` ${
+                                                className={`${
                                                     classId === cls.id
                                                         ? "bg-blue-500 text-white"
                                                         : "bg-gray-200"
                                                 }`}
+                                                size="small"
                                                 icon={
                                                     classId === cls.id
                                                         ? "pi pi-check"
@@ -436,7 +438,7 @@ function Home() {
                         </StepperPanel>
                         <StepperPanel header="Character">
                             <div className="flex flex-col h-full">
-                                <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto">
+                                <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-32">
                                     {students
                                         .filter((s) => s.class_id === classId)
                                         .map((student) => (
@@ -446,7 +448,7 @@ function Home() {
                                                 onClick={() =>
                                                     setStudentId(student.id)
                                                 }
-                                                className={` ${
+                                                className={`${
                                                     studentId === student.id
                                                         ? "bg-blue-500 text-white"
                                                         : "bg-gray-200"
@@ -484,14 +486,13 @@ function Home() {
                                 />
                             </div>
                         </StepperPanel>
-                        {/* < dymanic content */}
                         {activeButton === "activities" && (
                             <StepperPanel header="Activities">
                                 <div className="flex flex-col h-full">
                                     <div className="flex-grow grid grid-cols-1 items-center gap-2">
                                         {studentId ? (
                                             <>
-                                                <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 p-5 flex-grow flex flex-wrap items-center">
+                                                <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 p-5 flex-grow flex flex-wrap items-center max-h-48 overflow-y-auto">
                                                     <div className="justify-start mb-4">
                                                         Hi "
                                                         {
@@ -531,7 +532,7 @@ function Home() {
                                                                     }
                                                                     header={
                                                                         <div className="flex items-center gap-2">
-                                                                            <span>
+                                                                            <span className="truncate max-w-[100px] inline-block">
                                                                                 {
                                                                                     quest.activityName
                                                                                 }
@@ -554,6 +555,12 @@ function Home() {
                                                                     }
                                                                 >
                                                                     <div className="flex flex-col gap-2">
+                                                                        <p>
+                                                                            <strong>
+                                                                                Activity :
+                                                                            </strong>{" "}
+                                                                            {quest.activityName}
+                                                                        </p>
                                                                         <p>
                                                                             <strong>
                                                                                 Check-In
@@ -611,58 +618,114 @@ function Home() {
                                                         )}
                                                     </Accordion>
                                                 </div>
-                                                <div className="flex-grow grid grid-cols-1 gap-2">
-                                                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 overflow-y-auto">
-                                                        {isCheckedIn ? (
-                                                            <Button
-                                                                label={`${
-                                                                    selectedActivity?.name ||
-                                                                    editableActivity
-                                                                } - ${formatTime(
-                                                                    timer
-                                                                )}`}
-                                                                icon="pi pi-spin pi-spinner"
-                                                                size="small"
-                                                                disabled
-                                                                className="w-full mt-1  text-xs sm:text-sm md:text-base"
-                                                            />
-                                                        ) : (
-                                                            activities.map(
-                                                                (activity) => (
-                                                                    <Button
-                                                                        key={
-                                                                            activity.id
-                                                                        }
-                                                                        label={
-                                                                            activity.name
-                                                                        }
-                                                                        onClick={() =>
-                                                                            setActivityId(
+                                                <div className="flex-grow grid grid-cols-1 gap-2 max-h-32 overflow-y-auto">
+                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                        {!isCheckedIn && (
+                                                            <>
+                                                                {activities.map(
+                                                                    (
+                                                                        activity
+                                                                    ) => (
+                                                                        <Button
+                                                                            key={
                                                                                 activity.id
-                                                                            )
-                                                                        }
-                                                                        className={` ${
-                                                                            activityId ===
-                                                                            activity.id
-                                                                                ? "bg-blue-500 text-white"
-                                                                                : "bg-gray-200"
-                                                                        }`}
-                                                                        size="small"
-                                                                        icon={
-                                                                            activityId ===
-                                                                            activity.id
-                                                                                ? "pi pi-check"
-                                                                                : null
-                                                                        }
-                                                                    />
-                                                                )
-                                                            )
+                                                                            }
+                                                                            label={
+                                                                                activity.name
+                                                                            }
+                                                                            onClick={() => {
+                                                                                setActivityId(
+                                                                                    activity.id
+                                                                                );
+                                                                                setSelectedActivity(
+                                                                                    activity
+                                                                                );
+                                                                                setEditableActivity(
+                                                                                    ""
+                                                                                );
+                                                                                setShowCustomActivityInput(
+                                                                                    false
+                                                                                );
+                                                                            }}
+                                                                            className={`${
+                                                                                activityId ===
+                                                                                activity.id
+                                                                                    ? "bg-blue-500 text-white"
+                                                                                    : "bg-gray-200"
+                                                                            }`}
+                                                                            size="small"
+                                                                            icon={
+                                                                                activityId ===
+                                                                                activity.id
+                                                                                    ? "pi pi-check"
+                                                                                    : null
+                                                                            }
+                                                                        />
+                                                                    )
+                                                                )}
+                                                                <Button
+                                                                    label={
+                                                                        showCustomActivityInput
+                                                                            ? "Cancel Custom Activity"
+                                                                            : "Other Activity"
+                                                                    }
+                                                                    onClick={() => {
+                                                                        setShowCustomActivityInput(
+                                                                            !showCustomActivityInput
+                                                                        );
+                                                                        setActivityId(
+                                                                            null
+                                                                        );
+                                                                        setSelectedActivity(
+                                                                            null
+                                                                        );
+                                                                        setEditableActivity(
+                                                                            ""
+                                                                        );
+                                                                    }}
+                                                                    className="bg-gray-200"
+                                                                    size="small"
+                                                                    icon={
+                                                                        showCustomActivityInput
+                                                                            ? "pi pi-times"
+                                                                            : "pi pi-plus"
+                                                                    }
+                                                                />
+                                                            </>
                                                         )}
                                                     </div>
+                                                    {showCustomActivityInput &&
+                                                        !isCheckedIn && (
+                                                            <div className="mt-1">
+                                                                <InputText
+                                                                    value={
+                                                                        editableActivity
+                                                                    }
+                                                                    onChange={(
+                                                                        e
+                                                                    ) => {
+                                                                        setEditableActivity(
+                                                                            e
+                                                                                .target
+                                                                                .value
+                                                                        );
+                                                                        setSelectedActivity(
+                                                                            {
+                                                                                name: e
+                                                                                    .target
+                                                                                    .value,
+                                                                            }
+                                                                        );
+                                                                    }}
+                                                                    placeholder="Enter other activity"
+                                                                    className="w-full"
+                                                                />
+                                                            </div>
+                                                        )}
                                                 </div>
                                             </>
                                         ) : (
-                                            "Your Quest"
+                                            "Your Activity"
                                         )}
                                     </div>
                                 </div>
@@ -760,6 +823,8 @@ function Home() {
                                         disabled={
                                             (!selectedActivity &&
                                                 !isCheckedIn) ||
+                                            (!editableActivity &&
+                                                showCustomActivityInput) ||
                                             loading
                                         }
                                     />
@@ -948,7 +1013,6 @@ function Home() {
                                 </div>
                             </StepperPanel>
                         )}
-                        {/* dymanic content > */}
                     </Stepper>
                 </Card>
                 <div className="flex flex-row justify-center md:justify-start gap-4 w-11/12 sm:w-11/12 md:w-10/12 xl:w-1/2">
