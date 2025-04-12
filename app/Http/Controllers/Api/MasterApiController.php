@@ -86,7 +86,7 @@ class MasterApiController extends Controller
         if ($data->isNotEmpty()) {
             return response()->json(['status' => true, 'message' => 'Records found', 'result' => $data], Response::HTTP_OK);
         } else {
-            return response()->json(['status' => false, 'message' => 'No records found'], Response::HTTP_NOT_FOUND);
+            return response()->json(['status' => false, 'message' => 'No records found'], Response::HTTP_OK);
         }
     }
 
@@ -96,7 +96,7 @@ class MasterApiController extends Controller
         if ($item) {
             return response()->json(['status' => true, 'message' => 'Record found', 'result' => $item], Response::HTTP_OK);
         } else {
-            return response()->json(['status' => false, 'message' => 'Record not found'], Response::HTTP_NOT_FOUND);
+            return response()->json(['status' => false, 'message' => 'Record not found'], Response::HTTP_OK);
         }
     }
 
@@ -199,8 +199,6 @@ class MasterApiController extends Controller
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
-
-
 
     public function destroy(Request $request, $type, $id)
     {
