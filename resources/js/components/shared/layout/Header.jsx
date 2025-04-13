@@ -46,7 +46,7 @@ const Header = () => {
     const masterItem = [
         {
             label: "Dashboard",
-            command: () => navigate("/dashboard")
+            command: () => navigate("/dashboard"),
         },
         {
             label: "Master",
@@ -58,7 +58,7 @@ const Header = () => {
                 { label: "Activity", command: () => navigate("/activities") },
                 { label: "Facility", command: () => navigate("/facilities") },
             ],
-        }
+        },
     ];
 
     const reportItem = {

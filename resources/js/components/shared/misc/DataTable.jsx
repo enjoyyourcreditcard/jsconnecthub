@@ -488,7 +488,7 @@ const CustomDataTable = ({
     );
 
     return (
-        <div className="card">
+        <div>
             <ConfirmPopup />
             <Toolbar
                 className="mb-4"
@@ -510,7 +510,7 @@ const CustomDataTable = ({
                 dataKey={identifier}
                 stripedRows
                 scrollable
-                scrollHeight="380px"
+                scrollHeight="720px"
                 emptyMessage={`No ${type} found.`}
                 header={header}
                 onValueChange={(filteredData) =>
