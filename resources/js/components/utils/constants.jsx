@@ -4,8 +4,10 @@ export const stateKey = {
     roles: "roles",
     class: "class",
     levels: "levels",
-    activities: "activities",
     students: "students",
-    checkin: "checkin",
+    activities: "activities",
     facilities: "facilities",
+    checkin: "checkin",
+    bookings: "bookings",
+    counsels: "counsels",
 };

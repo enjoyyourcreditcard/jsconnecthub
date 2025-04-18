@@ -18,7 +18,7 @@ import { Calendar } from "primereact/calendar";
 import { InputText } from "primereact/inputtext";
 import { Checkbox } from "primereact/checkbox";
 
-function Checkin() {
+function Counsel() {
     const dispatch = useDispatch();
     const isAuthenticated = useIsAuthenticated();
     const [visible, setVisible] = useState(false);
@@ -282,7 +282,7 @@ function Checkin() {
                                 onFetch={(params) => myFetch(params)}
                                 onAdd={handleAdd}
                                 onEdit={handleEdit}
-                                title="Check In"
+                                title="Counsel"
                                 timeFilter={timeFilter}
                                 setTimeFilter={setTimeFilter}
                                 rangeFilter={rangeFilter}
@@ -501,4 +501,4 @@ function Checkin() {
     );
 }
 
-export default Checkin;
+export default Counsel;

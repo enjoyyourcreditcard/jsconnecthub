@@ -63,7 +63,17 @@ const Header = () => {
 
     const reportItem = {
         label: "Report",
-        items: [{ label: "Checkin", command: () => navigate("/checkin") }],
+        items: [
+            { label: "Checkin", command: () => navigate("/checkin") },
+            {
+                label: "Facility Reservations",
+                command: () => navigate("/facility-reservations"),
+            },
+            {
+                label: "Counsel",
+                command: () => navigate("/counsel"),
+            },
+        ],
     };
 
     const centerItems = auth()
@@ -106,7 +116,7 @@ const Header = () => {
                 background: "linear-gradient(to bottom, #f0f0f0, #ffffff)",
             }}
         >
-            <div>
+            <div className="flex-auto">
                 <Menubar
                     model={centerItems}
                     start={logo}
@@ -120,6 +130,7 @@ const Header = () => {
                         <Button
                             onClick={handleProfileClick}
                             className="p-button-text"
+                            size="small"
                         >
                             <Avatar
                                 label={(
@@ -152,6 +163,7 @@ const Header = () => {
                         label="Login"
                         icon="pi pi-sign-in"
                         className="p-button-text"
+                        size="small"
                         onClick={() => navigate("/login")}
                     />
                 )}

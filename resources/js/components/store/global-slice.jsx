@@ -8,8 +8,10 @@ import {
     LEVEL_STATE,
     ACTIVITY_STATE,
     STUDENT_STATE,
-    CHECKIN_STATE,
     FACILITY_STATE,
+    CHECKIN_STATE,
+    BOOKING_STATE,
+    COUNSEL_STATE,
 } from "./state";
 import { stateKey } from "../utils/constants";
 
@@ -21,8 +23,10 @@ const INITIAL_STATE = {
     [stateKey.levels]: LEVEL_STATE,
     [stateKey.activities]: ACTIVITY_STATE,
     [stateKey.students]: STUDENT_STATE,
-    [stateKey.checkin]: CHECKIN_STATE,
     [stateKey.facilities]: FACILITY_STATE,
+    [stateKey.checkin]: CHECKIN_STATE,
+    [stateKey.bookings]: BOOKING_STATE,
+    [stateKey.counsels]: COUNSEL_STATE,
 };
 
 const globalSlice = createSlice({

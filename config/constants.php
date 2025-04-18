@@ -4,13 +4,14 @@ return [
     'MASTER_TYPE_ARRAY' => [
         'USER_MASTER_TYPE' => 'users',
         'ROLE_MASTER_TYPE' => 'roles',
-        'LEVEL_MASTER_TYPE' => 'levels',
         'CLASS_MASTER_TYPE' => 'class',
+        'LEVEL_MASTER_TYPE' => 'levels',
         'STUDENT_MASTER_TYPE' => 'students',
         'ACTIVITY_MASTER_TYPE' => 'activities',
-        'ROLE_MASTER_TYPE' => 'roles',
+        'FACILITY_MASTER_TYPE' => 'facilities',
         'CHECKIN_MASTER_TYPE' => 'checkin',
-        'BOOKING_MASTER_TYPE' => 'bookings'
+        'BOOKING_MASTER_TYPE' => 'bookings',
+        'COUNSEL_MASTER_TYPE' => 'counsels'
     ],
 
     'MASTER_VALIDATION_ARRAY' => [

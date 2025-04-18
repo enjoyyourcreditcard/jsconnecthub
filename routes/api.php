@@ -59,4 +59,4 @@ Route::post('/booking/{id}/cancel', [BookingController::class, 'cancel']);
 /**
  * Ms Vi Counsellor
  */
-Route::post('/counsel', [CounselController::class, 'submit']);
+Route::post('/counsel-submit', [CounselController::class, 'submit']);

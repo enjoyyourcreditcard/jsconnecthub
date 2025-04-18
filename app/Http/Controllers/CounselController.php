@@ -9,7 +9,7 @@ use Illuminate\Http\Response;
 
 class CounselController extends Controller
 {
-    public function submit (Request $request)
+    public function submit(Request $request)
     {
         $validatedData = $request->validate([
             'student_id'            => ['required', 'exists:students,id'],
@@ -27,7 +27,7 @@ class CounselController extends Controller
 
         $result->save();
 
-        for ($i=0; $i < count($validatedData['question_id']); $i++) {
+        for ($i = 0; $i < count($validatedData['question_id']); $i++) {
             $answer = new Answer;
 
             $answer->result_id = $result->id;

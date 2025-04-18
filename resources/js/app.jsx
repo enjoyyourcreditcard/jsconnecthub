@@ -25,6 +25,8 @@ import ManageFacility from "./components/masters/ManageFacility";
 import ManageStudent from "./components/masters/ManageStudent";
 import Checkin from "./components/masters/reports/Checkin";
 import Dashboard from "./components/pages/Dashboard";
+import FacilityReservations from "./components/masters/reports/FacilityReservations";
+import Counsel from "./components/masters/reports/Counsel";
 
 const AppWrapper = () => {
     const authHeader = useAuthHeader();
@@ -104,6 +106,8 @@ const AppWrapper = () => {
                 <Route path="/students" element={<ManageStudent />} />
                 <Route path="/facilities" element={<ManageFacility />} />
                 <Route path="/checkin" element={<Checkin />} />
+                <Route path="/facility-reservations" element={<FacilityReservations />} />
+                <Route path="/counsel" element={<Counsel />} />
                 <Route path="/*" element={<NotFound />} />
             </Routes>
         </BrowserRouter>

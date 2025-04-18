@@ -2,9 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Level;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Str;
 
 class MasterService
 {
@@ -15,7 +13,9 @@ class MasterService
         'students' => \App\Models\Student::class,
         'activities' => \App\Models\Activity::class,
         'roles' => \Spatie\Permission\Models\Role::class,
-        'checkin' => \App\Models\Checkin::class
+        'checkin' => \App\Models\Checkin::class,
+        'bookings' => \App\Models\Booking::class,
+        'counsels' => \App\Models\Result::class
 
     ];
 
@@ -87,6 +87,12 @@ class MasterService
                     return $q;
                 })
                 ->get();
+        }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.BOOKING_MASTER_TYPE')) {
+            return $q->with(['student', 'facility'])->get();
+        }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.COUNSEL_MASTER_TYPE')) {
+            return $q->with(['student', 'answers.question'])->get();
         }
         return $q->get();
     }
