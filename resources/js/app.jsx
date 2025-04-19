@@ -107,7 +107,7 @@ const AppWrapper = () => {
                 <Route path="/facilities" element={<ManageFacility />} />
                 <Route path="/checkin" element={<Checkin />} />
                 <Route path="/facility-reservations" element={<FacilityReservations />} />
-                <Route path="/counsel" element={<Counsel />} />
+                <Route path="/counsels" element={<Counsel />} />
                 <Route path="/*" element={<NotFound />} />
             </Routes>
         </BrowserRouter>

@@ -56,7 +56,7 @@ const CustomDataTable = ({
     const [globalFilter, setGlobalFilter] = useState("");
     const [visibleColumns, setVisibleColumns] = useState([]);
     const [userTimezone, setUserTimezone] = useState(null);
-    const [filters] = useState({
+    const [filters, setFilters] = useState({
         student: { value: null },
         level: { value: null },
         class: { value: null },

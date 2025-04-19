@@ -16,7 +16,7 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         $superAdmin = User::create([
-            'name'      => 'Super Admin',
+            'name'      => 'Superadmin',
             'email'     => 'superadmin@gmail.com',
             'password'  => Hash::make('secret')
         ]);
@@ -24,7 +24,7 @@ class UserSeeder extends Seeder
         $superAdmin->assignRole(Role::findByName('Superadmin'));
 
         $admin1 = User::create([
-            'name'      => 'Admin 1',
+            'name'      => 'Admin1',
             'email'     => 'admin1@gmail.com',
             'password'  => Hash::make('secret')
         ]);
@@ -32,7 +32,7 @@ class UserSeeder extends Seeder
         $admin1->assignRole(Role::findByName('Admin1'));
 
         $admin2 = User::create([
-            'name'      => 'Admin 2',
+            'name'      => 'Admin2',
             'email'     => 'admin2@gmail.com',
             'password'  => Hash::make('secret')
         ]);
@@ -40,7 +40,7 @@ class UserSeeder extends Seeder
         $admin2->assignRole(Role::findByName('Admin2'));
 
         $admin3 = User::create([
-            'name'      => 'Admin 3',
+            'name'      => 'Admin3',
             'email'     => 'admin3@gmail.com',
             'password'  => Hash::make('secret')
         ]);

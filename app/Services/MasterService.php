@@ -2,21 +2,23 @@
 
 namespace App\Services;
 
+use App\Models\Level;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Str;
 
 class MasterService
 {
     protected $modelMap = [
+        'roles' => \Spatie\Permission\Models\Role::class,
         'users' => \App\Models\User::class,
-        'levels' => \App\Models\Level::class,
         'class' => \App\Models\DataClass::class,
+        'levels' => \App\Models\Level::class,
         'students' => \App\Models\Student::class,
         'activities' => \App\Models\Activity::class,
-        'roles' => \Spatie\Permission\Models\Role::class,
+        'facilities' => \App\Models\Facility::class,
         'checkin' => \App\Models\Checkin::class,
         'bookings' => \App\Models\Booking::class,
         'counsels' => \App\Models\Result::class
-
     ];
 
     protected function getModel($type)
@@ -92,7 +94,49 @@ class MasterService
             return $q->with(['student', 'facility'])->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.COUNSEL_MASTER_TYPE')) {
-            return $q->with(['student', 'answers.question'])->get();
+            return $q->with(['student', 'answers.question'])
+                ->when($request->time, function ($q) use ($request) {
+                    switch ($request->time) {
+                        case 'today':
+                            return $q->whereDate('created_at', today());
+                        case 'week':
+                            return $q->whereBetween('created_at', [
+                                now()->startOfWeek(),
+                                now()->endOfWeek(),
+                            ]);
+                        case 'month':
+                            return $q->whereBetween('created_at', [
+                                now()->startOfMonth(),
+                                now()->endOfMonth(),
+                            ]);
+                        case 'year':
+                            return $q->whereBetween('created_at', [
+                                now()->startOfYear(),
+                                now()->endOfYear(),
+                            ]);
+                        case 'last-year':
+                            return $q->whereBetween('created_at', [
+                                now()->subYear()->startOfYear(),
+                                now()->subYear()->endOfYear(),
+                            ]);
+                        default:
+                            return $q;
+                    }
+                })
+                ->when($request->range_time, function ($q) use ($request) {
+                    if (
+                        is_array($request->range_time) &&
+                        isset($request->range_time['start']) &&
+                        isset($request->range_time['end'])
+                    ) {
+                        return $q->whereBetween('created_at', [
+                            $request->range_time['start'],
+                            $request->range_time['end'],
+                        ]);
+                    }
+                    return $q;
+                })
+                ->get();
         }
         return $q->get();
     }
@@ -122,7 +166,11 @@ class MasterService
 
     public function delete($type, $id)
     {
-        $model = $this->getModel($type)->findOrFail($id);
+        if ($type === config('constants.MASTER_TYPE_ARRAY.COUNSEL_MASTER_TYPE')) {
+            $model = $this->getModel($type)->findOrFail($id);
+        } else {
+            $model = $this->getModel($type)->findOrFail($id);
+        }
         $model->delete();
     }
 }

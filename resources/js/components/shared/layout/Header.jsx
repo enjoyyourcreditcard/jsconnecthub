@@ -71,7 +71,7 @@ const Header = () => {
             },
             {
                 label: "Counsel",
-                command: () => navigate("/counsel"),
+                command: () => navigate("/counsels"),
             },
         ],
     };
