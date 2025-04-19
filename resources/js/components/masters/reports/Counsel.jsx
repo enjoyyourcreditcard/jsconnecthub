@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useIsAuthenticated } from "react-auth-kit";
-import {
-    getRecords,
-    setStateData,
-} from "../../store/global-slice";
+import { getRecords, setStateData } from "../../store/global-slice";
 import Header from "../../shared/layout/Header";
 import DataTable from "../../shared/misc/DataTable";
 import { Card } from "primereact/card";
@@ -12,7 +9,7 @@ import { Card } from "primereact/card";
 function Counsel() {
     const dispatch = useDispatch();
     const isAuthenticated = useIsAuthenticated();
-    const [timeFilter, setTimeFilter] = useState(null);
+    const [timeFilter, setTimeFilter] = useState("today");
     const [rangeFilter, setRangeFilter] = useState(null);
     const {
         counsels: { data: counsels = [], endPoints: counselEndPoints },
@@ -42,7 +39,9 @@ function Counsel() {
                     student: i.student?.name || "N/A",
                     support_strategies: [
                         ...new Set(
-                            i.answers.map((a) => a.question.support_strategy.name)
+                            i.answers.map(
+                                (a) => a.question.support_strategy.name
+                            )
                         ),
                     ].join(", "),
                     answers: i.answers,
@@ -82,7 +81,6 @@ function Counsel() {
                             <DataTable
                                 type="counsels"
                                 identifier="id"
-                                hasImport={true}
                                 onFetch={(params) => myFetch(params)}
                                 title="Counsel"
                                 timeFilter={timeFilter}

@@ -62,6 +62,7 @@ const CustomDataTable = ({
         level: { value: null },
         class: { value: null },
         activity: { value: null },
+        support_strategies: { value: null },
     });
     const [filteredDataState, setFilteredDataState] = useState([]);
     const [expandedRows, setExpandedRows] = useState([]);
@@ -200,12 +201,46 @@ const CustomDataTable = ({
     // start export
     const exportCSV = () => dt.current.exportCSV();
 
+    const formatAnswersForExport = (item) => {
+        if (type !== "counsels" || !item.answers) return "";
+        const strategyIds = [
+            ...new Set(item.answers.map((a) => a.question.support_strategy_id)),
+        ];
+        return strategyIds
+            .map((strategyId) => {
+                const strategy = supportStrategies.find(
+                    (s) => s.id === strategyId
+                );
+                const strategyName = strategy
+                    ? strategy.name
+                    : `Strategy ${strategyId}`;
+                const strategyAnswers = item.answers.filter(
+                    (a) => a.question.support_strategy_id === strategyId
+                );
+                return (
+                    `Section: ${strategyName}\n` +
+                    strategyAnswers
+                        .map(
+                            (a) =>
+                                `- Question: ${a.question.text} Answer: ${
+                                    a.text || "N/A"
+                                }`
+                        )
+                        .join("\n")
+                );
+            })
+            .join("\n\n");
+    };
+
     const exportExcel = () => {
         const dataToExport = filteredDataState.map((item) => {
             const rowData = {};
             visibleColumns.forEach((col) => {
                 rowData[col.header] = item[col.field] || "";
             });
+            if (type === "counsels") {
+                rowData["Questions and Answers"] = formatAnswersForExport(item);
+            }
             return rowData;
         });
         const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -216,13 +251,23 @@ const CustomDataTable = ({
 
     const exportPDF = () => {
         const doc = new jsPDF();
+        const columns = [
+            ...visibleColumns.map((col) => col.header),
+            ...(type === "counsels" ? ["Questions and Answers"] : []),
+        ];
+        const body = filteredDataState.map((item) => [
+            ...visibleColumns.map((col) => item[col.field] || ""),
+            ...(type === "counsels" ? [formatAnswersForExport(item)] : []),
+        ]);
         autoTable(doc, {
-            head: [visibleColumns.map((col) => col.header)],
-            body: filteredDataState.map((item) =>
-                visibleColumns.map((col) => item[col.field] || "")
-            ),
+            head: [columns],
+            body,
             styles: { fontSize: 10 },
             margin: { top: 10 },
+            columnStyles:
+                type === "counsels"
+                    ? { [columns.length - 1]: { cellWidth: 100 } }
+                    : {},
         });
         doc.save(`${type}_data.pdf`);
     };
@@ -300,7 +345,7 @@ const CustomDataTable = ({
                         onClick={(e) => overlayPanelRef.current.toggle(e)}
                     />
                 )}
-                {type === "checkin" && (
+                {(type === "checkin" || type === "counsels") && (
                     <>
                         <Button
                             label="Select"
@@ -381,6 +426,12 @@ const CustomDataTable = ({
               checkout_time: item.checkout_time
                   ? formatDateToLocal(item.checkout_time)
                   : "",
+              created_at: item.created_at
+                  ? formatDateToLocal(item.created_at)
+                  : "",
+              updated_at: item.updated_at
+                  ? formatDateToLocal(item.updated_at)
+                  : "",
           }))
         : [];
 
@@ -450,6 +501,12 @@ const CustomDataTable = ({
                 } else if (prop === "class") {
                     column.filter = true;
                 } else if (prop === "activity") {
+                    column.filter = true;
+                }
+            } else if (type === "counsels") {
+                if (prop === "student") {
+                    column.filter = true;
+                } else if (prop === "support_strategies") {
                     column.filter = true;
                 }
             }
@@ -568,8 +625,8 @@ const CustomDataTable = ({
                         : undefined
                 }
                 globalFilter={globalFilter}
-                filters={type === "checkin" ? filters : null}
-                filterDisplay={type === "checkin" ? "row" : undefined}
+                filters={filters}
+                filterDisplay="row"
                 paginator
                 rows={10}
                 rowsPerPageOptions={[10, 20, 50, 100]}

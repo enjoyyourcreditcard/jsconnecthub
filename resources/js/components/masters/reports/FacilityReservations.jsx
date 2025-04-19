@@ -278,7 +278,6 @@ function FacilityReservations() {
                             <DataTable
                                 type="checkin"
                                 identifier="id"
-                                hasImport={true}
                                 onFetch={(params) => myFetch(params)}
                                 onAdd={handleAdd}
                                 onEdit={handleEdit}

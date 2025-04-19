@@ -36,7 +36,7 @@ function Checkin() {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [timeFilter, setTimeFilter] = useState(null);
+    const [timeFilter, setTimeFilter] = useState("today");
     const [rangeFilter, setRangeFilter] = useState(null);
     const {
         checkin: { data: checkin = [], endPoints: checkinEndPoints },
@@ -278,7 +278,6 @@ function Checkin() {
                             <DataTable
                                 type="checkin"
                                 identifier="id"
-                                hasImport={true}
                                 onFetch={(params) => myFetch(params)}
                                 onAdd={handleAdd}
                                 onEdit={handleEdit}
