@@ -12,6 +12,7 @@ import {
     CHECKIN_STATE,
     BOOKING_STATE,
     COUNSEL_STATE,
+    SUPPORT_STRATEGY_STATE,
 } from "./state";
 import { stateKey } from "../utils/constants";
 
@@ -27,6 +28,7 @@ const INITIAL_STATE = {
     [stateKey.checkin]: CHECKIN_STATE,
     [stateKey.bookings]: BOOKING_STATE,
     [stateKey.counsels]: COUNSEL_STATE,
+    [stateKey.support_strategies]: SUPPORT_STRATEGY_STATE,
 };
 
 const globalSlice = createSlice({

@@ -18,7 +18,8 @@ class MasterService
         'facilities' => \App\Models\Facility::class,
         'checkin' => \App\Models\Checkin::class,
         'bookings' => \App\Models\Booking::class,
-        'counsels' => \App\Models\Result::class
+        'counsels' => \App\Models\Result::class,
+        'support-strategies' => \App\Models\SupportStrategy::class
     ];
 
     protected function getModel($type)
@@ -94,7 +95,7 @@ class MasterService
             return $q->with(['student', 'facility'])->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.COUNSEL_MASTER_TYPE')) {
-            return $q->with(['student', 'answers.question'])
+            return $q->with(['student', 'answers.question.supportStrategy'])
                 ->when($request->time, function ($q) use ($request) {
                     switch ($request->time) {
                         case 'today':

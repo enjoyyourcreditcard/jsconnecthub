@@ -50,19 +50,21 @@ const CustomDataTable = ({
             spinner,
             endPoints: dataEndPoints,
         } = {},
+        support_strategies: { data: supportStrategies = [] } = {},
     } = useSelector((state) => state.global);
     const [selectedRecords, setSelectedRecords] = useState(null);
     const [deleteRecordsDialog, setDeleteRecordsDialog] = useState(false);
     const [globalFilter, setGlobalFilter] = useState("");
     const [visibleColumns, setVisibleColumns] = useState([]);
     const [userTimezone, setUserTimezone] = useState(null);
-    const [filters, setFilters] = useState({
+    const [filters] = useState({
         student: { value: null },
         level: { value: null },
         class: { value: null },
         activity: { value: null },
     });
     const [filteredDataState, setFilteredDataState] = useState([]);
+    const [expandedRows, setExpandedRows] = useState([]);
 
     useEffect(() => {
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -82,11 +84,18 @@ const CustomDataTable = ({
                     typeof item === "object" &&
                     item !== null &&
                     Object.keys(item).length > 0 &&
-                    Object.values(item).every(
-                        (value) =>
-                            !Array.isArray(value) &&
-                            (typeof value !== "object" || value === null)
-                    )
+                    (type === "counsels"
+                        ? Object.values(item).every(
+                              (value) =>
+                                  !Array.isArray(value) ||
+                                  value === null ||
+                                  value === item.answers
+                          )
+                        : Object.values(item).every(
+                              (value) =>
+                                  !Array.isArray(value) &&
+                                  (typeof value !== "object" || value === null)
+                          ))
             )
         ) {
             const allColumns = generateColumns();
@@ -96,6 +105,7 @@ const CustomDataTable = ({
                 "email_verified_at",
                 "created_at",
                 "updated_at",
+                "answers",
             ];
             const isHiddenField = (field) => {
                 if (defaultHidden.includes(field)) return true;
@@ -112,7 +122,6 @@ const CustomDataTable = ({
         if (!utcDate || !userTimezone) return "";
         const dt = DateTime.fromISO(utcDate, { zone: "utc" });
         if (!dt.isValid) {
-            // console.error("Invalid date:", utcDate);
             return "";
         }
         return dt.setZone(userTimezone).toFormat("dd MMMM yyyy, HH:mm:ss z");
@@ -238,23 +247,26 @@ const CustomDataTable = ({
             .finally(() => overlayPanelRef.current.hide());
     };
 
-    const leftToolbarTemplate = () => (
-        <div className="flex flex-wrap gap-2">
-            <Button
-                label="Add"
-                icon="pi pi-plus"
-                severity="success"
-                onClick={onAdd}
-            />
-            <Button
-                label="Delete"
-                icon="pi pi-trash"
-                severity="danger"
-                onClick={confirmDeleteSelected}
-                disabled={!selectedRecords || !selectedRecords.length}
-            />
-        </div>
-    );
+    const leftToolbarTemplate = () => {
+        if (type === "counsels") return null;
+        return (
+            <div className="flex flex-wrap gap-2">
+                <Button
+                    label="Add"
+                    icon="pi pi-plus"
+                    severity="success"
+                    onClick={onAdd}
+                />
+                <Button
+                    label="Delete"
+                    icon="pi pi-trash"
+                    severity="danger"
+                    onClick={confirmDeleteSelected}
+                    disabled={!selectedRecords || !selectedRecords.length}
+                />
+            </div>
+        );
+    };
 
     const rightToolbarTemplate = () => {
         const timeOptions = [
@@ -336,24 +348,29 @@ const CustomDataTable = ({
         );
     };
 
-    const actionsTemplate = (rowData) => (
-        <>
-            <Button
-                icon="pi pi-pencil"
-                rounded
-                outlined
-                onClick={() => onEdit(rowData[identifier])}
-            />
-            <Button
-                icon="pi pi-trash"
-                rounded
-                outlined
-                style={{ marginLeft: "0.5rem" }}
-                severity="danger"
-                onClick={(event) => handleDelete(event, rowData[identifier])}
-            />
-        </>
-    );
+    const actionsTemplate = (rowData) => {
+        if (type === "counsels") return null;
+        return (
+            <>
+                <Button
+                    icon="pi pi-pencil"
+                    rounded
+                    outlined
+                    onClick={() => onEdit(rowData[identifier])}
+                />
+                <Button
+                    icon="pi pi-trash"
+                    rounded
+                    outlined
+                    style={{ marginLeft: "0.5rem" }}
+                    severity="danger"
+                    onClick={(event) =>
+                        handleDelete(event, rowData[identifier])
+                    }
+                />
+            </>
+        );
+    };
 
     const formattedData = Array.isArray(collection)
         ? collection.map((item) => ({
@@ -366,6 +383,35 @@ const CustomDataTable = ({
                   : "",
           }))
         : [];
+
+    const rowExpansionTemplate = (data) => {
+        if (type !== "counsels") return null;
+        const strategyIds = [
+            ...new Set(data.answers.map((a) => a.question.support_strategy_id)),
+        ];
+        const strategyNames = strategyIds
+            .map((id) => {
+                const strategy = supportStrategies.find((s) => s.id === id);
+                return strategy ? strategy.name : `Strategy ${id}`;
+            })
+            .join(", ");
+
+        return (
+            <div className="p-3">
+                <h5>Support Strategies: {strategyNames}</h5>
+                <h5>Questions & Answers</h5>
+                <ul>
+                    {data.answers.map((answer) => (
+                        <li key={answer.id}>
+                            <strong>Question:</strong> {answer.question.text}
+                            <br />
+                            <strong>Answer:</strong> {answer.text || "N/A"}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        );
+    };
 
     const generateColumns = () => {
         if (!collection.length) return [];
@@ -400,13 +446,17 @@ const CustomDataTable = ({
 
         return [
             ...dynamicColumns,
-            {
-                field: "actions",
-                header: "Actions",
-                body: actionsTemplate,
-                exportable: false,
-                headerStyle: { minWidth: "10rem" },
-            },
+            ...(type !== "counsels"
+                ? [
+                      {
+                          field: "actions",
+                          header: "Actions",
+                          body: actionsTemplate,
+                          exportable: false,
+                          headerStyle: { minWidth: "10rem" },
+                      },
+                  ]
+                : []),
         ];
     };
 
@@ -498,8 +548,12 @@ const CustomDataTable = ({
             <DataTable
                 ref={dt}
                 value={formattedData}
-                selection={selectedRecords}
-                onSelectionChange={(e) => setSelectedRecords(e.value)}
+                selection={type !== "counsels" ? selectedRecords : null}
+                onSelectionChange={
+                    type !== "counsels"
+                        ? (e) => setSelectedRecords(e.value)
+                        : undefined
+                }
                 globalFilter={globalFilter}
                 filters={type === "checkin" ? filters : null}
                 filterDisplay={type === "checkin" ? "row" : undefined}
@@ -516,12 +570,30 @@ const CustomDataTable = ({
                 onValueChange={(filteredData) =>
                     setFilteredDataState(filteredData)
                 }
+                expandedRows={type === "counsels" ? expandedRows : null}
+                onRowToggle={
+                    type === "counsels"
+                        ? (e) => setExpandedRows(e.data)
+                        : undefined
+                }
+                rowExpansionTemplate={
+                    type === "counsels" ? rowExpansionTemplate : undefined
+                }
             >
-                <Column
-                    selectionMode="multiple"
-                    headerStyle={{ width: "3rem" }}
-                    exportable={false}
-                />
+                {type === "counsels" && (
+                    <Column
+                        expander
+                        style={{ width: "3rem" }}
+                        exportable={false}
+                    />
+                )}
+                {type !== "counsels" && (
+                    <Column
+                        selectionMode="multiple"
+                        headerStyle={{ width: "3rem" }}
+                        exportable={false}
+                    />
+                )}
                 <Column
                     header="#"
                     body={indexTemplate}
@@ -541,28 +613,32 @@ const CustomDataTable = ({
                         filterElement={col.filterElement}
                     />
                 ))}
-                <Column
-                    field="actions"
-                    header="Actions"
-                    body={actionsTemplate}
-                    exportable={false}
-                    headerStyle={{ minWidth: "10rem" }}
-                />
+                {type !== "counsels" && (
+                    <Column
+                        field="actions"
+                        header="Actions"
+                        body={actionsTemplate}
+                        exportable={false}
+                        headerStyle={{ minWidth: "10rem" }}
+                    />
+                )}
             </DataTable>
-            <Dialog
-                visible={deleteRecordsDialog}
-                style={{ width: "32rem" }}
-                header="Confirm"
-                modal
-                footer={deleteRecordsDialogFooter}
-                onHide={() => setDeleteRecordsDialog(false)}
-            >
-                <div className="confirmation-content">
-                    <span>
-                        Are you sure you want to delete the selected {type}?
-                    </span>
-                </div>
-            </Dialog>
+            {type !== "counsels" && (
+                <Dialog
+                    visible={deleteRecordsDialog}
+                    style={{ width: "32rem" }}
+                    header="Confirm"
+                    modal
+                    footer={deleteRecordsDialogFooter}
+                    onHide={() => setDeleteRecordsDialog(false)}
+                >
+                    <div className="confirmation-content">
+                        <span>
+                            Are you sure you want to delete the selected {type}?
+                        </span>
+                    </div>
+                </Dialog>
+            )}
             <OverlayPanel
                 ref={overlayPanelRef}
                 showCloseIcon

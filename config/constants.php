@@ -11,7 +11,8 @@ return [
         'FACILITY_MASTER_TYPE' => 'facilities',
         'CHECKIN_MASTER_TYPE' => 'checkin',
         'BOOKING_MASTER_TYPE' => 'bookings',
-        'COUNSEL_MASTER_TYPE' => 'counsels'
+        'COUNSEL_MASTER_TYPE' => 'counsels',
+        'SUPPORT_STRATEGY_MASTER_TYPE' => 'support-strategies'
     ],
 
     'MASTER_VALIDATION_ARRAY' => [

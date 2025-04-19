@@ -3,8 +3,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { useIsAuthenticated } from "react-auth-kit";
 import {
     getRecords,
-    createRecord,
-    updateRecord,
     setStateData,
 } from "../../store/global-slice";
 import Header from "../../shared/layout/Header";
@@ -18,6 +16,10 @@ function Counsel() {
     const [rangeFilter, setRangeFilter] = useState(null);
     const {
         counsels: { data: counsels = [], endPoints: counselEndPoints },
+        support_strategies: {
+            data: supportStrategies = [],
+            endPoints: strategyEndPoints,
+        },
     } = useSelector((state) => state.global);
 
     const myFetch = (params = { timeFilter: "today" }) => {
@@ -38,6 +40,12 @@ function Counsel() {
                 const formattedCounsels = d.map((i) => ({
                     id: i.id,
                     student: i.student?.name || "N/A",
+                    support_strategies: [
+                        ...new Set(
+                            i.answers.map((a) => a.question.support_strategy.name)
+                        ),
+                    ].join(", "),
+                    answers: i.answers,
                 }));
                 dispatch(
                     setStateData({
@@ -52,6 +60,13 @@ function Counsel() {
     };
 
     useEffect(() => {
+        dispatch(
+            getRecords({
+                type: "support_strategies",
+                endPoint: strategyEndPoints.collection,
+                key: "data",
+            })
+        );
         myFetch();
     }, [dispatch]);
 
@@ -67,24 +82,12 @@ function Counsel() {
                                 identifier="id"
                                 hasImport={true}
                                 onFetch={(params) => myFetch(params)}
-                                // onAdd={handleAdd}
-                                // onEdit={handleEdit}
                                 title="Counsel"
                                 timeFilter={timeFilter}
                                 setTimeFilter={setTimeFilter}
                                 rangeFilter={rangeFilter}
                                 setRangeFilter={setRangeFilter}
                             />
-                            {/* <Dialog
-                                header={
-                                    mode === "create"
-                                        ? "Add Check In"
-                                        : "Edit Check In"
-                                }
-                                visible={visible}
-                                style={{ width: "400px" }}
-                                onHide={() => setVisible(false)}
-                            ></Dialog> */}
                         </>
                     ) : (
                         <p>Please log in to view and manage counsels.</p>

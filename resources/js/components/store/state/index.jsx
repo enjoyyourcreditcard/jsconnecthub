@@ -9,3 +9,4 @@ export { FACILITY_STATE } from "./Facility";
 export { CHECKIN_STATE } from "./Checkin";
 export { BOOKING_STATE } from "./Booking";
 export { COUNSEL_STATE } from "./Counsel";
+export { SUPPORT_STRATEGY_STATE } from "./SupportStrategy";
