@@ -389,26 +389,37 @@ const CustomDataTable = ({
         const strategyIds = [
             ...new Set(data.answers.map((a) => a.question.support_strategy_id)),
         ];
-        const strategyNames = strategyIds
-            .map((id) => {
-                const strategy = supportStrategies.find((s) => s.id === id);
-                return strategy ? strategy.name : `Strategy ${id}`;
-            })
-            .join(", ");
 
         return (
             <div className="p-3">
-                <h5>Support Strategies: {strategyNames}</h5>
-                <h5>Questions & Answers</h5>
-                <ul>
-                    {data.answers.map((answer) => (
-                        <li key={answer.id}>
-                            <strong>Question:</strong> {answer.question.text}
-                            <br />
-                            <strong>Answer:</strong> {answer.text || "N/A"}
-                        </li>
-                    ))}
-                </ul>
+                {strategyIds.map((strategyId) => {
+                    const strategy = supportStrategies.find(
+                        (s) => s.id === strategyId
+                    );
+                    const strategyName = strategy
+                        ? strategy.name
+                        : `Strategy ${strategyId}`;
+                    const strategyAnswers = data.answers.filter(
+                        (a) => a.question.support_strategy_id === strategyId
+                    );
+
+                    return (
+                        <div key={strategyId} className="mb-4">
+                            <h5>Section: {strategyName}</h5>
+                            <ul>
+                                {strategyAnswers.map((answer) => (
+                                    <li key={answer.id}>
+                                        <strong>Question:</strong>{" "}
+                                        {answer.question.text}
+                                        <br />
+                                        <strong>Answer:</strong>{" "}
+                                        {answer.text || "N/A"}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    );
+                })}
             </div>
         );
     };
@@ -417,7 +428,9 @@ const CustomDataTable = ({
         if (!collection.length) return [];
 
         const firstItem = collection[0];
-        const properties = Object.keys(firstItem);
+        const properties = Object.keys(firstItem).filter(
+            (prop) => prop !== "answers"
+        );
 
         const dynamicColumns = properties.map((prop) => {
             const column = {

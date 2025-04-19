@@ -46,6 +46,8 @@ function Counsel() {
                         ),
                     ].join(", "),
                     answers: i.answers,
+                    created_at: i.created_at,
+                    updated_at: i.updated_at,
                 }));
                 dispatch(
                     setStateData({
