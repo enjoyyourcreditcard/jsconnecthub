@@ -25,16 +25,12 @@ class BookingController extends Controller
         $booking = new Booking;
 
         $booking->student_id = $request->student_id;
-
         $booking->facility_id = $request->facility_id;
-
         $booking->start_time = $request->start_time;
-
         $booking->end_time = $request->end_time;
-
         $booking->save();
 
-        return response()->json(['status' => true, 'message' => 'Booking successful!', 'result' => $booking->load('student', 'facility')], Response::HTTP_OK);
+        return response()->json(['status' => true, 'message' => 'Booking successful!', 'result' => $booking->load('student.class.level', 'facility')], Response::HTTP_OK);
     }
 
     public function confirm(Int $id)

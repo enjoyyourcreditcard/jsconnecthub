@@ -69,7 +69,7 @@ class LoginController extends Controller
 
         $user->tokens()->delete();
 
-        $tokenString = $user->first_name . "-" . $user->email . "-" . $user->username . "_" . $user->id;
+        $tokenString = $user->name . "-" . $user->email . "_" . $user->id;
 
         return response()->json(['status' => true, 'result' => $user, 'token' => $user->createToken($tokenString)->plainTextToken]);
     }

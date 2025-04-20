@@ -346,7 +346,9 @@ const CustomDataTable = ({
                         onClick={(e) => overlayPanelRef.current.toggle(e)}
                     />
                 )}
-                {(type === "checkin" || type === "bookings" || type === "counsels") && (
+                {(type === "checkin" ||
+                    type === "bookings" ||
+                    type === "counsels") && (
                     <>
                         <Button
                             label="Select"
@@ -516,6 +518,10 @@ const CustomDataTable = ({
                 }
             } else if (type === "bookings") {
                 if (prop === "student") {
+                    column.filter = true;
+                } else if (prop === "level") {
+                    column.filter = true;
+                } else if (prop === "class") {
                     column.filter = true;
                 } else if (prop === "facility") {
                     column.filter = true;
