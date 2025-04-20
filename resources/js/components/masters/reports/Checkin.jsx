@@ -55,8 +55,10 @@ function Checkin() {
             params.rangeFilter[0] &&
             params.rangeFilter[1]
         ) {
-            const start = params.rangeFilter[0].toISOString().split("T")[0];
-            const end = params.rangeFilter[1].toISOString().split("T")[0];
+            const start = params.rangeFilter[0].toISOString();
+            const endDate = new Date(params.rangeFilter[1]);
+            endDate.setUTCDate(endDate.getUTCDate() + 1);
+            const end = endDate.toISOString();
             url += `?range_time[start]=${start}&range_time[end]=${end}`;
         }
         dispatch(getRecords({ type: "checkin", endPoint: url })).then((d) => {

@@ -51,8 +51,10 @@ function FacilityReservations() {
             params.rangeFilter[0] &&
             params.rangeFilter[1]
         ) {
-            const start = params.rangeFilter[0].toISOString().split("T")[0];
-            const end = params.rangeFilter[1].toISOString().split("T")[0];
+            const start = params.rangeFilter[0].toISOString();
+            const endDate = new Date(params.rangeFilter[1]);
+            endDate.setUTCDate(endDate.getUTCDate() + 1);
+            const end = endDate.toISOString();
             url += `?range_time[start]=${start}&range_time[end]=${end}`;
         }
         dispatch(getRecords({ type: "bookings", endPoint: url })).then((d) => {
@@ -182,8 +184,7 @@ function FacilityReservations() {
         const day = pad(date.getUTCDate());
         const hours = pad(date.getUTCHours());
         const minutes = pad(date.getUTCMinutes());
-        const seconds = pad(date.getUTCSeconds());
-        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        return `${year}-${month}-${day} ${hours}:${minutes}:00`;
     };
 
     const handleSubmit = async (e) => {
@@ -394,6 +395,7 @@ function FacilityReservations() {
                                                 hourFormat="24"
                                                 dateFormat="yy-mm-dd"
                                                 style={{ width: "100%" }}
+                                                required
                                                 disabled={loading}
                                                 placeholder="Select end time"
                                             />
