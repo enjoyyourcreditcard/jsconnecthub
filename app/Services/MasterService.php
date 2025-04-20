@@ -92,7 +92,49 @@ class MasterService
                 ->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.BOOKING_MASTER_TYPE')) {
-            return $q->with(['student', 'facility'])->get();
+            return $q->with(['student', 'facility'])
+                ->when($request->time, function ($q) use ($request) {
+                    switch ($request->time) {
+                        case 'today':
+                            return $q->whereDate('start_time', today());
+                        case 'week':
+                            return $q->whereBetween('start_time', [
+                                now()->startOfWeek(),
+                                now()->endOfWeek(),
+                            ]);
+                        case 'month':
+                            return $q->whereBetween('start_time', [
+                                now()->startOfMonth(),
+                                now()->endOfMonth(),
+                            ]);
+                        case 'year':
+                            return $q->whereBetween('start_time', [
+                                now()->startOfYear(),
+                                now()->endOfYear(),
+                            ]);
+                        case 'last-year':
+                            return $q->whereBetween('start_time', [
+                                now()->subYear()->startOfYear(),
+                                now()->subYear()->endOfYear(),
+                            ]);
+                        default:
+                            return $q;
+                    }
+                })
+                ->when($request->range_time, function ($q) use ($request) {
+                    if (
+                        is_array($request->range_time) &&
+                        isset($request->range_time['start']) &&
+                        isset($request->range_time['end'])
+                    ) {
+                        return $q->whereBetween('start_time', [
+                            $request->range_time['start'],
+                            $request->range_time['end'],
+                        ]);
+                    }
+                    return $q;
+                })
+                ->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.COUNSEL_MASTER_TYPE')) {
             return $q->with(['student', 'answers.question.supportStrategy'])

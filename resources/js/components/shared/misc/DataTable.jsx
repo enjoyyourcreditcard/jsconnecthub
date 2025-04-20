@@ -62,6 +62,7 @@ const CustomDataTable = ({
         level: { value: null },
         class: { value: null },
         activity: { value: null },
+        facility: { value: null },
         support_strategies: { value: null },
     });
     const [filteredDataState, setFilteredDataState] = useState([]);
@@ -345,7 +346,7 @@ const CustomDataTable = ({
                         onClick={(e) => overlayPanelRef.current.toggle(e)}
                     />
                 )}
-                {(type === "checkin" || type === "counsels") && (
+                {(type === "checkin" || type === "bookings" || type === "counsels") && (
                     <>
                         <Button
                             label="Select"
@@ -426,6 +427,10 @@ const CustomDataTable = ({
               checkout_time: item.checkout_time
                   ? formatDateToLocal(item.checkout_time)
                   : "",
+              start_time: item.start_time
+                  ? formatDateToLocal(item.start_time)
+                  : "",
+              end_time: item.end_time ? formatDateToLocal(item.end_time) : "",
               created_at: item.created_at
                   ? formatDateToLocal(item.created_at)
                   : "",
@@ -507,6 +512,12 @@ const CustomDataTable = ({
                 if (prop === "student") {
                     column.filter = true;
                 } else if (prop === "support_strategies") {
+                    column.filter = true;
+                }
+            } else if (type === "bookings") {
+                if (prop === "student") {
+                    column.filter = true;
+                } else if (prop === "facility") {
                     column.filter = true;
                 }
             }

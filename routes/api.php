@@ -51,7 +51,7 @@ Route::post('/check-out', [CheckinController::class, 'checkout']);
  * Booking
  */
 Route::post('/booking', [BookingController::class, 'store']);
-Route::group(['middleware' => 'auth:sanctum'], function () use ($types) {
+Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post('/booking/{id}/confirm', [BookingController::class, 'confirm']);
 });
 Route::post('/booking/{id}/cancel', [BookingController::class, 'cancel']);
