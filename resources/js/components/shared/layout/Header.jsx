@@ -3,7 +3,7 @@ import { Menubar } from "primereact/menubar";
 import { Avatar } from "primereact/avatar";
 import { Button } from "primereact/button";
 import { Menu } from "primereact/menu";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthUser, useSignOut } from "react-auth-kit";
 import api from "../../api";
 
@@ -11,6 +11,7 @@ const Header = () => {
     const auth = useAuthUser();
     const signOut = useSignOut();
     const navigate = useNavigate();
+    const location = useLocation();
     const menuRef = useRef(null);
 
     const handleLogout = () => {
@@ -150,8 +151,6 @@ const Header = () => {
         menuRef.current.toggle(event);
     };
 
-    // console.log(auth()); // Debug the entire auth object
-
     const logo = (
         <span
             className="logo-text"
@@ -161,6 +160,10 @@ const Header = () => {
         />
     );
 
+    const isHomePage =
+        (location.pathname === "/" || location.pathname === "/home") &&
+        auth() === null;
+
     return (
         <div
             className="card header-container"
@@ -169,7 +172,13 @@ const Header = () => {
                 justifyContent: "space-between",
                 alignItems: "center",
                 padding: "10px 20px",
-                background: "linear-gradient(to bottom, #f0f0f0, #ffffff)",
+                background: isHomePage
+                    ? "transparent"
+                    : "linear-gradient(to bottom, #f0f0f0, #ffffff)",
+                position: isHomePage ? "absolute" : "initial",
+                top: 0,
+                width: "100%",
+                zIndex: 10,
             }}
         >
             <div className="flex-auto">
@@ -200,6 +209,7 @@ const Header = () => {
                                 style={{
                                     marginLeft: "8px",
                                     flexWrap: "nowrap",
+                                    color: isHomePage ? "#fff" : "#000",
                                 }}
                             >
                                 <span className="font-bold">
@@ -220,6 +230,7 @@ const Header = () => {
                         icon="pi pi-sign-in"
                         className="p-button-text"
                         size="small"
+                        style={{ color: isHomePage ? "#fff" : "#000" }}
                         onClick={() => navigate("/login")}
                     />
                 )}

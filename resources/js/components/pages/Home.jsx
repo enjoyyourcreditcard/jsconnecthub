@@ -5,6 +5,7 @@ import {
     createRecord,
     setToastMessage,
 } from "../store/global-slice";
+import { useAuthUser } from "react-auth-kit";
 import { Accordion, AccordionTab } from "primereact/accordion";
 import { Badge } from "primereact/badge";
 import { Stepper } from "primereact/stepper";
@@ -22,6 +23,7 @@ import Header from "../shared/layout/Header";
 import "../../../css/home.css";
 
 function Home() {
+    const auth = useAuthUser();
     const toast = useRef(null);
     const stepperRef = useRef(null);
     const overlayRef = useRef(null);
@@ -252,7 +254,6 @@ function Home() {
                 ]);
                 setIsCheckedIn(true);
                 setTimer(0);
-                // startTimer();
                 dispatch(
                     setToastMessage({
                         severity: "success",
@@ -293,7 +294,6 @@ function Home() {
                     checkout_time: result.checkout_time,
                     reason: isEarlyCheckout ? earlyReason : null,
                 };
-                // stopTimer();
                 setQuestLog((prev) =>
                     prev.map((quest) =>
                         quest.id === result.id
@@ -353,12 +353,14 @@ function Home() {
             <Header />
             <div
                 className={`home-container ${
-                    !showCard ? "with-background" : ""
+                    !showCard && auth() === null ? "with-background" : ""
                 }`}
             >
                 {!showCard && (
                     <>
-                        <h4 className="launch-pad-title">The Launch Pad</h4>
+                        {auth() === null && (
+                            <h4 className="launch-pad-title">The Launch Pad</h4>
+                        )}
                         <div className="card-container">
                             <div className="grid md:grid-cols-3 gap-4">
                                 <Button
