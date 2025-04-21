@@ -2,17 +2,18 @@
 
 return [
     'MASTER_TYPE_ARRAY' => [
-        'USER_MASTER_TYPE' => 'users',
-        'ROLE_MASTER_TYPE' => 'roles',
-        'CLASS_MASTER_TYPE' => 'class',
-        'LEVEL_MASTER_TYPE' => 'levels',
-        'STUDENT_MASTER_TYPE' => 'students',
-        'ACTIVITY_MASTER_TYPE' => 'activities',
-        'FACILITY_MASTER_TYPE' => 'facilities',
-        'CHECKIN_MASTER_TYPE' => 'checkin',
-        'BOOKING_MASTER_TYPE' => 'bookings',
-        'COUNSEL_MASTER_TYPE' => 'counsels',
-        'SUPPORT_STRATEGY_MASTER_TYPE' => 'support-strategies'
+        'ACTIVITY_MASTER_TYPE'          => 'activities',
+        'BOOKING_MASTER_TYPE'           => 'bookings',
+        'CHECKIN_MASTER_TYPE'           => 'checkin',
+        'CLASS_MASTER_TYPE'             => 'class',
+        'COUNSEL_MASTER_TYPE'           => 'counsels',
+        'FACILITY_MASTER_TYPE'          => 'facilities',
+        'LEVEL_MASTER_TYPE'             => 'levels',
+        'PERMISSION_MASTER_TYPE'        => 'permissions',
+        'ROLE_MASTER_TYPE'              => 'roles',
+        'STUDENT_MASTER_TYPE'           => 'students',
+        'SUPPORT_STRATEGY_MASTER_TYPE'  => 'support-strategies',
+        'USER_MASTER_TYPE'              => 'users',
     ],
 
     'MASTER_VALIDATION_ARRAY' => [
@@ -48,11 +49,5 @@ return [
             'checkout_time' => ['nullable', 'date', 'after_or_equal:checkin_time'],
             'reason' => ['nullable', 'string', 'max:255']
         ],
-    ],
-
-    'MASTER_ROLE_ARRAY' => [
-        1 => 'admin',
-        2 => 'student'
-    ],
-
+    ]
 ];

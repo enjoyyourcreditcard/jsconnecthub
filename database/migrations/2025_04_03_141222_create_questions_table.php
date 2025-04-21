@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('support_strategy_id')->constrained();
             $table->integer('order')->nullable('false');
             $table->text('text')->nullable('false');
+            $table->enum('type', ['text', 'radio'])->nullable('false');
             $table->timestamps();
         });
     }
