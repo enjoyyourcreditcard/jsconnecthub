@@ -9,18 +9,18 @@ use Illuminate\Support\Str;
 class MasterService
 {
     protected $modelMap = [
-        'activities'            => \App\Models\Activity::class,
-        'bookings'              => \App\Models\Booking::class,
-        'checkin'               => \App\Models\Checkin::class,
-        'class'                 => \App\Models\DataClass::class,
-        'counsels'              => \App\Models\Result::class,
-        'facilities'            => \App\Models\Facility::class,
-        'levels'                => \App\Models\Level::class,
-        'permissions'           => \Spatie\Permission\Models\Permission::class,
         'roles'                 => \Spatie\Permission\Models\Role::class,
-        'students'              => \App\Models\Student::class,
-        'support-strategies'    => \App\Models\SupportStrategy::class,
+        'permissions'           => \Spatie\Permission\Models\Permission::class,
         'users'                 => \App\Models\User::class,
+        'class'                 => \App\Models\DataClass::class,
+        'levels'                => \App\Models\Level::class,
+        'students'              => \App\Models\Student::class,
+        'activities'            => \App\Models\Activity::class,
+        'facilities'            => \App\Models\Facility::class,
+        'checkin'               => \App\Models\Checkin::class,
+        'bookings'              => \App\Models\Booking::class,
+        'counsels'              => \App\Models\Result::class,
+        'support-strategies'    => \App\Models\SupportStrategy::class,
     ];
 
     protected function getModel($type)
