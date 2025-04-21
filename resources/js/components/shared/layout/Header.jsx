@@ -44,53 +44,55 @@ const Header = () => {
     ];
 
     const getMasterItems = () => {
-        const userRole = auth()?.role;
+        const permissions = auth()?.permissions || [];
         const items = [];
 
-        if (userRole === "Superadmin") {
+        if (permissions.includes("dashboard view")) {
             items.push({
                 label: "Dashboard",
                 command: () => navigate("/dashboard"),
             });
         }
 
-        if (["Superadmin", "Admin1", "Admin2", "Admin3"].includes(userRole)) {
-            const masterSubItems = [];
-
+        const masterSubItems = [];
+        if (permissions.includes("students view")) {
             masterSubItems.push({
                 label: "Student",
                 command: () => navigate("/students"),
             });
+        }
+        if (permissions.includes("users view")) {
+            masterSubItems.push({
+                label: "User",
+                command: () => navigate("/users"),
+            });
+        }
+        if (permissions.includes("class view")) {
+            masterSubItems.push({
+                label: "Class",
+                command: () => navigate("/class"),
+            });
+        }
+        if (permissions.includes("levels view")) {
+            masterSubItems.push({
+                label: "Level",
+                command: () => navigate("/levels"),
+            });
+        }
+        if (permissions.includes("activities view")) {
+            masterSubItems.push({
+                label: "Activity",
+                command: () => navigate("/activities"),
+            });
+        }
+        if (permissions.includes("facilities view")) {
+            masterSubItems.push({
+                label: "Facility",
+                command: () => navigate("/facilities"),
+            });
+        }
 
-            if (userRole === "Superadmin") {
-                masterSubItems.push(
-                    { label: "User", command: () => navigate("/users") },
-                    { label: "Class", command: () => navigate("/class") },
-                    { label: "Level", command: () => navigate("/levels") },
-                    {
-                        label: "Activity",
-                        command: () => navigate("/activities"),
-                    },
-                    {
-                        label: "Facility",
-                        command: () => navigate("/facilities"),
-                    }
-                );
-            } else {
-                if (userRole === "Admin1") {
-                    masterSubItems.push({
-                        label: "Activity",
-                        command: () => navigate("/activities"),
-                    });
-                }
-                if (userRole === "Admin2") {
-                    masterSubItems.push({
-                        label: "Facility",
-                        command: () => navigate("/facilities"),
-                    });
-                }
-            }
-
+        if (masterSubItems.length > 0) {
             items.push({
                 label: "Master",
                 items: masterSubItems,
@@ -104,21 +106,21 @@ const Header = () => {
         const permissions = auth()?.permissions || [];
         const items = [];
 
-        if (permissions.some((p) => p.includes("checkin"))) {
+        if (permissions.includes("checkin view")) {
             items.push({
                 label: "Checkin/Checkout",
                 command: () => navigate("/checkin"),
             });
         }
 
-        if (permissions.some((p) => p.includes("bookings"))) {
+        if (permissions.includes("bookings view")) {
             items.push({
                 label: "Facility Reservations",
                 command: () => navigate("/facility-reservations"),
             });
         }
 
-        if (permissions.some((p) => p.includes("counsels"))) {
+        if (permissions.includes("counsels view")) {
             items.push({
                 label: "Ask Ms Vi",
                 command: () => navigate("/counsels"),

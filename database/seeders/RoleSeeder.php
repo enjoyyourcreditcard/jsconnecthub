@@ -26,7 +26,7 @@ class RoleSeeder extends Seeder
         $masterTypes = config('constants.MASTER_TYPE_ARRAY');
 
         foreach ($masterTypes as $masterType) {
-            // Permission::create(['name' => $masterType . ' view']);
+            Permission::create(['name' => $masterType . ' view']);
             Permission::create(['name' => $masterType . ' create']);
             Permission::create(['name' => $masterType . ' edit']);
             Permission::create(['name' => $masterType . ' delete']);
@@ -36,7 +36,7 @@ class RoleSeeder extends Seeder
             }
 
             $superadminPermissions = [
-                // $masterType . ' view',
+                $masterType . ' view',
                 $masterType . ' create',
                 $masterType . ' edit',
                 $masterType . ' delete',
@@ -48,31 +48,37 @@ class RoleSeeder extends Seeder
             Role::findByName('Superadmin')->givePermissionTo($superadminPermissions);
         }
 
+        Permission::create(['name' => 'dashboard view']);
+
+        Role::findByName('Superadmin')->givePermissionTo([
+            'dashboard view'
+        ]);
+
         Role::findByName('Admin1')->givePermissionTo([
-            // 'checkin view',
+            'students view',
+            'activities view',
+            'checkin view',
             'checkin create',
             'checkin edit',
             'checkin delete',
-            // 'students view',
-            // 'activities view',
         ]);
 
         Role::findByName('Admin2')->givePermissionTo([
-            // 'bookings view',
+            'students view',
+            'facilities view',
+            'bookings view',
             'bookings create',
             'bookings edit',
             'bookings delete',
             'bookings confirm',
-            // 'students view',
-            // 'facilities view',
         ]);
 
         Role::findByName('Admin3')->givePermissionTo([
-            // 'counsels view',
+            'students view',
+            'counsels view',
             'counsels create',
             'counsels edit',
             'counsels delete',
-            // 'students view',
         ]);
     }
 }

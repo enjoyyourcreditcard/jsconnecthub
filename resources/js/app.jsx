@@ -4,8 +4,8 @@ import "../css/app.css";
 import { PrimeReactProvider } from "primereact/api";
 import React, { useEffect, useState, useRef } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider, useAuthHeader } from "react-auth-kit";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuthHeader, useAuthUser } from "react-auth-kit";
 import { Provider, useSelector, useDispatch } from "react-redux";
 import { store } from "./components/store";
 import { setAuthToken } from "./components/api";
@@ -28,8 +28,24 @@ import Dashboard from "./components/pages/Dashboard";
 import FacilityReservations from "./components/masters/reports/FacilityReservations";
 import Counsel from "./components/masters/reports/Counsel";
 
+const PrivateRoute = ({ element, permission }) => {
+    const auth = useAuthUser();
+    const permissions = auth()?.permissions || [];
+
+    if (!auth()) {
+        return <Navigate to="/login" replace />;
+    }
+
+    if (permission && !permissions.includes(permission)) {
+        return <Navigate to="/home" replace />;
+    }
+
+    return element;
+};
+
 const AppWrapper = () => {
     const authHeader = useAuthHeader();
+    const auth = useAuthUser();
     const [authReady, setAuthReady] = useState(false);
     const { spinner, toastMessage } = useSelector(
         (state) => state.global[stateKey.app]
@@ -39,9 +55,7 @@ const AppWrapper = () => {
 
     useEffect(() => {
         setAuthToken(authHeader);
-        if (authHeader) {
-            setAuthReady(true);
-        }
+        setAuthReady(true);
     }, [authHeader]);
 
     useEffect(() => {
@@ -53,6 +67,47 @@ const AppWrapper = () => {
     if (!authReady) {
         return <div>Loading authentication...</div>;
     }
+
+    const protectedRoutes = [
+        {
+            path: "/dashboard",
+            element: <Dashboard />,
+            permission: "dashboard view",
+        },
+        { path: "/users", element: <ManageUser />, permission: "users view" },
+        { path: "/class", element: <ManageClass />, permission: "class view" },
+        {
+            path: "/levels",
+            element: <ManageLevel />,
+            permission: "levels view",
+        },
+        {
+            path: "/activities",
+            element: <ManageActivity />,
+            permission: "activities view",
+        },
+        {
+            path: "/students",
+            element: <ManageStudent />,
+            permission: "students view",
+        },
+        {
+            path: "/facilities",
+            element: <ManageFacility />,
+            permission: "facilities view",
+        },
+        { path: "/checkin", element: <Checkin />, permission: "checkin view" },
+        {
+            path: "/facility-reservations",
+            element: <FacilityReservations />,
+            permission: "bookings view",
+        },
+        {
+            path: "/counsels",
+            element: <Counsel />,
+            permission: "counsels view",
+        },
+    ];
 
     return (
         <BrowserRouter>
@@ -97,20 +152,19 @@ const AppWrapper = () => {
                 <Route path="/login" element={<Login />} />
                 <Route path="/" element={<Home />} />
                 <Route path="/home" element={<Home />} />
-                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/about" element={<About />} />
-                <Route path="/users" element={<ManageUser />} />
-                <Route path="/class" element={<ManageClass />} />
-                <Route path="/levels" element={<ManageLevel />} />
-                <Route path="/activities" element={<ManageActivity />} />
-                <Route path="/students" element={<ManageStudent />} />
-                <Route path="/facilities" element={<ManageFacility />} />
-                <Route path="/checkin" element={<Checkin />} />
-                <Route
-                    path="/facility-reservations"
-                    element={<FacilityReservations />}
-                />
-                <Route path="/counsels" element={<Counsel />} />
+                {protectedRoutes.map(({ path, element, permission }) => (
+                    <Route
+                        key={path}
+                        path={path}
+                        element={
+                            <PrivateRoute
+                                element={element}
+                                permission={permission}
+                            />
+                        }
+                    />
+                ))}
                 <Route path="/*" element={<NotFound />} />
             </Routes>
         </BrowserRouter>
