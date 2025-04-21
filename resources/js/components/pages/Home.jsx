@@ -1,7 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
-import { setToastMessage } from "../store/global-slice";
+import React, { useRef, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getRecords, createRecord } from "../store/global-slice";
+import {
+    getRecords,
+    createRecord,
+    setToastMessage,
+} from "../store/global-slice";
 import { Accordion, AccordionTab } from "primereact/accordion";
 import { Badge } from "primereact/badge";
 import { Stepper } from "primereact/stepper";
@@ -16,6 +19,7 @@ import { Checkbox } from "primereact/checkbox";
 import { InputTextarea } from "primereact/inputtextarea";
 import { DateTime } from "luxon";
 import Header from "../shared/layout/Header";
+import "../../../css/home.css";
 
 function Home() {
     const toast = useRef(null);
@@ -144,10 +148,7 @@ function Home() {
                     setTimer(
                         Math.floor(now.diff(checkinTime, "seconds").seconds)
                     );
-                    startTimer(
-                        ongoingCheckin.activity?.name ||
-                            ongoingCheckin.other_activity
-                    );
+                    startTimer();
                 } else {
                     setIsCheckedIn(false);
                 }
@@ -173,11 +174,6 @@ function Home() {
         setTimerInterval(interval);
     };
 
-    const stopTimer = () => {
-        clearInterval(timerInterval);
-        setTimerInterval(null);
-    };
-
     const formatTime = (seconds) => {
         const hrs = Math.floor(seconds / 3600);
         const mins = Math.floor((seconds % 3600) / 60);
@@ -194,6 +190,24 @@ function Home() {
             return "";
         }
         return dt.setZone(userTimezone).toFormat("dd MMMM yyyy, HH:mm:ss z");
+    };
+
+    const resetState = () => {
+        setShowCard(false);
+        setActiveButton(null);
+        setQuestLog([]);
+        setLevelId(null);
+        setClassId(null);
+        setStudentId(null);
+        setActivityId(null);
+        setSelectedActivity(null);
+        setEditableActivity("");
+        setShowCustomActivityInput(false);
+        setIsCheckedIn(false);
+        setTimer(0);
+        setIsEarlyCheckout(false);
+        setEarlyReason("");
+        setError("");
     };
 
     const handleCheckin = () => {
@@ -238,15 +252,16 @@ function Home() {
                 ]);
                 setIsCheckedIn(true);
                 setTimer(0);
-                startTimer(selectedActivity?.name || editableActivity);
+                // startTimer();
                 dispatch(
                     setToastMessage({
                         severity: "success",
                         summary: "Checked In",
-                        detail: "You have started your quest!",
+                        detail: "You have started your quest! Returning to Launch Pad.",
                     })
                 );
                 setShowCustomActivityInput(false);
+                resetState();
             })
             .catch((err) => {
                 setError(err.message || "Check-in failed");
@@ -278,7 +293,7 @@ function Home() {
                     checkout_time: result.checkout_time,
                     reason: isEarlyCheckout ? earlyReason : null,
                 };
-                stopTimer();
+                // stopTimer();
                 setQuestLog((prev) =>
                     prev.map((quest) =>
                         quest.id === result.id
@@ -306,12 +321,13 @@ function Home() {
                         severity: "info",
                         summary: "Checked Out",
                         detail: isEarlyCheckout
-                            ? `Early checkout recorded. Reason: ${earlyReason}`
-                            : "You have completed your quest!",
+                            ? `Early checkout recorded. Reason: ${earlyReason}. Returning to Launch Pad.`
+                            : "You have completed your quest! Returning to Launch Pad.",
                     })
                 );
                 setEarlyReason("");
                 overlayRef.current.hide();
+                resetState();
             })
             .catch((err) => {
                 setError(err.message || "Check-out failed");
@@ -322,16 +338,11 @@ function Home() {
     };
 
     const handleBack = () => {
-        setShowCard(false);
-        setActiveButton(null);
-        setQuestLog([]);
-        setLevelId(null);
-        setClassId(null);
-        setStudentId(null);
+        resetState();
         dispatch(
             setToastMessage({
                 severity: "info",
-                summary: "Returned to Home",
+                summary: "Returned to Launch Pad",
                 detail: "Select an option to continue.",
             })
         );
@@ -340,51 +351,55 @@ function Home() {
     return (
         <div>
             <Header />
-            <div className="min-h-screen flex flex-col gap-6 justify-center items-center p-4">
+            <div
+                className={`home-container ${
+                    !showCard ? "with-background" : ""
+                }`}
+            >
                 {!showCard && (
-                    <div className="w-11/12 sm:w-11/12 md:w-10/12 xl:w-1/2 flex flex-col">
-                        <h4 className="mb-10 font-semibold text-2xl text-center">
-                            The Launch Pad
-                        </h4>
-                        <div className="grid md:grid-cols-3 gap-4 mb-4">
-                            <Button
-                                label="Activities"
-                                onClick={() => {
-                                    setActiveButton("activities");
-                                    setShowCard(true);
-                                }}
-                            />
-                            <Button
-                                label="Ask Ms Vi"
-                                onClick={() => {
-                                    setActiveButton("msvi");
-                                    setShowCard(true);
-                                }}
-                            />
-                            <Button
-                                label="Facilities"
-                                onClick={() => {
-                                    setActiveButton("facilities");
-                                    setShowCard(true);
-                                }}
-                            />
+                    <>
+                        <h4 className="launch-pad-title">The Launch Pad</h4>
+                        <div className="card-container">
+                            <div className="grid md:grid-cols-3 gap-4">
+                                <Button
+                                    label="Activities"
+                                    onClick={() => {
+                                        setActiveButton("activities");
+                                        setShowCard(true);
+                                    }}
+                                />
+                                <Button
+                                    label="Ask Ms Vi"
+                                    onClick={() => {
+                                        setActiveButton("msvi");
+                                        setShowCard(true);
+                                    }}
+                                />
+                                <Button
+                                    label="Facilities"
+                                    onClick={() => {
+                                        setActiveButton("facilities");
+                                        setShowCard(true);
+                                    }}
+                                />
+                            </div>
+                            <div className="grid md:grid-cols-2 sm:w-1/2 sm:m-auto gap-4">
+                                <Button
+                                    label="JSEILPR"
+                                    onClick={() =>
+                                        window.open(
+                                            "https://jseilpr.com/",
+                                            "_blank"
+                                        )
+                                    }
+                                />
+                                <Button label="Another Link" />
+                            </div>
                         </div>
-                        <div className="grid md:grid-cols-2 sm:w-1/2 sm:m-auto gap-4">
-                            <Button
-                                label="JSEILPR"
-                                onClick={() =>
-                                    window.open(
-                                        "https://jseilpr.com/",
-                                        "_blank"
-                                    )
-                                }
-                            />
-                            <Button label="Another Link" />
-                        </div>
-                    </div>
+                    </>
                 )}
                 {showCard && (
-                    <div className="w-11/12 sm:w-11/12 md:w-10/12 xl:w-1/2 flex flex-col gap-4">
+                    <div className="card-container">
                         <Button
                             icon="pi pi-arrow-left"
                             rounded
@@ -842,7 +857,6 @@ function Home() {
                                                         },
                                                     })
                                                 }
-                                                disabled={isCheckedIn}
                                             />
                                             {error && (
                                                 <p
