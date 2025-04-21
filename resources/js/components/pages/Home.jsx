@@ -29,7 +29,8 @@ function Home() {
         activities: { data: activities = [], endPoints: activityEndPoints },
         checkin: { data: checkin = [], endPoints: checkinEndPoints },
     } = useSelector((state) => state.global);
-    const [activeButton, setActiveButton] = useState("activities");
+    const [activeButton, setActiveButton] = useState(null);
+    const [showCard, setShowCard] = useState(false);
     const [levelId, setLevelId] = useState(null);
     const [classId, setClassId] = useState(null);
     const [studentId, setStudentId] = useState(null);
@@ -54,35 +55,37 @@ function Home() {
     }, []);
 
     useEffect(() => {
-        dispatch(
-            getRecords({
-                type: "class",
-                endPoint: classEndPoints.collection,
-                key: "data",
-            })
-        );
-        dispatch(
-            getRecords({
-                type: "levels",
-                endPoint: levelEndPoints.collection,
-                key: "data",
-            })
-        );
-        dispatch(
-            getRecords({
-                type: "students",
-                endPoint: studentEndPoints.collection,
-                key: "data",
-            })
-        );
-        dispatch(
-            getRecords({
-                type: "activities",
-                endPoint: activityEndPoints.collection,
-                key: "data",
-            })
-        );
-    }, [dispatch]);
+        if (showCard) {
+            dispatch(
+                getRecords({
+                    type: "class",
+                    endPoint: classEndPoints.collection,
+                    key: "data",
+                })
+            );
+            dispatch(
+                getRecords({
+                    type: "levels",
+                    endPoint: levelEndPoints.collection,
+                    key: "data",
+                })
+            );
+            dispatch(
+                getRecords({
+                    type: "students",
+                    endPoint: studentEndPoints.collection,
+                    key: "data",
+                })
+            );
+            dispatch(
+                getRecords({
+                    type: "activities",
+                    endPoint: activityEndPoints.collection,
+                    key: "data",
+                })
+            );
+        }
+    }, [dispatch, showCard]);
 
     const handleToQuest = () => {
         if (studentId && activeButton === "activities") {
@@ -316,715 +319,804 @@ function Home() {
             });
     };
 
+    const handleBack = () => {
+        setShowCard(false);
+        setActiveButton(null);
+        setQuestLog([]);
+        setLevelId(null);
+        setClassId(null);
+        setStudentId(null);
+        dispatch(
+            setToastMessage({
+                severity: "info",
+                summary: "Returned to Home",
+                detail: "Select an option to continue.",
+            })
+        );
+    };
+
     return (
         <div>
             <Header />
             <div className="min-h-screen flex flex-col gap-6 justify-center items-center p-4">
-                <div className="flex flex-row justify-center md:justify-start gap-4 w-11/12 sm:w-11/12 md:w-10/12 xl:w-1/2">
-                    <Button
-                        label="Activities"
-                        icon={
-                            activeButton === "activities" ? "pi pi-check" : null
-                        }
-                        iconPos="right"
-                        size="small"
-                        onClick={() => setActiveButton("activities")}
-                    />
-                    <Button
-                        label="Ask Ms Vi"
-                        icon={activeButton === "msvi" ? "pi pi-check" : null}
-                        iconPos="right"
-                        size="small"
-                        onClick={() => setActiveButton("msvi")}
-                    />
-                    <Button
-                        label="Facilities"
-                        icon={
-                            activeButton === "facilities" ? "pi pi-check" : null
-                        }
-                        iconPos="right"
-                        size="small"
-                        onClick={() => setActiveButton("facilities")}
-                    />
-                </div>
-                <Card className="w-11/12 sm:w-11/12 md:w-10/12 xl:w-1/2">
-                    <Toast ref={toast} />
-                    <ConfirmPopup />
-                    <Stepper ref={stepperRef} className="w-full" linear>
-                        <StepperPanel header="Level">
-                            <div className="flex flex-col h-full">
-                                <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-32">
-                                    {levels.map((level) => (
+                {!showCard && (
+                    <div className="w-11/12 sm:w-11/12 md:w-10/12 xl:w-1/2 flex flex-col">
+                        <h4 className="mb-10 font-semibold text-2xl text-center">
+                            The Launch Pad
+                        </h4>
+                        <div className="grid md:grid-cols-3 gap-4 mb-4">
+                            <Button
+                                label="Activities"
+                                onClick={() => {
+                                    setActiveButton("activities");
+                                    setShowCard(true);
+                                }}
+                            />
+                            <Button
+                                label="Ask Ms Vi"
+                                onClick={() => {
+                                    setActiveButton("msvi");
+                                    setShowCard(true);
+                                }}
+                            />
+                            <Button
+                                label="Facilities"
+                                onClick={() => {
+                                    setActiveButton("facilities");
+                                    setShowCard(true);
+                                }}
+                            />
+                        </div>
+                        <div className="grid md:grid-cols-2 sm:w-1/2 sm:m-auto gap-4">
+                            <Button
+                                label="JSEILPR"
+                                onClick={() =>
+                                    window.open(
+                                        "https://jseilpr.com/",
+                                        "_blank"
+                                    )
+                                }
+                            />
+                            <Button label="Another Link" />
+                        </div>
+                    </div>
+                )}
+                {showCard && (
+                    <div className="w-11/12 sm:w-11/12 md:w-10/12 xl:w-1/2 flex flex-col gap-4">
+                        <Button
+                            icon="pi pi-arrow-left"
+                            rounded
+                            onClick={handleBack}
+                            style={{
+                                position: "relative",
+                            }}
+                        />
+                        <Card>
+                            <Toast ref={toast} />
+                            <ConfirmPopup />
+                            <Stepper ref={stepperRef} className="w-full" linear>
+                                <StepperPanel header="Level">
+                                    <div className="flex flex-col h-full">
+                                        <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-32">
+                                            {levels.map((level) => (
+                                                <Button
+                                                    key={level.id}
+                                                    label={level.name}
+                                                    onClick={() =>
+                                                        setLevelId(level.id)
+                                                    }
+                                                    className={`${
+                                                        levelId === level.id
+                                                            ? "bg-blue-500 text-white"
+                                                            : "bg-gray-200"
+                                                    }`}
+                                                    size="small"
+                                                    icon={
+                                                        levelId === level.id
+                                                            ? "pi pi-check"
+                                                            : null
+                                                    }
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="flex pt-4 justify-end">
                                         <Button
-                                            key={level.id}
-                                            label={level.name}
-                                            onClick={() => setLevelId(level.id)}
-                                            className={`${
-                                                levelId === level.id
-                                                    ? "bg-blue-500 text-white"
-                                                    : "bg-gray-200"
-                                            }`}
+                                            label="Next"
+                                            icon="pi pi-arrow-right"
+                                            iconPos="right"
                                             size="small"
-                                            icon={
-                                                levelId === level.id
-                                                    ? "pi pi-check"
-                                                    : null
+                                            onClick={() =>
+                                                stepperRef.current.nextCallback()
+                                            }
+                                            disabled={!levelId}
+                                        />
+                                    </div>
+                                </StepperPanel>
+                                <StepperPanel header="Class">
+                                    <div className="flex flex-col h-full">
+                                        <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-32">
+                                            {classes
+                                                .filter(
+                                                    (c) =>
+                                                        c.level_id === levelId
+                                                )
+                                                .map((cls) => (
+                                                    <Button
+                                                        key={cls.id}
+                                                        label={cls.name}
+                                                        onClick={() =>
+                                                            setClassId(cls.id)
+                                                        }
+                                                        className={`${
+                                                            classId === cls.id
+                                                                ? "bg-blue-500 text-white"
+                                                                : "bg-gray-200"
+                                                        }`}
+                                                        size="small"
+                                                        icon={
+                                                            classId === cls.id
+                                                                ? "pi pi-check"
+                                                                : null
+                                                        }
+                                                    />
+                                                ))}
+                                        </div>
+                                    </div>
+                                    <div className="flex pt-4 justify-between">
+                                        <Button
+                                            label="Back"
+                                            severity="secondary"
+                                            icon="pi pi-arrow-left"
+                                            size="small"
+                                            onClick={() =>
+                                                stepperRef.current.prevCallback()
                                             }
                                         />
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="flex pt-4 justify-end">
-                                <Button
-                                    label="Next"
-                                    icon="pi pi-arrow-right"
-                                    iconPos="right"
-                                    size="small"
-                                    onClick={() =>
-                                        stepperRef.current.nextCallback()
-                                    }
-                                    disabled={!levelId}
-                                />
-                            </div>
-                        </StepperPanel>
-                        <StepperPanel header="Class">
-                            <div className="flex flex-col h-full">
-                                <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-32">
-                                    {classes
-                                        .filter((c) => c.level_id === levelId)
-                                        .map((cls) => (
-                                            <Button
-                                                key={cls.id}
-                                                label={cls.name}
-                                                onClick={() =>
-                                                    setClassId(cls.id)
-                                                }
-                                                className={`${
-                                                    classId === cls.id
-                                                        ? "bg-blue-500 text-white"
-                                                        : "bg-gray-200"
-                                                }`}
-                                                size="small"
-                                                icon={
-                                                    classId === cls.id
-                                                        ? "pi pi-check"
-                                                        : null
-                                                }
-                                            />
-                                        ))}
-                                </div>
-                            </div>
-                            <div className="flex pt-4 justify-between">
-                                <Button
-                                    label="Back"
-                                    severity="secondary"
-                                    icon="pi pi-arrow-left"
-                                    size="small"
-                                    onClick={() =>
-                                        stepperRef.current.prevCallback()
-                                    }
-                                />
-                                <Button
-                                    label="Next"
-                                    icon="pi pi-arrow-right"
-                                    iconPos="right"
-                                    size="small"
-                                    onClick={() =>
-                                        stepperRef.current.nextCallback()
-                                    }
-                                    disabled={!classId}
-                                />
-                            </div>
-                        </StepperPanel>
-                        <StepperPanel header="Character">
-                            <div className="flex flex-col h-full">
-                                <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-32">
-                                    {students
-                                        .filter((s) => s.class_id === classId)
-                                        .map((student) => (
-                                            <Button
-                                                key={student.id}
-                                                label={student.name}
-                                                onClick={() =>
-                                                    setStudentId(student.id)
-                                                }
-                                                className={`${
-                                                    studentId === student.id
-                                                        ? "bg-blue-500 text-white"
-                                                        : "bg-gray-200"
-                                                }`}
-                                                size="small"
-                                                icon={
-                                                    studentId === student.id
-                                                        ? "pi pi-check"
-                                                        : null
-                                                }
-                                            />
-                                        ))}
-                                </div>
-                            </div>
-                            <div className="flex pt-4 justify-between">
-                                <Button
-                                    label="Back"
-                                    severity="secondary"
-                                    icon="pi pi-arrow-left"
-                                    size="small"
-                                    onClick={() =>
-                                        stepperRef.current.prevCallback()
-                                    }
-                                />
-                                <Button
-                                    label="Next"
-                                    icon="pi pi-arrow-right"
-                                    iconPos="right"
-                                    size="small"
-                                    onClick={() => {
-                                        handleToQuest();
-                                        stepperRef.current.nextCallback();
-                                    }}
-                                    disabled={!studentId}
-                                />
-                            </div>
-                        </StepperPanel>
-                        {activeButton === "activities" && (
-                            <StepperPanel header="Activities">
-                                <div className="flex flex-col h-full">
-                                    <div className="flex-grow grid grid-cols-1 items-center gap-2">
-                                        {studentId ? (
-                                            <>
-                                                <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 p-5 flex-grow flex flex-wrap items-center max-h-48 overflow-y-auto">
-                                                    <div className="justify-start mb-4">
-                                                        Hi "
-                                                        {
-                                                            students.find(
-                                                                (s) =>
-                                                                    s.id ===
-                                                                    studentId
-                                                            )?.name
-                                                        }
-                                                        " from class "
-                                                        {
-                                                            classes.find(
-                                                                (c) =>
-                                                                    c.id ===
-                                                                    classId
-                                                            )?.name
-                                                        }
-                                                        " level "
-                                                        {
-                                                            levels.find(
-                                                                (l) =>
-                                                                    l.id ===
-                                                                    levelId
-                                                            )?.name
-                                                        }
-                                                        ". This is your
-                                                        activities log today
-                                                        (Timezone:{" "}
-                                                        {userTimezone}):
-                                                    </div>
-                                                    <Accordion className="w-full">
-                                                        {questLog.map(
-                                                            (quest) => (
-                                                                <AccordionTab
-                                                                    key={
-                                                                        quest.id
-                                                                    }
-                                                                    header={
-                                                                        <div className="flex items-center gap-2">
-                                                                            <span className="truncate max-w-[100px] inline-block">
-                                                                                {
-                                                                                    quest.activityName
-                                                                                }
-                                                                            </span>
-                                                                            <Badge
-                                                                                value={
-                                                                                    quest.status
-                                                                                }
-                                                                                severity={
-                                                                                    quest.status ===
-                                                                                    "Ongoing"
-                                                                                        ? "info"
-                                                                                        : quest.status ===
-                                                                                          "Finished"
-                                                                                        ? "success"
-                                                                                        : "warning"
-                                                                                }
-                                                                            />
-                                                                        </div>
-                                                                    }
-                                                                >
-                                                                    <div className="flex flex-col gap-2">
-                                                                        <p>
-                                                                            <strong>
-                                                                                Activity :
-                                                                            </strong>{" "}
-                                                                            {quest.activityName}
-                                                                        </p>
-                                                                        <p>
-                                                                            <strong>
-                                                                                Check-In
-                                                                                Time:
-                                                                            </strong>{" "}
-                                                                            {formatDateToLocal(
-                                                                                quest.checkInTime
-                                                                            )}
-                                                                        </p>
-                                                                        {quest.checkOutTime && (
-                                                                            <p>
-                                                                                <strong>
-                                                                                    Check-Out
-                                                                                    Time:
-                                                                                </strong>{" "}
-                                                                                {formatDateToLocal(
-                                                                                    quest.checkOutTime
-                                                                                )}
-                                                                            </p>
-                                                                        )}
-                                                                        {quest.status ===
-                                                                            "Finished (Early)" && (
-                                                                            <p>
-                                                                                <strong>
-                                                                                    Reason:
-                                                                                </strong>{" "}
-                                                                                {
-                                                                                    quest.earlyReason
-                                                                                }
-                                                                            </p>
-                                                                        )}
-                                                                        <p>
-                                                                            <strong>
-                                                                                Duration:
-                                                                            </strong>{" "}
-                                                                            {quest.checkOutTime
-                                                                                ? formatTime(
-                                                                                      Math.floor(
-                                                                                          (new Date(
-                                                                                              quest.checkOutTime
-                                                                                          ) -
-                                                                                              new Date(
-                                                                                                  quest.checkInTime
-                                                                                              )) /
-                                                                                              1000
-                                                                                      )
-                                                                                  )
-                                                                                : formatTime(
-                                                                                      timer
-                                                                                  )}
-                                                                        </p>
-                                                                    </div>
-                                                                </AccordionTab>
+                                        <Button
+                                            label="Next"
+                                            icon="pi pi-arrow-right"
+                                            iconPos="right"
+                                            size="small"
+                                            onClick={() =>
+                                                stepperRef.current.nextCallback()
+                                            }
+                                            disabled={!classId}
+                                        />
+                                    </div>
+                                </StepperPanel>
+                                <StepperPanel header="Character">
+                                    <div className="flex flex-col h-full">
+                                        <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-32">
+                                            {students
+                                                .filter(
+                                                    (s) =>
+                                                        s.class_id === classId
+                                                )
+                                                .map((student) => (
+                                                    <Button
+                                                        key={student.id}
+                                                        label={student.name}
+                                                        onClick={() =>
+                                                            setStudentId(
+                                                                student.id
                                                             )
-                                                        )}
-                                                    </Accordion>
-                                                </div>
-                                                <div className="flex-grow grid grid-cols-1 gap-2 max-h-32 overflow-y-auto">
-                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                                        {!isCheckedIn && (
-                                                            <>
-                                                                {activities.map(
-                                                                    (
-                                                                        activity
-                                                                    ) => (
-                                                                        <Button
+                                                        }
+                                                        className={`${
+                                                            studentId ===
+                                                            student.id
+                                                                ? "bg-blue-500 text-white"
+                                                                : "bg-gray-200"
+                                                        }`}
+                                                        size="small"
+                                                        icon={
+                                                            studentId ===
+                                                            student.id
+                                                                ? "pi pi-check"
+                                                                : null
+                                                        }
+                                                    />
+                                                ))}
+                                        </div>
+                                    </div>
+                                    <div className="flex pt-4 justify-between">
+                                        <Button
+                                            label="Back"
+                                            severity="secondary"
+                                            icon="pi pi-arrow-left"
+                                            size="small"
+                                            onClick={() =>
+                                                stepperRef.current.prevCallback()
+                                            }
+                                        />
+                                        <Button
+                                            label="Next"
+                                            icon="pi pi-arrow-right"
+                                            iconPos="right"
+                                            size="small"
+                                            onClick={() => {
+                                                handleToQuest();
+                                                stepperRef.current.nextCallback();
+                                            }}
+                                            disabled={!studentId}
+                                        />
+                                    </div>
+                                </StepperPanel>
+                                {activeButton === "activities" && (
+                                    <StepperPanel header="Activities">
+                                        <div className="flex flex-col h-full">
+                                            <div className="flex-grow grid grid-cols-1 items-center gap-2">
+                                                {studentId ? (
+                                                    <>
+                                                        <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 p-5 flex-grow flex flex-wrap items-center max-h-48 overflow-y-auto">
+                                                            <div className="justify-start mb-4">
+                                                                Hi "
+                                                                {
+                                                                    students.find(
+                                                                        (s) =>
+                                                                            s.id ===
+                                                                            studentId
+                                                                    )?.name
+                                                                }
+                                                                " from class "
+                                                                {
+                                                                    classes.find(
+                                                                        (c) =>
+                                                                            c.id ===
+                                                                            classId
+                                                                    )?.name
+                                                                }
+                                                                " level "
+                                                                {
+                                                                    levels.find(
+                                                                        (l) =>
+                                                                            l.id ===
+                                                                            levelId
+                                                                    )?.name
+                                                                }
+                                                                ". This is your
+                                                                activities log
+                                                                today (Timezone:{" "}
+                                                                {userTimezone}
+                                                                ):
+                                                            </div>
+                                                            <Accordion className="w-full">
+                                                                {questLog.map(
+                                                                    (quest) => (
+                                                                        <AccordionTab
                                                                             key={
-                                                                                activity.id
+                                                                                quest.id
                                                                             }
+                                                                            header={
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <span className="truncate max-w-[100px] inline-block">
+                                                                                        {
+                                                                                            quest.activityName
+                                                                                        }
+                                                                                    </span>
+                                                                                    <Badge
+                                                                                        value={
+                                                                                            quest.status
+                                                                                        }
+                                                                                        severity={
+                                                                                            quest.status ===
+                                                                                            "Ongoing"
+                                                                                                ? "info"
+                                                                                                : quest.status ===
+                                                                                                  "Finished"
+                                                                                                ? "success"
+                                                                                                : "warning"
+                                                                                        }
+                                                                                    />
+                                                                                </div>
+                                                                            }
+                                                                        >
+                                                                            <div className="flex flex-col gap-2">
+                                                                                <p>
+                                                                                    <strong>
+                                                                                        Activity:
+                                                                                    </strong>{" "}
+                                                                                    {
+                                                                                        quest.activityName
+                                                                                    }
+                                                                                </p>
+                                                                                <p>
+                                                                                    <strong>
+                                                                                        Check-In
+                                                                                        Time:
+                                                                                    </strong>{" "}
+                                                                                    {formatDateToLocal(
+                                                                                        quest.checkInTime
+                                                                                    )}
+                                                                                </p>
+                                                                                {quest.checkOutTime && (
+                                                                                    <p>
+                                                                                        <strong>
+                                                                                            Check-Out
+                                                                                            Time:
+                                                                                        </strong>{" "}
+                                                                                        {formatDateToLocal(
+                                                                                            quest.checkOutTime
+                                                                                        )}
+                                                                                    </p>
+                                                                                )}
+                                                                                {quest.status ===
+                                                                                    "Finished (Early)" && (
+                                                                                    <p>
+                                                                                        <strong>
+                                                                                            Reason:
+                                                                                        </strong>{" "}
+                                                                                        {
+                                                                                            quest.earlyReason
+                                                                                        }
+                                                                                    </p>
+                                                                                )}
+                                                                                <p>
+                                                                                    <strong>
+                                                                                        Duration:
+                                                                                    </strong>{" "}
+                                                                                    {quest.checkOutTime
+                                                                                        ? formatTime(
+                                                                                              Math.floor(
+                                                                                                  (new Date(
+                                                                                                      quest.checkOutTime
+                                                                                                  ) -
+                                                                                                      new Date(
+                                                                                                          quest.checkInTime
+                                                                                                      )) /
+                                                                                                      1000
+                                                                                              )
+                                                                                          )
+                                                                                        : formatTime(
+                                                                                              timer
+                                                                                          )}
+                                                                                </p>
+                                                                            </div>
+                                                                        </AccordionTab>
+                                                                    )
+                                                                )}
+                                                            </Accordion>
+                                                        </div>
+                                                        {!isCheckedIn && (
+                                                            <div>
+                                                                <p>
+                                                                    Please
+                                                                    select your
+                                                                    activity for
+                                                                    today.
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                        <div className="flex-grow grid grid-cols-1 gap-2 max-h-32 overflow-y-auto">
+                                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                                {!isCheckedIn && (
+                                                                    <>
+                                                                        {activities.map(
+                                                                            (
+                                                                                activity
+                                                                            ) => (
+                                                                                <Button
+                                                                                    key={
+                                                                                        activity.id
+                                                                                    }
+                                                                                    label={
+                                                                                        activity.name
+                                                                                    }
+                                                                                    onClick={() => {
+                                                                                        setActivityId(
+                                                                                            activity.id
+                                                                                        );
+                                                                                        setSelectedActivity(
+                                                                                            activity
+                                                                                        );
+                                                                                        setEditableActivity(
+                                                                                            ""
+                                                                                        );
+                                                                                        setShowCustomActivityInput(
+                                                                                            false
+                                                                                        );
+                                                                                    }}
+                                                                                    className={`${
+                                                                                        activityId ===
+                                                                                        activity.id
+                                                                                            ? "bg-blue-500 text-white"
+                                                                                            : "bg-gray-200"
+                                                                                    }`}
+                                                                                    size="small"
+                                                                                    icon={
+                                                                                        activityId ===
+                                                                                        activity.id
+                                                                                            ? "pi pi-check"
+                                                                                            : null
+                                                                                    }
+                                                                                />
+                                                                            )
+                                                                        )}
+                                                                        <Button
                                                                             label={
-                                                                                activity.name
+                                                                                showCustomActivityInput
+                                                                                    ? "Cancel Custom Activity"
+                                                                                    : "Other Activity"
                                                                             }
                                                                             onClick={() => {
+                                                                                setShowCustomActivityInput(
+                                                                                    !showCustomActivityInput
+                                                                                );
                                                                                 setActivityId(
-                                                                                    activity.id
+                                                                                    null
                                                                                 );
                                                                                 setSelectedActivity(
-                                                                                    activity
+                                                                                    null
                                                                                 );
                                                                                 setEditableActivity(
                                                                                     ""
                                                                                 );
-                                                                                setShowCustomActivityInput(
-                                                                                    false
-                                                                                );
                                                                             }}
-                                                                            className={`${
-                                                                                activityId ===
-                                                                                activity.id
-                                                                                    ? "bg-blue-500 text-white"
-                                                                                    : "bg-gray-200"
-                                                                            }`}
+                                                                            className="bg-gray-200"
                                                                             size="small"
                                                                             icon={
-                                                                                activityId ===
-                                                                                activity.id
-                                                                                    ? "pi pi-check"
-                                                                                    : null
+                                                                                showCustomActivityInput
+                                                                                    ? "pi pi-times"
+                                                                                    : "pi pi-plus"
                                                                             }
                                                                         />
-                                                                    )
+                                                                    </>
                                                                 )}
-                                                                <Button
-                                                                    label={
-                                                                        showCustomActivityInput
-                                                                            ? "Cancel Custom Activity"
-                                                                            : "Other Activity"
-                                                                    }
-                                                                    onClick={() => {
-                                                                        setShowCustomActivityInput(
-                                                                            !showCustomActivityInput
-                                                                        );
-                                                                        setActivityId(
-                                                                            null
-                                                                        );
-                                                                        setSelectedActivity(
-                                                                            null
-                                                                        );
-                                                                        setEditableActivity(
-                                                                            ""
-                                                                        );
-                                                                    }}
-                                                                    className="bg-gray-200"
-                                                                    size="small"
-                                                                    icon={
-                                                                        showCustomActivityInput
-                                                                            ? "pi pi-times"
-                                                                            : "pi pi-plus"
-                                                                    }
-                                                                />
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                    {showCustomActivityInput &&
-                                                        !isCheckedIn && (
-                                                            <div className="mt-1">
-                                                                <InputText
-                                                                    value={
-                                                                        editableActivity
-                                                                    }
-                                                                    onChange={(
-                                                                        e
-                                                                    ) => {
-                                                                        setEditableActivity(
-                                                                            e
-                                                                                .target
-                                                                                .value
-                                                                        );
-                                                                        setSelectedActivity(
-                                                                            {
-                                                                                name: e
-                                                                                    .target
-                                                                                    .value,
-                                                                            }
-                                                                        );
-                                                                    }}
-                                                                    placeholder="Enter other activity"
-                                                                    className="w-full"
-                                                                />
                                                             </div>
-                                                        )}
-                                                </div>
-                                            </>
-                                        ) : (
-                                            "Your Activity"
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="flex pt-2 sm:pt-4 justify-between">
-                                    <Button
-                                        label="Back"
-                                        severity="secondary"
-                                        icon="pi pi-arrow-left"
-                                        size="small"
-                                        onClick={(event) =>
-                                            confirmPopup({
-                                                target: event.currentTarget,
-                                                message:
-                                                    "Are you sure you want to go back?",
-                                                icon: "pi pi-exclamation-triangle",
-                                                accept: () => {
-                                                    dispatch(
-                                                        setToastMessage({
-                                                            severity: "info",
-                                                            summary:
-                                                                "Stay focus kiddo.",
-                                                            detail: "Moved back to Character step",
-                                                        })
-                                                    );
-                                                    stepperRef.current.prevCallback();
-                                                    setQuestLog([]);
-                                                },
-                                                reject: () => {
-                                                    dispatch(
-                                                        setToastMessage({
-                                                            severity: "info",
-                                                            summary:
-                                                                "Nice stay focus on your activity.",
-                                                            detail: "Stayed on Activities step",
-                                                        })
-                                                    );
-                                                },
-                                            })
-                                        }
-                                        disabled={isCheckedIn}
-                                    />
-                                    {error && (
-                                        <p
-                                            style={{
-                                                color: "red",
-                                                marginLeft: "1rem",
-                                            }}
-                                        >
-                                            {error}
-                                        </p>
-                                    )}
-                                    <Button
-                                        label={
-                                            isCheckedIn
-                                                ? "Check Out"
-                                                : "Check In"
-                                        }
-                                        icon={
-                                            isCheckedIn
-                                                ? "pi pi-sign-out"
-                                                : "pi pi-sign-in"
-                                        }
-                                        iconPos="right"
-                                        severity={
-                                            isCheckedIn ? "warning" : undefined
-                                        }
-                                        size="small"
-                                        onClick={(event) => {
-                                            if (!isCheckedIn) {
-                                                confirmPopup({
-                                                    target: event.currentTarget,
-                                                    message:
-                                                        "Are you sure you want to check in?",
-                                                    icon: "pi pi-exclamation-triangle",
-                                                    accept: () =>
-                                                        handleCheckin(),
-                                                    reject: () => {
-                                                        dispatch(
-                                                            setToastMessage({
-                                                                severity:
-                                                                    "warn",
-                                                                summary:
-                                                                    "Action Cancelled",
-                                                                detail: "You stayed checked out.",
-                                                            })
-                                                        );
-                                                    },
-                                                });
-                                            } else {
-                                                overlayRef.current.toggle(
-                                                    event
-                                                );
-                                            }
-                                        }}
-                                        disabled={
-                                            (!selectedActivity &&
-                                                !isCheckedIn) ||
-                                            (!editableActivity &&
-                                                showCustomActivityInput) ||
-                                            loading
-                                        }
-                                    />
-                                </div>
-                                <OverlayPanel ref={overlayRef} showCloseIcon>
-                                    <div className="flex flex-col gap-4">
-                                        <h3>Confirm Check Out</h3>
-                                        <div className="flex items-center gap-2">
-                                            <Checkbox
-                                                inputId="earlyCheckout"
-                                                checked={isEarlyCheckout}
-                                                onChange={(e) =>
-                                                    setIsEarlyCheckout(
-                                                        e.checked
-                                                    )
-                                                }
-                                            />
-                                            <label htmlFor="earlyCheckout">
-                                                Early Checkout?
-                                            </label>
+                                                            {showCustomActivityInput &&
+                                                                !isCheckedIn && (
+                                                                    <div className="mt-1">
+                                                                        <InputText
+                                                                            value={
+                                                                                editableActivity
+                                                                            }
+                                                                            onChange={(
+                                                                                e
+                                                                            ) => {
+                                                                                setEditableActivity(
+                                                                                    e
+                                                                                        .target
+                                                                                        .value
+                                                                                );
+                                                                                setSelectedActivity(
+                                                                                    {
+                                                                                        name: e
+                                                                                            .target
+                                                                                            .value,
+                                                                                    }
+                                                                                );
+                                                                            }}
+                                                                            placeholder="Enter other activity"
+                                                                            className="w-full"
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    "Your Activity"
+                                                )}
+                                            </div>
                                         </div>
-                                        {isEarlyCheckout && (
-                                            <InputTextarea
-                                                value={earlyReason}
-                                                onChange={(e) =>
-                                                    setEarlyReason(
-                                                        e.target.value
-                                                    )
+                                        <div className="flex pt-2 sm:pt-4 justify-between">
+                                            <Button
+                                                label="Back"
+                                                severity="secondary"
+                                                icon="pi pi-arrow-left"
+                                                size="small"
+                                                onClick={(event) =>
+                                                    confirmPopup({
+                                                        target: event.currentTarget,
+                                                        message:
+                                                            "Are you sure you want to go back?",
+                                                        icon: "pi pi-exclamation-triangle",
+                                                        accept: () => {
+                                                            dispatch(
+                                                                setToastMessage(
+                                                                    {
+                                                                        severity:
+                                                                            "info",
+                                                                        summary:
+                                                                            "Stay focus kiddo.",
+                                                                        detail: "Moved back to Character step",
+                                                                    }
+                                                                )
+                                                            );
+                                                            stepperRef.current.prevCallback();
+                                                            setQuestLog([]);
+                                                        },
+                                                        reject: () => {
+                                                            dispatch(
+                                                                setToastMessage(
+                                                                    {
+                                                                        severity:
+                                                                            "info",
+                                                                        summary:
+                                                                            "Nice stay focus on your activity.",
+                                                                        detail: "Stayed on Activities step",
+                                                                    }
+                                                                )
+                                                            );
+                                                        },
+                                                    })
                                                 }
-                                                rows={3}
-                                                placeholder="Reason for early checkout"
-                                                className="w-full"
+                                                disabled={isCheckedIn}
                                             />
-                                        )}
-                                        <Button
-                                            label="Confirm"
-                                            size="small"
-                                            onClick={() =>
-                                                confirmPopup({
-                                                    target: overlayRef.current.getElement(),
-                                                    message: `Are you sure you want to check out${
-                                                        isEarlyCheckout
-                                                            ? " early"
-                                                            : ""
-                                                    }?`,
-                                                    icon: "pi pi-exclamation-triangle",
-                                                    accept: () =>
-                                                        handleCheckout(),
-                                                    reject: () => {
-                                                        dispatch(
-                                                            setToastMessage({
-                                                                severity:
-                                                                    "warn",
-                                                                summary:
-                                                                    "Action Cancelled",
-                                                                detail: "You stayed checked in.",
-                                                            })
+                                            {error && (
+                                                <p
+                                                    style={{
+                                                        color: "red",
+                                                        marginLeft: "1rem",
+                                                    }}
+                                                >
+                                                    {error}
+                                                </p>
+                                            )}
+                                            <Button
+                                                label={
+                                                    isCheckedIn
+                                                        ? "Check Out"
+                                                        : "Check In"
+                                                }
+                                                icon={
+                                                    isCheckedIn
+                                                        ? "pi pi-sign-out"
+                                                        : "pi pi-sign-in"
+                                                }
+                                                iconPos="right"
+                                                severity={
+                                                    isCheckedIn
+                                                        ? "warning"
+                                                        : undefined
+                                                }
+                                                size="small"
+                                                onClick={(event) => {
+                                                    if (!isCheckedIn) {
+                                                        confirmPopup({
+                                                            target: event.currentTarget,
+                                                            message:
+                                                                "Are you sure you want to check in?",
+                                                            icon: "pi pi-exclamation-triangle",
+                                                            accept: () =>
+                                                                handleCheckin(),
+                                                            reject: () => {
+                                                                dispatch(
+                                                                    setToastMessage(
+                                                                        {
+                                                                            severity:
+                                                                                "warn",
+                                                                            summary:
+                                                                                "Action Cancelled",
+                                                                            detail: "You stayed checked out.",
+                                                                        }
+                                                                    )
+                                                                );
+                                                            },
+                                                        });
+                                                    } else {
+                                                        overlayRef.current.toggle(
+                                                            event
                                                         );
-                                                        overlayRef.current.hide();
-                                                    },
-                                                })
-                                            }
-                                            disabled={
-                                                isEarlyCheckout &&
-                                                !earlyReason.trim()
-                                            }
-                                        />
-                                    </div>
-                                </OverlayPanel>
-                            </StepperPanel>
-                        )}
-                        {activeButton === "msvi" && (
-                            <StepperPanel header="Ask Ms Vi">
-                                <div className="flex flex-col h-full">
-                                    <div className="flex-grow grid grid-cols-1 justify-start items-center gap-2">
-                                        <p>Ask Ms Vi content goes here.</p>
-                                    </div>
-                                </div>
-                                <div className="flex pt-2 sm:pt-4 justify-start">
-                                    <Button
-                                        label="Back"
-                                        severity="secondary"
-                                        icon="pi pi-arrow-left"
-                                        size="small"
-                                        onClick={(event) =>
-                                            confirmPopup({
-                                                target: event.currentTarget,
-                                                message:
-                                                    "Are you sure you want to go back?",
-                                                icon: "pi pi-exclamation-triangle",
-                                                accept: () => {
-                                                    dispatch(
-                                                        setToastMessage({
-                                                            severity: "info",
-                                                            summary:
-                                                                "See you again.",
-                                                            detail: "Moved back to Character step",
-                                                        })
-                                                    );
-                                                    stepperRef.current.prevCallback();
-                                                    setQuestLog([]);
-                                                },
-                                                reject: () => {
-                                                    dispatch(
-                                                        setToastMessage({
-                                                            severity: "info",
-                                                            summary:
-                                                                "Tell me, whats your problem.",
-                                                            detail: "Stayed on Ask Ms Vi step",
-                                                        })
-                                                    );
-                                                },
-                                            })
-                                        }
-                                    />
-                                    {error && (
-                                        <p
-                                            style={{
-                                                color: "red",
-                                                marginLeft: "1rem",
-                                            }}
+                                                    }
+                                                }}
+                                                disabled={
+                                                    (!selectedActivity &&
+                                                        !isCheckedIn) ||
+                                                    (!editableActivity &&
+                                                        showCustomActivityInput) ||
+                                                    loading
+                                                }
+                                            />
+                                        </div>
+                                        <OverlayPanel
+                                            ref={overlayRef}
+                                            showCloseIcon
                                         >
-                                            {error}
-                                        </p>
-                                    )}
-                                </div>
-                            </StepperPanel>
-                        )}
-                        {activeButton === "facilities" && (
-                            <StepperPanel header="Facilities Booking">
-                                <div className="flex flex-col h-full">
-                                    <div className="flex-grow grid grid-cols-1 justify-start items-center gap-2">
-                                        <p>
-                                            Facilities Booking content goes
-                                            here.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex pt-2 sm:pt-4 justify-start">
-                                    <Button
-                                        label="Back"
-                                        severity="secondary"
-                                        icon="pi pi-arrow-left"
-                                        size="small"
-                                        onClick={(event) =>
-                                            confirmPopup({
-                                                target: event.currentTarget,
-                                                message:
-                                                    "Are you sure you want to go back?",
-                                                icon: "pi pi-exclamation-triangle",
-                                                accept: () => {
-                                                    dispatch(
-                                                        setToastMessage({
-                                                            severity: "info",
-                                                            summary:
-                                                                "See you again.",
-                                                            detail: "Moved back to Character step",
+                                            <div className="flex flex-col gap-4">
+                                                <h3>Confirm Check Out</h3>
+                                                <div className="flex items-center gap-2">
+                                                    <Checkbox
+                                                        inputId="earlyCheckout"
+                                                        checked={
+                                                            isEarlyCheckout
+                                                        }
+                                                        onChange={(e) =>
+                                                            setIsEarlyCheckout(
+                                                                e.checked
+                                                            )
+                                                        }
+                                                    />
+                                                    <label htmlFor="earlyCheckout">
+                                                        Early Checkout?
+                                                    </label>
+                                                </div>
+                                                {isEarlyCheckout && (
+                                                    <InputTextarea
+                                                        value={earlyReason}
+                                                        onChange={(e) =>
+                                                            setEarlyReason(
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        rows={3}
+                                                        placeholder="Reason for early checkout"
+                                                        className="w-full"
+                                                    />
+                                                )}
+                                                <Button
+                                                    label="Confirm"
+                                                    size="small"
+                                                    onClick={() =>
+                                                        confirmPopup({
+                                                            target: overlayRef.current.getElement(),
+                                                            message: `Are you sure you want to check out${
+                                                                isEarlyCheckout
+                                                                    ? " early"
+                                                                    : ""
+                                                            }?`,
+                                                            icon: "pi pi-exclamation-triangle",
+                                                            accept: () =>
+                                                                handleCheckout(),
+                                                            reject: () => {
+                                                                dispatch(
+                                                                    setToastMessage(
+                                                                        {
+                                                                            severity:
+                                                                                "warn",
+                                                                            summary:
+                                                                                "Action Cancelled",
+                                                                            detail: "You stayed checked in.",
+                                                                        }
+                                                                    )
+                                                                );
+                                                                overlayRef.current.hide();
+                                                            },
                                                         })
-                                                    );
-                                                    stepperRef.current.prevCallback();
-                                                    setQuestLog([]);
-                                                },
-                                                reject: () => {
-                                                    dispatch(
-                                                        setToastMessage({
-                                                            severity: "info",
-                                                            summary:
-                                                                "What facility you want?",
-                                                            detail: "Stayed on Facilities step",
-                                                        })
-                                                    );
-                                                },
-                                            })
-                                        }
-                                    />
-                                    {error && (
-                                        <p
-                                            style={{
-                                                color: "red",
-                                                marginLeft: "1rem",
-                                            }}
-                                        >
-                                            {error}
-                                        </p>
-                                    )}
-                                </div>
-                            </StepperPanel>
-                        )}
-                    </Stepper>
-                </Card>
-                <div className="flex flex-row justify-center md:justify-start gap-4 w-11/12 sm:w-11/12 md:w-10/12 xl:w-1/2">
-                    <Button
-                        label="JSEILPR"
-                        size="small"
-                        onClick={() =>
-                            window.open("https://jseilpr.com/", "_blank")
-                        }
-                    />
-                    <Button label="Another Link" size="small" />
-                </div>
+                                                    }
+                                                    disabled={
+                                                        isEarlyCheckout &&
+                                                        !earlyReason.trim()
+                                                    }
+                                                />
+                                            </div>
+                                        </OverlayPanel>
+                                    </StepperPanel>
+                                )}
+                                {activeButton === "msvi" && (
+                                    <StepperPanel header="Ask Ms Vi">
+                                        <div className="flex flex-col h-full">
+                                            <div className="flex-grow grid grid-cols-1 justify-start items-center gap-2">
+                                                <p>
+                                                    Ask Ms Vi content goes here.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex pt-2 sm:pt-4 justify-start">
+                                            <Button
+                                                label="Back"
+                                                severity="secondary"
+                                                icon="pi pi-arrow-left"
+                                                size="small"
+                                                onClick={(event) =>
+                                                    confirmPopup({
+                                                        target: event.currentTarget,
+                                                        message:
+                                                            "Are you sure you want to go back?",
+                                                        icon: "pi pi-exclamation-triangle",
+                                                        accept: () => {
+                                                            dispatch(
+                                                                setToastMessage(
+                                                                    {
+                                                                        severity:
+                                                                            "info",
+                                                                        summary:
+                                                                            "See you again.",
+                                                                        detail: "Moved back to Character step",
+                                                                    }
+                                                                )
+                                                            );
+                                                            stepperRef.current.prevCallback();
+                                                            setQuestLog([]);
+                                                        },
+                                                        reject: () => {
+                                                            dispatch(
+                                                                setToastMessage(
+                                                                    {
+                                                                        severity:
+                                                                            "info",
+                                                                        summary:
+                                                                            "Tell me, whats your problem.",
+                                                                        detail: "Stayed on Ask Ms Vi step",
+                                                                    }
+                                                                )
+                                                            );
+                                                        },
+                                                    })
+                                                }
+                                            />
+                                            {error && (
+                                                <p
+                                                    style={{
+                                                        color: "red",
+                                                        marginLeft: "1rem",
+                                                    }}
+                                                >
+                                                    {error}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </StepperPanel>
+                                )}
+                                {activeButton === "facilities" && (
+                                    <StepperPanel header="Facilities Booking">
+                                        <div className="flex flex-col h-full">
+                                            <div className="flex-grow grid grid-cols-1 justify-start items-center gap-2">
+                                                <p>
+                                                    Facilities Booking content
+                                                    goes here.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex pt-2 sm:pt-4 justify-start">
+                                            <Button
+                                                label="Back"
+                                                severity="secondary"
+                                                icon="pi pi-arrow-left"
+                                                size="small"
+                                                onClick={(event) =>
+                                                    confirmPopup({
+                                                        target: event.currentTarget,
+                                                        message:
+                                                            "Are you sure you want to go back?",
+                                                        icon: "pi pi-exclamation-triangle",
+                                                        accept: () => {
+                                                            dispatch(
+                                                                setToastMessage(
+                                                                    {
+                                                                        severity:
+                                                                            "info",
+                                                                        summary:
+                                                                            "See you again.",
+                                                                        detail: "Moved back to Character step",
+                                                                    }
+                                                                )
+                                                            );
+                                                            stepperRef.current.prevCallback();
+                                                            setQuestLog([]);
+                                                        },
+                                                        reject: () => {
+                                                            dispatch(
+                                                                setToastMessage(
+                                                                    {
+                                                                        severity:
+                                                                            "info",
+                                                                        summary:
+                                                                            "What facility you want?",
+                                                                        detail: "Stayed on Facilities step",
+                                                                    }
+                                                                )
+                                                            );
+                                                        },
+                                                    })
+                                                }
+                                            />
+                                            {error && (
+                                                <p
+                                                    style={{
+                                                        color: "red",
+                                                        marginLeft: "1rem",
+                                                    }}
+                                                >
+                                                    {error}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </StepperPanel>
+                                )}
+                            </Stepper>
+                        </Card>
+                    </div>
+                )}
             </div>
         </div>
     );

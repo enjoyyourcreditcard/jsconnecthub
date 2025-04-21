@@ -43,42 +43,94 @@ const Header = () => {
         },
     ];
 
-    const masterItem = [
-        {
-            label: "Dashboard",
-            command: () => navigate("/dashboard"),
-        },
-        {
-            label: "Master",
-            items: [
-                { label: "Student", command: () => navigate("/students") },
-                { label: "User", command: () => navigate("/users") },
-                { label: "Class", command: () => navigate("/class") },
-                { label: "Level", command: () => navigate("/levels") },
-                { label: "Activity", command: () => navigate("/activities") },
-                { label: "Facility", command: () => navigate("/facilities") },
-            ],
-        },
-    ];
+    const getMasterItems = () => {
+        const userRole = auth()?.role;
+        const items = [];
 
-    const reportItem = {
-        label: "Report",
-        items: [
-            { label: "Checkin", command: () => navigate("/checkin") },
-            {
+        if (userRole === "Superadmin") {
+            items.push({
+                label: "Dashboard",
+                command: () => navigate("/dashboard"),
+            });
+        }
+
+        if (["Superadmin", "Admin1", "Admin2", "Admin3"].includes(userRole)) {
+            const masterSubItems = [];
+
+            masterSubItems.push({
+                label: "Student",
+                command: () => navigate("/students"),
+            });
+
+            if (userRole === "Superadmin") {
+                masterSubItems.push(
+                    { label: "User", command: () => navigate("/users") },
+                    { label: "Class", command: () => navigate("/class") },
+                    { label: "Level", command: () => navigate("/levels") },
+                    {
+                        label: "Activity",
+                        command: () => navigate("/activities"),
+                    },
+                    {
+                        label: "Facility",
+                        command: () => navigate("/facilities"),
+                    }
+                );
+            } else {
+                if (userRole === "Admin1") {
+                    masterSubItems.push({
+                        label: "Activity",
+                        command: () => navigate("/activities"),
+                    });
+                }
+                if (userRole === "Admin2") {
+                    masterSubItems.push({
+                        label: "Facility",
+                        command: () => navigate("/facilities"),
+                    });
+                }
+            }
+
+            items.push({
+                label: "Master",
+                items: masterSubItems,
+            });
+        }
+
+        return items;
+    };
+
+    const getReportItems = () => {
+        const permissions = auth()?.permissions || [];
+        const items = [];
+
+        if (permissions.some((p) => p.includes("checkin"))) {
+            items.push({
+                label: "Checkin/Checkout",
+                command: () => navigate("/checkin"),
+            });
+        }
+
+        if (permissions.some((p) => p.includes("bookings"))) {
+            items.push({
                 label: "Facility Reservations",
                 command: () => navigate("/facility-reservations"),
-            },
-            {
-                label: "Counsel",
+            });
+        }
+
+        if (permissions.some((p) => p.includes("counsels"))) {
+            items.push({
+                label: "Ask Ms Vi",
                 command: () => navigate("/counsels"),
-            },
-        ],
+            });
+        }
+
+        return items.length > 0 ? [{ label: "Report", items }] : [];
     };
 
     const centerItems = auth()
-        ? [...baseItems, ...masterItem, reportItem]
-        : baseItems;
+        ? [...baseItems, ...getMasterItems(), ...getReportItems()]
+        : [];
 
     const profileItems = [
         {
@@ -95,6 +147,8 @@ const Header = () => {
     const handleProfileClick = (event) => {
         menuRef.current.toggle(event);
     };
+
+    // console.log(auth()); // Debug the entire auth object
 
     const logo = (
         <span

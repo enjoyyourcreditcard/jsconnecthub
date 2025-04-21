@@ -49,10 +49,4 @@ return [
             'reason' => ['nullable', 'string', 'max:255']
         ],
     ],
-
-    'MASTER_ROLE_ARRAY' => [
-        1 => 'admin',
-        2 => 'student'
-    ],
-
 ];

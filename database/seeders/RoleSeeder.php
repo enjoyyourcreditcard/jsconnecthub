@@ -25,22 +25,29 @@ class RoleSeeder extends Seeder
         Role::insert($roles);
 
         foreach (config('constants.MASTER_TYPE_ARRAY') as $masterType) {
-            if ($masterType == 'bookings') {
-                Permission::create(['name' => $masterType . ' confirm']);
-            }
-
             Permission::create(['name' => $masterType . ' create']);
             Permission::create(['name' => $masterType . ' edit']);
             Permission::create(['name' => $masterType . ' delete']);
 
+
             if ($masterType == 'bookings') {
-                Role::findByName('Superadmin')->givePermissionTo([$masterType . ' confirm']);
+                Permission::create(['name' => $masterType . ' confirm']);
             }
 
             Role::findByName('Superadmin')->givePermissionTo([$masterType . ' create', $masterType . ' edit', $masterType . ' delete']);
-        }
-        Role::findByName('Admin1')->givePermissionTo(['checkin' . ' create', 'checkin' . ' edit', 'checkin' . ' delete']);
 
-        Role::findByName('Admin2')->givePermissionTo(['bookings' . ' create', 'bookings' . ' edit', 'bookings' . ' delete', 'bookings' . ' confirm']);
+            if ($masterType == 'checkin') {
+                Role::findByName('Admin1')->givePermissionTo([$masterType . ' create', $masterType . ' edit', $masterType . ' delete']);
+            }
+
+            if ($masterType == 'bookings') {
+                Role::findByName('Superadmin')->givePermissionTo([$masterType . ' confirm']);
+                Role::findByName('Admin2')->givePermissionTo([$masterType . ' create', $masterType . ' edit', $masterType . ' delete', $masterType . ' confirm']);
+            }
+
+            if ($masterType == 'counsels') {
+                Role::findByName('Admin3')->givePermissionTo([$masterType . ' create', $masterType . ' edit', $masterType . ' delete']);
+            }
+        }
     }
 }
