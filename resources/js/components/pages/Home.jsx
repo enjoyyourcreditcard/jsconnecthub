@@ -148,6 +148,8 @@ function Home() {
                         ongoingCheckin.activity?.name ||
                             ongoingCheckin.other_activity
                     );
+                } else {
+                    setIsCheckedIn(false);
                 }
             } else {
                 dispatch(
