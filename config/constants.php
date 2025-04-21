@@ -49,5 +49,5 @@ return [
             'checkout_time' => ['nullable', 'date', 'after_or_equal:checkin_time'],
             'reason' => ['nullable', 'string', 'max:255']
         ],
-    ]
+    ],
 ];

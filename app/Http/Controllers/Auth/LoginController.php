@@ -71,7 +71,17 @@ class LoginController extends Controller
 
         $tokenString = $user->name . "-" . $user->email . "_" . $user->id;
 
-        return response()->json(['status' => true, 'result' => $user, 'token' => $user->createToken($tokenString)->plainTextToken]);
+        return response()->json([
+            'status' => true,
+            'result' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->getRoleNames()->first(),
+                'permissions' => $user->getAllPermissions()->pluck('name'),
+            ],
+            'token' => $user->createToken($tokenString)->plainTextToken
+        ]);
     }
 
     /**
