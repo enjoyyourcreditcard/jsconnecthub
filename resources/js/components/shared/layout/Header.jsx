@@ -166,7 +166,7 @@ const Header = () => {
 
     return (
         <div
-            className="card header-container"
+            className={`card header-container ${isHomePage ? "is-home" : ""}`}
             style={{
                 display: "flex",
                 justifyContent: "space-between",

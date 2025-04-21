@@ -25,13 +25,21 @@ body {
     font-size: 1.5rem;
     font-weight: bold;
     transition: all 0.3s ease;
+    color: #333;
 }
 
 .logo-text::before {
     content: attr(data-full);
 }
 
-.header-container .profile-dropdown .p-menubar .p-submenu-list {
+.header-container.is-home .logo-text {
+    color: #fff;
+    opacity: 0.7;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+}
+
+.header-container .profile-dropdown,
+.header-container .p-menubar .p-submenu-list {
     left: auto !important;
     right: 0 !important;
 }
@@ -49,13 +57,23 @@ body {
     .logo-text {
         font-size: 1.2rem;
     }
+    .header-container.is-home .logo-text {
+        font-size: 1.2rem;
+        opacity: 0.75;
+        text-shadow: 0 0 6px rgba(255, 255, 255, 0.7);
+    }
     .profile-text {
         display: none;
     }
 }
 
-@media (max-width: 500px) {
+@media (max-width: 640px) {
     .logo-text {
         font-size: 1rem;
+    }
+    .header-container.is-home .logo-text {
+        font-size: 1rem;
+        opacity: 0.8;
+        text-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
     }
 }

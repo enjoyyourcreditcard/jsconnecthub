@@ -1,16 +1,14 @@
 @font-face {
     font-family: "Modular";
-    src: url("/public/assets/font/Modular.ttf") format("truetype");
+    src: url("/assets/font/Modular.ttf") format("truetype");
     font-weight: normal;
     font-style: normal;
 }
 
 .launch-pad-title {
     font-family: "Modular", sans-serif;
-    font-size: 7rem;
+    font-size: 6rem;
     text-align: center;
-    position: relative;
-    bottom: 13rem;
     color: white;
 }
 
@@ -20,38 +18,52 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 1rem;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    position: relative;
 }
 
 .home-container.with-background {
-    background-image: url("/public/assets/images/JS-KIOSK-Connect.jpg");
+    background-image: url("/assets/images/JS-KIOSK-Connect.jpg");
 }
 
-.card-container {
+.p-button.effected {
+    padding: 1rem;
+    font-size: 1.5rem;
     width: 100%;
-    max-width: 50%;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    height: 80px;
+    border-radius: 8px;
 }
 
 @media (max-width: 1280px) {
-    .card-container {
-        max-width: 66.67%;
+    .launch-pad-title {
+        font-size: 5rem;
+    }
+
+    .p-button.effected {
+        font-size: 1.25rem;
     }
 }
 
 @media (max-width: 768px) {
-    .card-container {
-        max-width: 83.33%;
+    .launch-pad-title {
+        font-size: 4rem;
+    }
+
+    .p-button.effected {
+        font-size: 1rem;
+        height: 50px;
     }
 }
 
 @media (max-width: 640px) {
-    .card-container {
-        max-width: 91.67%;
+    .launch-pad-title {
+        font-size: 3rem;
+    }
+
+    .p-button.effected {
+        font-size: 1rem;
+        height: 40px;
     }
 }

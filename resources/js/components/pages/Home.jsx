@@ -357,57 +357,62 @@ function Home() {
                 }`}
             >
                 {!showCard && (
-                    <>
+                    <div className="w-11/12 sm:w-10/12 md:w-9/12 xl:w-9/12 2xl:w-1/2 flex flex-col gap-2 md:gap-6">
                         {auth() === null && (
                             <h4 className="launch-pad-title">The Launch Pad</h4>
                         )}
-                        <div className="card-container">
-                            <div className="grid md:grid-cols-3 gap-4">
-                                <Button
-                                    label="Activities"
-                                    onClick={() => {
-                                        setActiveButton("activities");
-                                        setShowCard(true);
-                                    }}
-                                />
-                                <Button
-                                    label="Ask Ms Vi"
-                                    onClick={() => {
-                                        setActiveButton("msvi");
-                                        setShowCard(true);
-                                    }}
-                                />
-                                <Button
-                                    label="Facilities"
-                                    onClick={() => {
-                                        setActiveButton("facilities");
-                                        setShowCard(true);
-                                    }}
-                                />
-                            </div>
-                            <div className="grid md:grid-cols-2 sm:w-1/2 sm:m-auto gap-4">
-                                <Button
-                                    label="JSEILPR"
-                                    onClick={() =>
-                                        window.open(
-                                            "https://jseilpr.com/",
-                                            "_blank"
-                                        )
-                                    }
-                                />
-                                <Button label="Another Link" />
-                            </div>
+                        <div className="grid md:grid-cols-3 gap-2 md:gap-6">
+                            <Button
+                                label="Checkin/Checkout"
+                                onClick={() => {
+                                    setActiveButton("activities");
+                                    setShowCard(true);
+                                }}
+                                className="effected"
+                            />
+                            <Button
+                                label="Facility Reservations"
+                                onClick={() => {
+                                    setActiveButton("facilities");
+                                    setShowCard(true);
+                                }}
+                                className="effected"
+                            />
+                            <Button
+                                label="Ask Ms Vi"
+                                onClick={() => {
+                                    setActiveButton("msvi");
+                                    setShowCard(true);
+                                }}
+                                className="effected"
+                            />
                         </div>
-                    </>
+                        <div className="grid md:grid-cols-2 gap-2 md:gap-6 w-full md:w-1/2 sm:m-auto">
+                            <Button
+                                label="JSEILPR"
+                                onClick={() =>
+                                    window.open(
+                                        "https://jseilpr.com/",
+                                        "_blank"
+                                    )
+                                }
+                                className="effected"
+                            />
+                            <Button label="Another Link" className="effected" />
+                        </div>
+                    </div>
                 )}
                 {showCard && (
-                    <div className="card-container">
+                    <div className="w-11/12 sm:w-11/12 md:w-10/12 xl:w-1/2 flex flex-col gap-4">
                         <Button
                             icon="pi pi-arrow-left"
                             rounded
+                            size="small"
                             onClick={handleBack}
                             style={{
                                 position: "relative",
+                                width: "40px",
+                                height: "40px",
                             }}
                         />
                         <Card>
