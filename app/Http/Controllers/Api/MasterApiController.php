@@ -21,12 +21,15 @@ class MasterApiController extends Controller
     {
         $this->masterService = $masterService;
 
-        foreach (config('constants.MASTER_TYPE_ARRAY') as $masterType) {
-            // $this->middleware('permission:' . $masterType . ' list', ['only' => ['index', 'show']]);
-            $this->middleware('permission:' . $masterType . ' create', ['only' => ['store', 'import']]);
-            $this->middleware('permission:' . $masterType . ' edit', ['only' => ['update']]);
-            $this->middleware('permission:' . $masterType . ' delete', ['only' => ['destroy']]);
+        $urlMasterType = request()->segment(2);
+
+        if (!in_array($urlMasterType, config('constants.MASTER_TYPE_ARRAY'))) {
+            return response()->json(['status' => false, 'message' => 'Master Type not found'], Response::HTTP_NOT_FOUND);
         }
+
+        $this->middleware('permission:' . $urlMasterType . ' create', ['only' => ['store', 'import']]);
+        $this->middleware('permission:' . $urlMasterType . ' edit', ['only' => ['update']]);
+        $this->middleware('permission:' . $urlMasterType . ' delete', ['only' => ['destroy']]);
     }
 
     private function getRuleValidationByType($type)
