@@ -44,7 +44,6 @@ class RoleSeeder extends Seeder
             if ($masterType == 'bookings') {
                 $superadminPermissions[] = $masterType . ' confirm';
             }
-            dump($superadminPermissions);
             Role::findByName('Superadmin')->givePermissionTo($superadminPermissions);
         }
 

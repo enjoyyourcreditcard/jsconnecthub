@@ -11,12 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('answers', function (Blueprint $table) {
+        Schema::create('radio_options', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('result_id')->constrained();
             $table->foreignId('question_id')->constrained();
-            $table->foreignId('radio_option_id')->nullable('true')->constrained()->comment('only necessary if the question is in radio form');
-            $table->text('text')->nullable('true')->comment('only necessary if the question is in text form');
+            $table->text('text')->nullable('false');
             $table->timestamps();
         });
     }
@@ -26,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('answers');
+        Schema::dropIfExists('radio_options');
     }
 };

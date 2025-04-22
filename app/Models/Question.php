@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\RadioOption;
 use App\Models\SupportStrategy;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Question extends Model
@@ -29,5 +31,15 @@ class Question extends Model
     public function supportStrategy(): BelongsTo
     {
         return $this->belongsTo(SupportStrategy::class);
+    }
+
+    /**
+     * Get all of the radio options for the question
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function radioOptions(): HasMany
+    {
+        return $this->hasMany(RadioOption::class);
     }
 }
