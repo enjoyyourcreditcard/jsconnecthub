@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Answer;
+use App\Models\Question;
 use App\Models\Result;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -34,7 +35,12 @@ class CounselController extends Controller
 
             $answer->question_id = $validatedData['question_id'][$i];
 
-            $answer->text = $validatedData['answer'][$i];
+            if (Question::find($validatedData['question_id'][$i])->type == 'text') {
+                $answer->text = $validatedData['answer'][$i];
+            } else {
+                $answer->radio_option_id = $validatedData['answer'][$i];
+            }
+
 
             $answer->save();
         }

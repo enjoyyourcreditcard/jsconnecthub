@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use App\Models\Question;
 use App\Models\Result;
+use App\Models\Question;
+use App\Models\RadioOption;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -19,6 +20,7 @@ class Answer extends Model
     protected $fillable = [
         'result_id',
         'question_id',
+        'radio_option_id',
         'text'
     ];
 
@@ -40,5 +42,15 @@ class Answer extends Model
     public function question(): BelongsTo
     {
         return $this->belongsTo(Question::class);
+    }
+
+    /**
+     * Get the Question that owns the Radio Option
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function radioOption(): BelongsTo
+    {
+        return $this->belongsTo(RadioOption::class);
     }
 }
