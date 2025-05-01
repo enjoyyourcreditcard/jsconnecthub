@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -66,6 +67,8 @@ class BookingController extends Controller
         $booking->status = 'reserved';
         $booking->save();
 
+        $this->sendToSocket();
+
         return response()->json([
             'status' => true,
             'message' => 'Booking confirmed!',
@@ -73,7 +76,18 @@ class BookingController extends Controller
         ], Response::HTTP_OK);
     }
 
-    public function cancel(int $id)
+    private function sendToSocket($param = null)
+    {
+        $client = new Client();
+
+        $socketAddress = env('APP_SOCKET_URL') . '/booking-confirmation';
+
+        $client->post($socketAddress, [
+            'json' => ['data' => $param]
+        ]);
+    }
+
+    public function cancel(Int $id)
     {
         $booking = Booking::find($id);
 

@@ -6,6 +6,7 @@ export const BOOKING_STATE = {
     endPoints: {
         collection: "/api/bookings/",
         store: "/api/bookings/",
+        booking: "/api/booking/",
         confirm: "/api/booking-confirm/",
         cancel: "/api/booking-cancel/",
         update: "/api/bookings/",
