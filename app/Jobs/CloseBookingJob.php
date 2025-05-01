@@ -24,17 +24,16 @@ class CloseBookingJob implements ShouldQueue
     public function handle()
     {
         $booking = Booking::find($this->bookingId);
-
         $endTime = Carbon::parse($booking->end_time);
         if (!$endTime->isValid()) {
             return;
         }
 
         if (
-            in_array($booking->status, ['reserved']) &&
+            in_array($booking->status, ['requested', 'reserved']) &&
             $endTime->isPast()
         ) {
-            $booking->status = 'closed';
+            $booking->status = $booking->status === 'reserved' ? 'closed' : 'ignored';
             $booking->job_id = null;
             $booking->save();
         }

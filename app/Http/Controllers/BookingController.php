@@ -17,12 +17,7 @@ class BookingController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'student_id'    => ['required', 'exists:students,id'],
-            'facility_id'   => ['required', 'exists:facilities,id'],
-            'start_time'    => ['required', 'date_format:Y-m-d H:i:s'],
-            'end_time'      => ['required', 'date_format:Y-m-d H:i:s', 'after:start_time'],
-        ]);
+        $request->validate(config('master.MASTER_VALIDATION_ARRAY.BOOKING_MASTER_VALIDATION'));
 
         $booking = new Booking;
         $booking->student_id = $request->student_id;
@@ -67,7 +62,7 @@ class BookingController extends Controller
         $booking->status = 'reserved';
         $booking->save();
 
-        $this->sendToSocket();
+        // $this->sendToSocket();
 
         return response()->json([
             'status' => true,
@@ -87,7 +82,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function cancel(Int $id)
+    public function cancel(int $id)
     {
         $booking = Booking::find($id);
 

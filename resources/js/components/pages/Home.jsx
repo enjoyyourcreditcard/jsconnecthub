@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-import io from 'socket.io-client';
+// import io from "socket.io-client";
 import { useDispatch, useSelector } from "react-redux";
 import {
     getRecords,
@@ -68,21 +68,22 @@ function Home() {
         start_time: null,
         end_time: null,
     });
-    const socket = io('http://127.0.0.1:6001');
+
+    // const socket = io("http://localhost:6001");
+
+    // useEffect(() => {
+    //     socket.on("message", (msg) => {
+    //         console.log(msg);
+    //     });
+    //     return () => {
+    //         socket.off("message");
+    //         socket.disconnect();
+    //     };
+    // }, []);
 
     useEffect(() => {
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         setUserTimezone(timezone);
-    }, []);
-
-    useEffect(() => {
-        socket.on('message', (msg) => {
-            console.log(msg);
-        });
-        return () => {
-            socket.off('message');
-            socket.disconnect();
-        };
     }, []);
 
     useEffect(() => {
@@ -551,9 +552,10 @@ function Home() {
         if (!facilityBookingData.start_time || !facilityBookingData.end_time) {
             return false;
         }
+        const now = DateTime.now();
         const start = DateTime.fromJSDate(facilityBookingData.start_time);
         const end = DateTime.fromJSDate(facilityBookingData.end_time);
-        return end > start;
+        return start >= now && end > start;
     };
 
     return (
@@ -1662,6 +1664,7 @@ function Home() {
                                                         }}
                                                         required
                                                         placeholder="Select start time"
+                                                        minDate={new Date()}
                                                     />
                                                 </div>
                                                 <div>
@@ -1687,6 +1690,7 @@ function Home() {
                                                         }}
                                                         required
                                                         placeholder="Select end time"
+                                                        minDate={new Date()}
                                                     />
                                                 </div>
                                                 <Button
@@ -1711,7 +1715,7 @@ function Home() {
                                                                                     "error",
                                                                                 summary:
                                                                                     "Invalid Time",
-                                                                                detail: "End time must be after start time.",
+                                                                                detail: "End time must be after start time, and start time must not be in the past.",
                                                                             }
                                                                         )
                                                                     );

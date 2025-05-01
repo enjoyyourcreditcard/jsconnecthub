@@ -465,6 +465,7 @@ function FacilityReservations() {
                                                 required
                                                 disabled={loading}
                                                 placeholder="Select start time"
+                                                minDate={new Date()}
                                             />
                                             <label htmlFor="start_time">
                                                 Start Time
@@ -484,6 +485,7 @@ function FacilityReservations() {
                                                 required
                                                 disabled={loading}
                                                 placeholder="Select end time"
+                                                minDate={new Date()}
                                             />
                                             <label htmlFor="end_time">
                                                 End Time
