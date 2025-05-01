@@ -52,9 +52,9 @@ Route::post('/check-out', [CheckinController::class, 'checkout']);
  */
 Route::post('/booking', [BookingController::class, 'store']);
 Route::group(['middleware' => 'auth:sanctum'], function () {
-    Route::post('/booking-confirm/{id}', [BookingController::class, 'confirm']);
+    Route::put('/booking-confirm/{id}', [BookingController::class, 'confirm']);
 });
-Route::post('/booking-cancel/{id}', [BookingController::class, 'cancel']);
+Route::put('/booking-cancel/{id}', [BookingController::class, 'cancel']);
 
 /**
  * Ms Vi Counsellor

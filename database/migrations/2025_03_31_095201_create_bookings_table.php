@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('facility_id')->constrained();
             $table->timestamp('start_time')->nullable('false');
             $table->timestamp('end_time')->nullable('false');
-            $table->enum('status', ['open', 'confirmed', 'closed', 'cancelled'])->default('open');
+            $table->enum('status', ['requested', 'reserved', 'closed', 'cancelled'])->default('requested');
             $table->timestamps();
         });
     }

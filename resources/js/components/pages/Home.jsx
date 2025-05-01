@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
     getRecords,
     createRecord,
+    updateRecord,
     setToastMessage,
 } from "../store/global-slice";
 import { useAuthUser } from "react-auth-kit";
@@ -18,6 +19,7 @@ import { Toast } from "primereact/toast";
 import { OverlayPanel } from "primereact/overlaypanel";
 import { Checkbox } from "primereact/checkbox";
 import { InputTextarea } from "primereact/inputtextarea";
+import { Calendar } from "primereact/calendar";
 import { DateTime } from "luxon";
 import Header from "../shared/layout/Header";
 import "../../../css/home.css";
@@ -27,6 +29,7 @@ function Home() {
     const toast = useRef(null);
     const stepperRef = useRef(null);
     const overlayRef = useRef(null);
+    const facilityOverlayRef = useRef(null);
     const dispatch = useDispatch();
     const {
         class: { data: classes = [], endPoints: classEndPoints },
@@ -34,6 +37,8 @@ function Home() {
         students: { data: students = [], endPoints: studentEndPoints },
         activities: { data: activities = [], endPoints: activityEndPoints },
         checkin: { data: checkin = [], endPoints: checkinEndPoints },
+        bookings: { data: bookings = [], endPoints: bookingEndPoints },
+        facilities: { data: facilities = [], endPoints: facilityEndPoints },
     } = useSelector((state) => state.global);
     const [activeButton, setActiveButton] = useState(null);
     const [showCard, setShowCard] = useState(false);
@@ -51,9 +56,17 @@ function Home() {
     const [isEarlyCheckout, setIsEarlyCheckout] = useState(false);
     const [earlyReason, setEarlyReason] = useState("");
     const [questLog, setQuestLog] = useState([]);
+    const [bookingId, setBookingId] = useState(null);
+    const [selectedFacility, setSelectedFacility] = useState(null);
+    const [isBooked, setIsBooked] = useState(false);
+    const [bookingLog, setBookingLog] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [userTimezone, setUserTimezone] = useState(null);
+    const [facilityBookingData, setFacilityBookingData] = useState({
+        start_time: null,
+        end_time: null,
+    });
 
     useEffect(() => {
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -90,12 +103,21 @@ function Home() {
                     key: "data",
                 })
             );
+            dispatch(
+                getRecords({
+                    type: "facilities",
+                    endPoint: facilityEndPoints.collection,
+                    key: "data",
+                })
+            );
         }
     }, [dispatch, showCard]);
 
     const handleToQuest = () => {
         if (studentId && activeButton === "activities") {
             fetchCheckinsByStudent();
+        } else if (studentId && activeButton === "facilities") {
+            fetchBookingsByStudent();
         }
     };
 
@@ -168,6 +190,58 @@ function Home() {
         });
     };
 
+    const fetchBookingsByStudent = () => {
+        dispatch(
+            getRecords({
+                type: "bookings",
+                endPoint: `${bookingEndPoints.collection}?student_id=${studentId}&time=today`,
+                key: "data",
+            })
+        ).then((result) => {
+            if (result.length) {
+                const bookings = result;
+                setBookingLog(
+                    bookings.map((booking) => ({
+                        id: booking.id,
+                        facilityName: booking.facility?.name,
+                        status:
+                            booking.status.charAt(0).toUpperCase() +
+                            booking.status.slice(1),
+                        startTime: booking.start_time,
+                        endTime: booking.end_time,
+                    }))
+                );
+                const activeBooking = bookings.find(
+                    (b) =>
+                        (b.status.toLowerCase() === "requested" ||
+                            b.status.toLowerCase() === "reserved") &&
+                        b.student_id === studentId
+                );
+                if (activeBooking) {
+                    setIsBooked(true);
+                    setSelectedFacility(
+                        facilities.find(
+                            (f) => f.id === activeBooking.facility_id
+                        )
+                    );
+                    setBookingId(activeBooking.id);
+                } else {
+                    setIsBooked(false);
+                }
+            } else {
+                dispatch(
+                    setToastMessage({
+                        severity: "info",
+                        summary:
+                            "Hi " +
+                            students.find((s) => s.id === studentId)?.name,
+                        detail: "Ready to book a facility today?",
+                    })
+                );
+            }
+        });
+    };
+
     const startTimer = () => {
         if (timerInterval) clearInterval(timerInterval);
         const interval = setInterval(() => {
@@ -198,18 +272,23 @@ function Home() {
         setShowCard(false);
         setActiveButton(null);
         setQuestLog([]);
+        setBookingLog([]);
         setLevelId(null);
         setClassId(null);
         setStudentId(null);
         setActivityId(null);
+        setBookingId(null);
         setSelectedActivity(null);
+        setSelectedFacility(null);
         setEditableActivity("");
         setShowCustomActivityInput(false);
         setIsCheckedIn(false);
+        setIsBooked(false);
         setTimer(0);
         setIsEarlyCheckout(false);
         setEarlyReason("");
         setError("");
+        setFacilityBookingData({ start_time: null, end_time: null });
     };
 
     const handleCheckin = () => {
@@ -337,6 +416,111 @@ function Home() {
             });
     };
 
+    const formatDateTimeForMySQL = (date) => {
+        if (!date) return null;
+        const pad = (n) => String(n).padStart(2, "0");
+        const year = date.getUTCFullYear();
+        const month = pad(date.getUTCMonth() + 1);
+        const day = pad(date.getUTCDate());
+        const hours = pad(date.getUTCHours());
+        const minutes = pad(date.getUTCMinutes());
+        return `${year}-${month}-${day} ${hours}:${minutes}:00`;
+    };
+
+    const handleReserve = () => {
+        setLoading(true);
+        setError("");
+        const bookingData = {
+            student_id: studentId,
+            facility_id: selectedFacility?.id,
+            start_time: formatDateTimeForMySQL(facilityBookingData.start_time),
+            end_time: formatDateTimeForMySQL(facilityBookingData.end_time),
+            status: "requested",
+        };
+        dispatch(
+            createRecord({
+                type: "bookings",
+                endPoint: bookingEndPoints.store,
+                data: bookingData,
+                returnData: true,
+            })
+        )
+            .then((response) => {
+                const result = response;
+                const newBooking = {
+                    id: result.id || Date.now(),
+                    facilityName: selectedFacility?.name,
+                    status: "Requested",
+                    startTime: result.start_time,
+                    endTime: result.end_time,
+                };
+                setBookingLog((prev) => [...prev, newBooking]);
+                setIsBooked(true);
+                setBookingId(result.id);
+                dispatch(
+                    setToastMessage({
+                        severity: "success",
+                        summary: "Facility Reserved",
+                        detail: `You have reserved ${selectedFacility?.name}! Returning to Launch Pad.`,
+                    })
+                );
+                resetState();
+            })
+            .catch((err) => {
+                setError(err.message || "Reservation failed");
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    };
+
+    const handleCancelBooking = (bookingId, facilityName) => {
+        console.log(`${bookingEndPoints.cancel}${bookingId}`);
+        setLoading(true);
+        setError("");
+        const cancelData = {
+            status: "cancelled",
+        };
+        dispatch(
+            updateRecord({
+                type: "bookings",
+                endPoint: `${bookingEndPoints.cancel}${bookingId}`,
+                data: cancelData,
+                returnData: true,
+            })
+        )
+            .then((response) => {
+                const result = response;
+                setBookingLog((prev) =>
+                    prev.map((booking) =>
+                        booking.id === result.id
+                            ? {
+                                  ...booking,
+                                  status: "Cancelled",
+                              }
+                            : booking
+                    )
+                );
+                dispatch(
+                    setToastMessage({
+                        severity: "info",
+                        summary: "Booking Cancelled",
+                        detail: `Reservation for ${facilityName} cancelled.`,
+                    })
+                );
+                setIsBooked(false);
+                setSelectedFacility(null);
+                setBookingId(null);
+                fetchBookingsByStudent();
+            })
+            .catch((err) => {
+                setError(err.message || "Cancellation failed");
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    };
+
     const handleBack = () => {
         resetState();
         dispatch(
@@ -346,6 +530,15 @@ function Home() {
                 detail: "Select an option to continue.",
             })
         );
+    };
+
+    const validateBookingTimes = () => {
+        if (!facilityBookingData.start_time || !facilityBookingData.end_time) {
+            return false;
+        }
+        const start = DateTime.fromJSDate(facilityBookingData.start_time);
+        const end = DateTime.fromJSDate(facilityBookingData.end_time);
+        return end > start;
     };
 
     return (
@@ -1073,14 +1266,230 @@ function Home() {
                                 {activeButton === "facilities" && (
                                     <StepperPanel header="Facilities Booking">
                                         <div className="flex flex-col h-full">
-                                            <div className="flex-grow grid grid-cols-1 justify-start items-center gap-2">
-                                                <p>
-                                                    Facilities Booking content
-                                                    goes here.
-                                                </p>
+                                            <div className="flex-grow grid grid-cols-1 items-center gap-2">
+                                                {studentId ? (
+                                                    <>
+                                                        <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 p-5 flex-grow flex flex-wrap items-center max-h-48 overflow-y-auto">
+                                                            <div className="justify-start mb-4">
+                                                                Hi "
+                                                                {
+                                                                    students.find(
+                                                                        (s) =>
+                                                                            s.id ===
+                                                                            studentId
+                                                                    )?.name
+                                                                }
+                                                                " from class "
+                                                                {
+                                                                    classes.find(
+                                                                        (c) =>
+                                                                            c.id ===
+                                                                            classId
+                                                                    )?.name
+                                                                }
+                                                                " level "
+                                                                {
+                                                                    levels.find(
+                                                                        (l) =>
+                                                                            l.id ===
+                                                                            levelId
+                                                                    )?.name
+                                                                }
+                                                                ". This is your
+                                                                facility booking
+                                                                log today
+                                                                (Timezone:{" "}
+                                                                {userTimezone}
+                                                                ):
+                                                            </div>
+                                                            <Accordion className="w-full">
+                                                                {bookingLog.map(
+                                                                    (
+                                                                        booking
+                                                                    ) => (
+                                                                        <AccordionTab
+                                                                            key={
+                                                                                booking.id
+                                                                            }
+                                                                            header={
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <span className="truncate max-w-[100px] inline-block">
+                                                                                        {
+                                                                                            booking.facilityName
+                                                                                        }
+                                                                                    </span>
+                                                                                    <Badge
+                                                                                        value={
+                                                                                            booking.status
+                                                                                        }
+                                                                                        severity={
+                                                                                            booking.status.toLowerCase() ===
+                                                                                            "requested"
+                                                                                                ? "info"
+                                                                                                : booking.status.toLowerCase() ===
+                                                                                                  "reserved"
+                                                                                                ? "success"
+                                                                                                : booking.status.toLowerCase() ===
+                                                                                                  "closed"
+                                                                                                ? "secondary"
+                                                                                                : "danger"
+                                                                                        }
+                                                                                    />
+                                                                                </div>
+                                                                            }
+                                                                        >
+                                                                            <div className="flex flex-col gap-2">
+                                                                                <p>
+                                                                                    <strong>
+                                                                                        Facility:
+                                                                                    </strong>{" "}
+                                                                                    {
+                                                                                        booking.facilityName
+                                                                                    }
+                                                                                </p>
+                                                                                <p>
+                                                                                    <strong>
+                                                                                        Start
+                                                                                        Time:
+                                                                                    </strong>{" "}
+                                                                                    {formatDateToLocal(
+                                                                                        booking.startTime
+                                                                                    )}
+                                                                                </p>
+                                                                                <p>
+                                                                                    <strong>
+                                                                                        End
+                                                                                        Time:
+                                                                                    </strong>{" "}
+                                                                                    {formatDateToLocal(
+                                                                                        booking.endTime
+                                                                                    )}
+                                                                                </p>
+                                                                                <p>
+                                                                                    <strong>
+                                                                                        Status:
+                                                                                    </strong>{" "}
+                                                                                    {
+                                                                                        booking.status
+                                                                                    }
+                                                                                </p>
+                                                                                {(booking.status.toLowerCase() ===
+                                                                                    "requested" ||
+                                                                                    booking.status.toLowerCase() ===
+                                                                                        "reserved") && (
+                                                                                    <Button
+                                                                                        label="Cancel"
+                                                                                        icon="pi pi-times"
+                                                                                        severity="danger"
+                                                                                        size="small"
+                                                                                        onClick={(
+                                                                                            event
+                                                                                        ) =>
+                                                                                            confirmPopup(
+                                                                                                {
+                                                                                                    target: event.currentTarget,
+                                                                                                    message: `Are you sure you want to cancel your reservation for ${booking.facilityName}?`,
+                                                                                                    icon: "pi pi-exclamation-triangle",
+                                                                                                    accept: () =>
+                                                                                                        handleCancelBooking(
+                                                                                                            booking.id,
+                                                                                                            booking.facilityName
+                                                                                                        ),
+                                                                                                    reject: () => {
+                                                                                                        dispatch(
+                                                                                                            setToastMessage(
+                                                                                                                {
+                                                                                                                    severity:
+                                                                                                                        "warn",
+                                                                                                                    summary:
+                                                                                                                        "Action Cancelled",
+                                                                                                                    detail: "Reservation not cancelled.",
+                                                                                                                }
+                                                                                                            )
+                                                                                                        );
+                                                                                                    },
+                                                                                                }
+                                                                                            )
+                                                                                        }
+                                                                                    />
+                                                                                )}
+                                                                            </div>
+                                                                        </AccordionTab>
+                                                                    )
+                                                                )}
+                                                            </Accordion>
+                                                        </div>
+                                                        {!isBooked && (
+                                                            <div>
+                                                                <p>
+                                                                    Please
+                                                                    select a
+                                                                    facility to
+                                                                    reserve
+                                                                    today.
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                        <div className="flex-grow grid grid-cols-1 gap-2 max-h-32 overflow-y-auto">
+                                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                                {!isBooked && (
+                                                                    <>
+                                                                        {facilities.map(
+                                                                            (
+                                                                                facility
+                                                                            ) => (
+                                                                                <Button
+                                                                                    key={
+                                                                                        facility.id
+                                                                                    }
+                                                                                    label={
+                                                                                        facility.name
+                                                                                    }
+                                                                                    onClick={(
+                                                                                        event
+                                                                                    ) => {
+                                                                                        setSelectedFacility(
+                                                                                            facility
+                                                                                        );
+                                                                                        setFacilityBookingData(
+                                                                                            {
+                                                                                                start_time:
+                                                                                                    null,
+                                                                                                end_time:
+                                                                                                    null,
+                                                                                            }
+                                                                                        );
+                                                                                        facilityOverlayRef.current.toggle(
+                                                                                            event
+                                                                                        );
+                                                                                    }}
+                                                                                    className={`${
+                                                                                        selectedFacility?.id ===
+                                                                                        facility.id
+                                                                                            ? "bg-blue-500 text-white"
+                                                                                            : "bg-gray-200"
+                                                                                    }`}
+                                                                                    size="small"
+                                                                                    icon={
+                                                                                        selectedFacility?.id ===
+                                                                                        facility.id
+                                                                                            ? "pi pi-check"
+                                                                                            : null
+                                                                                    }
+                                                                                />
+                                                                            )
+                                                                        )}
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    "Your Facility Booking"
+                                                )}
                                             </div>
                                         </div>
-                                        <div className="flex pt-2 sm:pt-4 justify-start">
+                                        <div className="flex pt-2 sm:pt-4 justify-between">
                                             <Button
                                                 label="Back"
                                                 severity="secondary"
@@ -1105,7 +1514,7 @@ function Home() {
                                                                 )
                                                             );
                                                             stepperRef.current.prevCallback();
-                                                            setQuestLog([]);
+                                                            setBookingLog([]);
                                                         },
                                                         reject: () => {
                                                             dispatch(
@@ -1114,8 +1523,8 @@ function Home() {
                                                                         severity:
                                                                             "info",
                                                                         summary:
-                                                                            "What facility you want?",
-                                                                        detail: "Stayed on Facilities step",
+                                                                            "What facility do you want?",
+                                                                        detail: "Stayed on Facilities Booking step",
                                                                     }
                                                                 )
                                                             );
@@ -1133,7 +1542,189 @@ function Home() {
                                                     {error}
                                                 </p>
                                             )}
+                                            <Button
+                                                label={
+                                                    isBooked
+                                                        ? "Cancel Booking"
+                                                        : "Reserve"
+                                                }
+                                                icon={
+                                                    isBooked
+                                                        ? "pi pi-times"
+                                                        : "pi pi-check"
+                                                }
+                                                iconPos="right"
+                                                severity={
+                                                    isBooked
+                                                        ? "danger"
+                                                        : undefined
+                                                }
+                                                size="small"
+                                                onClick={(event) => {
+                                                    if (!isBooked) {
+                                                        if (selectedFacility) {
+                                                            facilityOverlayRef.current.toggle(
+                                                                event
+                                                            );
+                                                        } else {
+                                                            dispatch(
+                                                                setToastMessage(
+                                                                    {
+                                                                        severity:
+                                                                            "warn",
+                                                                        summary:
+                                                                            "No Facility Selected",
+                                                                        detail: "Please select a facility to reserve.",
+                                                                    }
+                                                                )
+                                                            );
+                                                        }
+                                                    } else {
+                                                        confirmPopup({
+                                                            target: event.currentTarget,
+                                                            message: `Are you sure you want to cancel your reservation for ${selectedFacility?.name}?`,
+                                                            icon: "pi pi-exclamation-triangle",
+                                                            accept: () =>
+                                                                handleCancelBooking(
+                                                                    bookingId,
+                                                                    selectedFacility?.name
+                                                                ),
+                                                            reject: () => {
+                                                                dispatch(
+                                                                    setToastMessage(
+                                                                        {
+                                                                            severity:
+                                                                                "warn",
+                                                                            summary:
+                                                                                "Action Cancelled",
+                                                                            detail: "Reservation not cancelled.",
+                                                                        }
+                                                                    )
+                                                                );
+                                                            },
+                                                        });
+                                                    }
+                                                }}
+                                                disabled={
+                                                    (!selectedFacility &&
+                                                        !isBooked) ||
+                                                    loading
+                                                }
+                                            />
                                         </div>
+                                        <OverlayPanel
+                                            ref={facilityOverlayRef}
+                                            showCloseIcon
+                                            closeOnEscape
+                                            dismissable={false}
+                                        >
+                                            <div className="flex flex-col gap-4">
+                                                <h3>
+                                                    Reserve{" "}
+                                                    {selectedFacility?.name}
+                                                </h3>
+                                                <div>
+                                                    <label>Start Time</label>
+                                                    <Calendar
+                                                        value={
+                                                            facilityBookingData.start_time
+                                                        }
+                                                        onChange={(e) =>
+                                                            setFacilityBookingData(
+                                                                (prev) => ({
+                                                                    ...prev,
+                                                                    start_time:
+                                                                        e.value,
+                                                                })
+                                                            )
+                                                        }
+                                                        showTime
+                                                        hourFormat="24"
+                                                        dateFormat="yy-mm-dd"
+                                                        style={{
+                                                            width: "100%",
+                                                        }}
+                                                        required
+                                                        placeholder="Select start time"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label>End Time</label>
+                                                    <Calendar
+                                                        value={
+                                                            facilityBookingData.end_time
+                                                        }
+                                                        onChange={(e) =>
+                                                            setFacilityBookingData(
+                                                                (prev) => ({
+                                                                    ...prev,
+                                                                    end_time:
+                                                                        e.value,
+                                                                })
+                                                            )
+                                                        }
+                                                        showTime
+                                                        hourFormat="24"
+                                                        dateFormat="yy-mm-dd"
+                                                        style={{
+                                                            width: "100%",
+                                                        }}
+                                                        required
+                                                        placeholder="Select end time"
+                                                    />
+                                                </div>
+                                                <Button
+                                                    label="Confirm Reservation"
+                                                    size="small"
+                                                    onClick={(event) =>
+                                                        confirmPopup({
+                                                            target: event.currentTarget,
+                                                            message: `Are you sure you want to reserve ${selectedFacility?.name}?`,
+                                                            icon: "pi pi-exclamation-triangle",
+                                                            accept: () => {
+                                                                if (
+                                                                    validateBookingTimes()
+                                                                ) {
+                                                                    handleReserve();
+                                                                    facilityOverlayRef.current.hide();
+                                                                } else {
+                                                                    dispatch(
+                                                                        setToastMessage(
+                                                                            {
+                                                                                severity:
+                                                                                    "error",
+                                                                                summary:
+                                                                                    "Invalid Time",
+                                                                                detail: "End time must be after start time.",
+                                                                            }
+                                                                        )
+                                                                    );
+                                                                }
+                                                            },
+                                                            reject: () => {
+                                                                dispatch(
+                                                                    setToastMessage(
+                                                                        {
+                                                                            severity:
+                                                                                "warn",
+                                                                            summary:
+                                                                                "Action Cancelled",
+                                                                            detail: "Reservation not made.",
+                                                                        }
+                                                                    )
+                                                                );
+                                                                facilityOverlayRef.current.hide();
+                                                            },
+                                                        })
+                                                    }
+                                                    disabled={
+                                                        !facilityBookingData.start_time ||
+                                                        !facilityBookingData.end_time ||
+                                                        loading
+                                                    }
+                                                />
+                                            </div>
+                                        </OverlayPanel>
                                     </StepperPanel>
                                 )}
                             </Stepper>

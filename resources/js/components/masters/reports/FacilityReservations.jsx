@@ -65,6 +65,7 @@ function FacilityReservations() {
                     level: i.student?.class?.level?.name || "N/A",
                     class: i.student?.class?.name || "N/A",
                     facility: i.facility?.name || "N/A",
+                    status: i.status,
                     start_time: i.start_time,
                     end_time: i.end_time,
                 }));
@@ -162,6 +163,88 @@ function FacilityReservations() {
         }
     };
 
+    const handleConfirm = (id) => {
+        setLoading(true);
+        setError("");
+        dispatch(
+            updateRecord({
+                type: "bookings",
+                endPoint: `${bookingEndPoints.confirm}${id}`,
+                data: { status: "reserved" },
+                returnData: true,
+            })
+        )
+            .then(() => {
+                dispatch(
+                    setStateData({
+                        key: "alert",
+                        data: {
+                            type: "success",
+                            text: "Booking confirmed successfully.",
+                            show: true,
+                        },
+                    })
+                );
+                myFetch();
+            })
+            .catch((err) => {
+                dispatch(
+                    setStateData({
+                        key: "alert",
+                        data: {
+                            type: "danger",
+                            text: err.message || "Failed to confirm booking.",
+                            show: true,
+                        },
+                    })
+                );
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    };
+
+    const handleCancel = (id) => {
+        setLoading(true);
+        setError("");
+        dispatch(
+            updateRecord({
+                type: "bookings",
+                endPoint: `${bookingEndPoints.cancel}${id}`,
+                data: { status: "cancelled" },
+                returnData: true,
+            })
+        )
+            .then(() => {
+                dispatch(
+                    setStateData({
+                        key: "alert",
+                        data: {
+                            type: "success",
+                            text: "Booking cancelled successfully.",
+                            show: true,
+                        },
+                    })
+                );
+                myFetch();
+            })
+            .catch((err) => {
+                dispatch(
+                    setStateData({
+                        key: "alert",
+                        data: {
+                            type: "danger",
+                            text: err.message || "Failed to cancel booking.",
+                            show: true,
+                        },
+                    })
+                );
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target ? e.target : e;
         setFormData((prev) => {
@@ -195,6 +278,7 @@ function FacilityReservations() {
         const dataToSubmit = {
             student_id: formData.student?.id,
             facility_id: formData.facility?.id,
+            status: "requested",
             start_time: formatDateTimeForMySQL(formData.start_time),
             end_time: formatDateTimeForMySQL(formData.end_time),
         };
@@ -263,6 +347,8 @@ function FacilityReservations() {
                                 onFetch={(params) => myFetch(params)}
                                 onAdd={handleAdd}
                                 onEdit={handleEdit}
+                                onConfirm={handleConfirm}
+                                onCancel={handleCancel}
                                 title="Facility Reservations"
                                 timeFilter={timeFilter}
                                 setTimeFilter={setTimeFilter}

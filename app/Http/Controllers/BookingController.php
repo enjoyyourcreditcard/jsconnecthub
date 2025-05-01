@@ -45,11 +45,11 @@ class BookingController extends Controller
             return response()->json(['status' => false, 'message' => 'Booking already cancelled.'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $booking->status = 'confirmed';
+        $booking->status = 'reserved';
 
         $booking->save();
 
-        return response()->json(['status' => true, 'message' => 'Booking confirmed!'], Response::HTTP_OK);
+        return response()->json(['status' => true, 'message' => 'Booking confirmed!', 'result' => $booking], Response::HTTP_OK);
     }
 
     public function cancel(Int $id)
@@ -72,6 +72,6 @@ class BookingController extends Controller
 
         $booking->save();
 
-        return response()->json(['status' => true, 'message' => 'Booking cancelled!'], Response::HTTP_OK);
+        return response()->json(['status' => true, 'message' => 'Booking cancelled!', 'result' => $booking], Response::HTTP_OK);
     }
 }

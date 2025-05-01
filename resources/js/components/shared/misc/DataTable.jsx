@@ -34,6 +34,8 @@ const CustomDataTable = ({
     onFetch = () => {},
     onAdd = () => {},
     onEdit = () => {},
+    onConfirm = () => {},
+    onCancel = () => {},
     onDelete = null,
     timeFilter,
     setTimeFilter,
@@ -163,6 +165,30 @@ const CustomDataTable = ({
         });
     };
 
+    const handleConfirm = (event, id) => {
+        confirmPopup({
+            target: event.currentTarget,
+            message: `Do you want to confirm this booking?`,
+            icon: "pi pi-info-circle",
+            acceptClassName: "p-button-success",
+            accept: () => {
+                onConfirm(id);
+            },
+        });
+    };
+
+    const handleCancel = (event, id) => {
+        confirmPopup({
+            target: event.currentTarget,
+            message: `Do you want to cancel this booking?`,
+            icon: "pi pi-info-circle",
+            acceptClassName: "p-button-danger",
+            accept: () => {
+                onCancel(id);
+            },
+        });
+    };
+
     const confirmDeleteSelected = () => {
         if (selectedRecords && selectedRecords.length > 0) {
             setDeleteRecordsDialog(true);
@@ -199,7 +225,6 @@ const CustomDataTable = ({
         setSelectedRecords(null);
     };
 
-    // start export
     const exportCSV = () => dt.current.exportCSV();
 
     const formatAnswersForExport = (item) => {
@@ -272,7 +297,6 @@ const CustomDataTable = ({
         });
         doc.save(`${type}_data.pdf`);
     };
-    // end export
 
     const handleFileUpload = (event) => {
         const file = event.files[0];
@@ -416,6 +440,33 @@ const CustomDataTable = ({
                         handleDelete(event, rowData[identifier])
                     }
                 />
+                {type === "bookings" &&
+                    rowData.status.toLowerCase() === "requested" && (
+                        <Button
+                            icon="pi pi-check"
+                            rounded
+                            outlined
+                            style={{ marginLeft: "0.5rem" }}
+                            severity="success"
+                            onClick={(event) =>
+                                handleConfirm(event, rowData[identifier])
+                            }
+                        />
+                    )}
+                {type === "bookings" &&
+                    (rowData.status.toLowerCase() === "requested" ||
+                        rowData.status.toLowerCase() === "reserved") && (
+                        <Button
+                            icon="pi pi-times"
+                            rounded
+                            outlined
+                            style={{ marginLeft: "0.5rem" }}
+                            severity="danger"
+                            onClick={(event) =>
+                                handleCancel(event, rowData[identifier])
+                            }
+                        />
+                    )}
             </>
         );
     };
@@ -423,6 +474,7 @@ const CustomDataTable = ({
     const formattedData = Array.isArray(collection)
         ? collection.map((item) => ({
               ...item,
+              status: item.status ? capitalize(item.status) : item.status,
               checkin_time: item.checkin_time
                   ? formatDateToLocal(item.checkin_time)
                   : "",
@@ -524,6 +576,8 @@ const CustomDataTable = ({
                 } else if (prop === "class") {
                     column.filter = true;
                 } else if (prop === "facility") {
+                    column.filter = true;
+                } else if (prop === "status") {
                     column.filter = true;
                 }
             }
@@ -757,6 +811,8 @@ CustomDataTable.propTypes = {
     onFetch: PropTypes.func,
     onAdd: PropTypes.func,
     onEdit: PropTypes.func,
+    onConfirm: PropTypes.func,
+    onCancel: PropTypes.func,
     onDelete: PropTypes.func,
     timeFilter: PropTypes.string,
     setTimeFilter: PropTypes.func,
