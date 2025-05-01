@@ -113,6 +113,11 @@ function Home() {
         }
     }, [dispatch, showCard]);
 
+    const capitalize = (str) => {
+        if (!str) return str;
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    };
+
     const handleToQuest = () => {
         if (studentId && activeButton === "activities") {
             fetchCheckinsByStudent();
@@ -204,19 +209,17 @@ function Home() {
                     bookings.map((booking) => ({
                         id: booking.id,
                         facilityName: booking.facility?.name,
-                        status:
-                            booking.status.charAt(0).toUpperCase() +
-                            booking.status.slice(1),
+                        status: booking.status,
                         startTime: booking.start_time,
                         endTime: booking.end_time,
                     }))
                 );
                 const activeBooking = bookings.find(
                     (b) =>
-                        (b.status.toLowerCase() === "requested" ||
-                            b.status.toLowerCase() === "reserved") &&
+                        (b.status === "requested" || b.status === "reserved") &&
                         b.student_id === studentId
                 );
+                console.log(activeBooking);
                 if (activeBooking) {
                     setIsBooked(true);
                     setSelectedFacility(
@@ -1319,17 +1322,17 @@ function Home() {
                                                                                         }
                                                                                     </span>
                                                                                     <Badge
-                                                                                        value={
+                                                                                        value={capitalize(
                                                                                             booking.status
-                                                                                        }
+                                                                                        )}
                                                                                         severity={
-                                                                                            booking.status.toLowerCase() ===
+                                                                                            booking.status ===
                                                                                             "requested"
                                                                                                 ? "info"
-                                                                                                : booking.status.toLowerCase() ===
+                                                                                                : booking.status ===
                                                                                                   "reserved"
                                                                                                 ? "success"
-                                                                                                : booking.status.toLowerCase() ===
+                                                                                                : booking.status ===
                                                                                                   "closed"
                                                                                                 ? "secondary"
                                                                                                 : "danger"
@@ -1369,13 +1372,13 @@ function Home() {
                                                                                     <strong>
                                                                                         Status:
                                                                                     </strong>{" "}
-                                                                                    {
+                                                                                    {capitalize(
                                                                                         booking.status
-                                                                                    }
+                                                                                    )}
                                                                                 </p>
-                                                                                {(booking.status.toLowerCase() ===
+                                                                                {(booking.status ===
                                                                                     "requested" ||
-                                                                                    booking.status.toLowerCase() ===
+                                                                                    booking.status ===
                                                                                         "reserved") && (
                                                                                     <Button
                                                                                         label="Cancel"
@@ -1515,6 +1518,7 @@ function Home() {
                                                             );
                                                             stepperRef.current.prevCallback();
                                                             setBookingLog([]);
+                                                            setIsBooked(false);
                                                         },
                                                         reject: () => {
                                                             dispatch(

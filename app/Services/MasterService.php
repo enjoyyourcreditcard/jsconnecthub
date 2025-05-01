@@ -94,6 +94,9 @@ class MasterService
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.BOOKING_MASTER_TYPE')) {
             return $q->with(['student.class.level', 'facility'])
+                ->when($request->student_id, function ($q) use ($request) {
+                    return $q->where('student_id', $request->student_id);
+                })
                 ->when($request->time, function ($q) use ($request) {
                     switch ($request->time) {
                         case 'today':

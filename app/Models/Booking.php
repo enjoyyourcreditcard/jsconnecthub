@@ -20,7 +20,9 @@ class Booking extends Model
         'student_id',
         'facility_id',
         'start_time',
-        'end_time'
+        'end_time',
+        'status',
+        'job_id',
     ];
 
     /**

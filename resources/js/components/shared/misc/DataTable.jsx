@@ -16,7 +16,6 @@ import { OverlayPanel } from "primereact/overlaypanel";
 import { FileUpload } from "primereact/fileupload";
 import { Dropdown } from "primereact/dropdown";
 import { Calendar } from "primereact/calendar";
-import { Badge } from "primereact/badge";
 import {
     deleteRecord,
     importRecord,
@@ -443,7 +442,7 @@ const CustomDataTable = ({
         ];
 
         if (type === "bookings") {
-            if (rowData.status.toLowerCase() === "requested") {
+            if (rowData.status === "requested") {
                 actions.push({
                     label: "Confirm",
                     icon: "pi pi-check",
@@ -452,8 +451,8 @@ const CustomDataTable = ({
                 });
             }
             if (
-                rowData.status.toLowerCase() === "requested" ||
-                rowData.status.toLowerCase() === "reserved"
+                rowData.status === "requested" ||
+                rowData.status === "reserved"
             ) {
                 actions.push({
                     label: "Cancel",
@@ -474,29 +473,9 @@ const CustomDataTable = ({
         );
     };
 
-    const statusBodyTemplate = (rowData) => {
-        if (type !== "bookings" || !rowData.status) return rowData.status;
-        const status = rowData.status;
-        return (
-            <Badge
-                value={status}
-                severity={
-                    status.toLowerCase() === "requested"
-                        ? "info"
-                        : status.toLowerCase() === "reserved"
-                        ? "success"
-                        : status.toLowerCase() === "cancelled"
-                        ? "danger"
-                        : "secondary"
-                }
-            />
-        );
-    };
-
     const formattedData = Array.isArray(collection)
         ? collection.map((item) => ({
               ...item,
-              status: item.status ? capitalize(item.status) : item.status,
               checkin_time: item.checkin_time
                   ? formatDateToLocal(item.checkin_time)
                   : "",
@@ -601,7 +580,7 @@ const CustomDataTable = ({
                     column.filter = true;
                 } else if (prop === "status") {
                     column.filter = true;
-                    column.body = statusBodyTemplate;
+                    // column.body = 'tes';
                 }
             }
 
@@ -711,7 +690,7 @@ const CustomDataTable = ({
             />
             <DataTable
                 ref={dt}
-                value={filteredDataState}
+                value={formattedData}
                 selection={type !== "counsels" ? selectedRecords : null}
                 onSelectionChange={
                     type !== "counsels"

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->timestamp('start_time')->nullable('false');
             $table->timestamp('end_time')->nullable('false');
             $table->enum('status', ['requested', 'reserved', 'closed', 'cancelled'])->default('requested');
+            $table->string('job_id')->nullable();
             $table->timestamps();
         });
     }
