@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
+import io from 'socket.io-client';
 import { useDispatch, useSelector } from "react-redux";
 import {
     getRecords,
@@ -67,10 +68,21 @@ function Home() {
         start_time: null,
         end_time: null,
     });
+    const socket = io('http://127.0.0.1:6001');
 
     useEffect(() => {
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         setUserTimezone(timezone);
+    }, []);
+
+    useEffect(() => {
+        socket.on('message', (msg) => {
+            console.log(msg);
+        });
+        return () => {
+            socket.off('message');
+            socket.disconnect();
+        };
     }, []);
 
     useEffect(() => {

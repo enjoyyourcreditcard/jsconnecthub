@@ -2,10 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CounselController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Api\CheckinController;
 use App\Http\Controllers\Api\MasterApiController;
-use App\Http\Controllers\CounselController;
 
 /**
  * References
