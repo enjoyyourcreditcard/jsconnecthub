@@ -12,7 +12,6 @@ import { InputText } from "primereact/inputtext";
 import { IconField } from "primereact/iconfield";
 import { InputIcon } from "primereact/inputicon";
 import { MultiSelect } from "primereact/multiselect";
-import { Menu } from "primereact/menu";
 import { OverlayPanel } from "primereact/overlaypanel";
 import { FileUpload } from "primereact/fileupload";
 import { Dropdown } from "primereact/dropdown";
@@ -47,7 +46,6 @@ const CustomDataTable = ({
 }) => {
     const dispatch = useDispatch();
     const dt = useRef(null);
-    const menuRight = useRef(null);
     const overlayPanelRef = useRef(null);
     const timeFilterRef = useRef(null);
     const {
@@ -467,29 +465,12 @@ const CustomDataTable = ({
         }
 
         return (
-            <>
-                <Menu
-                    model={actions}
-                    popup
-                    ref={menuRight}
-                    id="popup_menu_right"
-                    popupAlignment="right"
-                />
-                <Button
-                    label=""
-                    icon="pi pi-cog"
-                    className="p-button-text"
-                    onClick={(event) => menuRight.current.toggle(event)}
-                    aria-controls="popup_menu_right"
-                    aria-haspopup
-                />
-            </>
-            // <SplitButton
-            //     label=""
-            //     icon="pi pi-cog"
-            //     model={actions}
-            //     className="p-button-text"
-            // />
+            <SplitButton
+                label=""
+                icon="pi pi-cog"
+                model={actions}
+                className="p-button-text"
+            />
         );
     };
 
@@ -636,7 +617,7 @@ const CustomDataTable = ({
                           header: "Actions",
                           body: actionsTemplate,
                           exportable: false,
-                          headerStyle: { minWidth: "10rem" },
+                          headerStyle: { minWidth: "8rem" },
                       },
                   ]
                 : []),
@@ -730,7 +711,7 @@ const CustomDataTable = ({
             />
             <DataTable
                 ref={dt}
-                value={formattedData}
+                value={filteredDataState}
                 selection={type !== "counsels" ? selectedRecords : null}
                 onSelectionChange={
                     type !== "counsels"
