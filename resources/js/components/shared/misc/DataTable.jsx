@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Button } from "primereact/button";
+import { SplitButton } from "primereact/splitbutton";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { ProgressSpinner } from "primereact/progressspinner";
@@ -11,10 +12,12 @@ import { InputText } from "primereact/inputtext";
 import { IconField } from "primereact/iconfield";
 import { InputIcon } from "primereact/inputicon";
 import { MultiSelect } from "primereact/multiselect";
+import { Menu } from "primereact/menu";
 import { OverlayPanel } from "primereact/overlaypanel";
 import { FileUpload } from "primereact/fileupload";
 import { Dropdown } from "primereact/dropdown";
 import { Calendar } from "primereact/calendar";
+import { Badge } from "primereact/badge";
 import {
     deleteRecord,
     importRecord,
@@ -44,6 +47,7 @@ const CustomDataTable = ({
 }) => {
     const dispatch = useDispatch();
     const dt = useRef(null);
+    const menuRight = useRef(null);
     const overlayPanelRef = useRef(null);
     const timeFilterRef = useRef(null);
     const {
@@ -131,7 +135,10 @@ const CustomDataTable = ({
         return dt.setZone(userTimezone).toFormat("dd MMMM yyyy, HH:mm:ss z");
     };
 
-    const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+    const capitalize = (str) => {
+        if (!str) return str;
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    };
 
     const handleDelete = (event, id) => {
         confirmPopup({
@@ -422,52 +429,86 @@ const CustomDataTable = ({
 
     const actionsTemplate = (rowData) => {
         if (type === "counsels") return null;
+
+        const actions = [
+            {
+                label: "Edit",
+                icon: "pi pi-pencil",
+                command: (event) => onEdit(rowData[identifier]),
+            },
+            {
+                label: "Delete",
+                icon: "pi pi-trash",
+                command: (event) =>
+                    handleDelete(event.originalEvent, rowData[identifier]),
+            },
+        ];
+
+        if (type === "bookings") {
+            if (rowData.status.toLowerCase() === "requested") {
+                actions.push({
+                    label: "Confirm",
+                    icon: "pi pi-check",
+                    command: (event) =>
+                        handleConfirm(event.originalEvent, rowData[identifier]),
+                });
+            }
+            if (
+                rowData.status.toLowerCase() === "requested" ||
+                rowData.status.toLowerCase() === "reserved"
+            ) {
+                actions.push({
+                    label: "Cancel",
+                    icon: "pi pi-times",
+                    command: (event) =>
+                        handleCancel(event.originalEvent, rowData[identifier]),
+                });
+            }
+        }
+
         return (
             <>
-                <Button
-                    icon="pi pi-pencil"
-                    rounded
-                    outlined
-                    onClick={() => onEdit(rowData[identifier])}
+                <Menu
+                    model={actions}
+                    popup
+                    ref={menuRight}
+                    id="popup_menu_right"
+                    popupAlignment="right"
                 />
                 <Button
-                    icon="pi pi-trash"
-                    rounded
-                    outlined
-                    style={{ marginLeft: "0.5rem" }}
-                    severity="danger"
-                    onClick={(event) =>
-                        handleDelete(event, rowData[identifier])
-                    }
+                    label=""
+                    icon="pi pi-cog"
+                    className="p-button-text"
+                    onClick={(event) => menuRight.current.toggle(event)}
+                    aria-controls="popup_menu_right"
+                    aria-haspopup
                 />
-                {type === "bookings" &&
-                    rowData.status.toLowerCase() === "requested" && (
-                        <Button
-                            icon="pi pi-check"
-                            rounded
-                            outlined
-                            style={{ marginLeft: "0.5rem" }}
-                            severity="success"
-                            onClick={(event) =>
-                                handleConfirm(event, rowData[identifier])
-                            }
-                        />
-                    )}
-                {type === "bookings" &&
-                    (rowData.status.toLowerCase() === "requested" ||
-                        rowData.status.toLowerCase() === "reserved") && (
-                        <Button
-                            icon="pi pi-times"
-                            rounded
-                            outlined
-                            style={{ marginLeft: "0.5rem" }}
-                            severity="danger"
-                            onClick={(event) =>
-                                handleCancel(event, rowData[identifier])
-                            }
-                        />
-                    )}
             </>
+            // <SplitButton
+            //     label=""
+            //     icon="pi pi-cog"
+            //     model={actions}
+            //     className="p-button-text"
+            // />
+        );
+    };
+
+    const statusBodyTemplate = (rowData) => {
+        if (type !== "bookings" || !rowData.status) return rowData.status;
+        const status = rowData.status;
+        return (
+            <Badge
+                value={status}
+                severity={
+                    status.toLowerCase() === "requested"
+                        ? "info"
+                        : status.toLowerCase() === "reserved"
+                        ? "success"
+                        : status.toLowerCase() === "cancelled"
+                        ? "danger"
+                        : "secondary"
+                }
+            />
         );
     };
 
@@ -579,6 +620,7 @@ const CustomDataTable = ({
                     column.filter = true;
                 } else if (prop === "status") {
                     column.filter = true;
+                    column.body = statusBodyTemplate;
                 }
             }
 
