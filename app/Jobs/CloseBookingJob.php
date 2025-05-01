@@ -3,12 +3,12 @@
 namespace App\Jobs;
 
 use App\Models\Booking;
-use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class CloseBookingJob implements ShouldQueue
 {
@@ -16,7 +16,7 @@ class CloseBookingJob implements ShouldQueue
 
     protected $bookingId;
 
-    public function __construct(int $bookingId)
+    public function __construct($bookingId)
     {
         $this->bookingId = $bookingId;
     }
@@ -24,18 +24,19 @@ class CloseBookingJob implements ShouldQueue
     public function handle()
     {
         $booking = Booking::find($this->bookingId);
-        $endTime = Carbon::parse($booking->end_time);
-        if (!$endTime->isValid()) {
+
+        if (!$booking) {
+            Log::warning('CloseBookingJob: Booking not found', [
+                'booking_id' => $this->bookingId
+            ]);
             return;
         }
 
-        if (
-            in_array($booking->status, ['requested', 'reserved']) &&
-            $endTime->isPast()
-        ) {
-            $booking->status = $booking->status === 'reserved' ? 'closed' : 'ignored';
-            $booking->job_id = null;
-            $booking->save();
-        }
+        $booking->status = $booking->status === 'reserved' ? 'closed' : 'ignored';
+        $booking->save();
+
+        Log::info('CloseBookingJob: Booking closed', [
+            'booking_id' => $this->bookingId
+        ]);
     }
 }

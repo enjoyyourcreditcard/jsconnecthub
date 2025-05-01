@@ -97,6 +97,14 @@ class MasterService
                 ->when($request->student_id, function ($q) use ($request) {
                     return $q->where('student_id', $request->student_id);
                 })
+                ->when($request->facility_id, function ($q) use ($request) {
+                    return $q->where('facility_id', $request->facility_id);
+                })
+                ->when($request->facility, function ($q) use ($request) {
+                    return $q->whereHas('facility', function ($query) use ($request) {
+                        $query->where('name', $request->facility);
+                    });
+                })
                 ->when($request->time, function ($q) use ($request) {
                     switch ($request->time) {
                         case 'today':

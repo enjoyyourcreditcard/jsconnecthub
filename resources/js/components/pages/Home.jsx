@@ -61,7 +61,7 @@ function Home() {
     const [selectedFacility, setSelectedFacility] = useState(null);
     const [isBooked, setIsBooked] = useState(false);
     const [bookingLog, setBookingLog] = useState([]);
-    const [facilityBookings, setFacilityBookings] = useState([]); // New state for facility-specific bookings
+    const [facilityBookings, setFacilityBookings] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [userTimezone, setUserTimezone] = useState(null);
@@ -575,13 +575,19 @@ function Home() {
 
     const validateBookingTimes = () => {
         if (!facilityBookingData.start_time || !facilityBookingData.end_time) {
+            dispatch(
+                setToastMessage({
+                    severity: "error",
+                    summary: "Invalid Time",
+                    detail: "Please select both start and end times.",
+                })
+            );
             return false;
         }
         const now = DateTime.now();
         const start = DateTime.fromJSDate(facilityBookingData.start_time);
         const end = DateTime.fromJSDate(facilityBookingData.end_time);
 
-        // Check if start_time is in the past or end_time is not after start_time
         if (start < now || end <= start) {
             dispatch(
                 setToastMessage({
@@ -593,7 +599,6 @@ function Home() {
             return false;
         }
 
-        // Check for overlapping bookings
         for (const booking of facilityBookings) {
             const existingStart = DateTime.fromISO(booking.start_time, {
                 zone: "utc",
@@ -606,19 +611,16 @@ function Home() {
             );
             const newEnd = DateTime.fromJSDate(facilityBookingData.end_time);
 
-            // Check if new booking overlaps with existing (start or end falls within existing booking)
             if (
                 (newStart >= existingStart && newStart < existingEnd) ||
                 (newEnd > existingStart && newEnd <= existingEnd) ||
-                (newStart <= existingStart &&
-                    newEnd >= existingEnd &&
-                    facilityBookingData.status === "reserved")
+                (newStart <= existingStart && newEnd >= existingEnd)
             ) {
                 dispatch(
                     setToastMessage({
                         severity: "error",
                         summary: "Booking Conflict",
-                        detail: `The selected time overlaps with an existing booking from ${formatDateToLocal(
+                        detail: `The selected time overlaps with an existing reserved booking from ${formatDateToLocal(
                             booking.start_time
                         )} to ${formatDateToLocal(booking.end_time)}.`,
                     })
@@ -1719,8 +1721,8 @@ function Home() {
                                                 {facilityBookings.length > 0 ? (
                                                     <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 bg-gray-50">
                                                         <p className="font-semibold">
-                                                            Existing Bookings
-                                                            (Timezone:{" "}
+                                                            Existing Reserved
+                                                            Bookings (Timezone:{" "}
                                                             {userTimezone}):
                                                         </p>
                                                         <ul className="list-disc pl-5">
@@ -1745,7 +1747,7 @@ function Home() {
                                                     </div>
                                                 ) : (
                                                     <p>
-                                                        No existing bookings for
+                                                        No reserved bookings for
                                                         this facility today.
                                                     </p>
                                                 )}
