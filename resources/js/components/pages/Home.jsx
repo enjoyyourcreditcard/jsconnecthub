@@ -61,6 +61,7 @@ function Home() {
     const [selectedFacility, setSelectedFacility] = useState(null);
     const [isBooked, setIsBooked] = useState(false);
     const [bookingLog, setBookingLog] = useState([]);
+    const [facilityBookings, setFacilityBookings] = useState([]); // New state for facility-specific bookings
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [userTimezone, setUserTimezone] = useState(null);
@@ -232,7 +233,6 @@ function Home() {
                         (b.status === "requested" || b.status === "reserved") &&
                         b.student_id === studentId
                 );
-                console.log(activeBooking);
                 if (activeBooking) {
                     setIsBooked(true);
                     setSelectedFacility(
@@ -254,6 +254,30 @@ function Home() {
                         detail: "Ready to book a facility today?",
                     })
                 );
+            }
+        });
+    };
+
+    const fetchFacilityBookings = (facilityId) => {
+        dispatch(
+            getRecords({
+                type: "bookings",
+                endPoint: `${bookingEndPoints.collection}?facility_id=${facilityId}&time=today`,
+                key: "data",
+            })
+        ).then((result) => {
+            if (result.length) {
+                setFacilityBookings(
+                    result
+                        .filter((booking) => booking.status === "reserved")
+                        .map((booking) => ({
+                            id: booking.id,
+                            start_time: booking.start_time,
+                            end_time: booking.end_time,
+                        }))
+                );
+            } else {
+                setFacilityBookings([]);
             }
         });
     };
@@ -289,6 +313,7 @@ function Home() {
         setActiveButton(null);
         setQuestLog([]);
         setBookingLog([]);
+        setFacilityBookings([]);
         setLevelId(null);
         setClassId(null);
         setStudentId(null);
@@ -555,7 +580,54 @@ function Home() {
         const now = DateTime.now();
         const start = DateTime.fromJSDate(facilityBookingData.start_time);
         const end = DateTime.fromJSDate(facilityBookingData.end_time);
-        return start >= now && end > start;
+
+        // Check if start_time is in the past or end_time is not after start_time
+        if (start < now || end <= start) {
+            dispatch(
+                setToastMessage({
+                    severity: "error",
+                    summary: "Invalid Time",
+                    detail: "End time must be after start time, and start time must not be in the past.",
+                })
+            );
+            return false;
+        }
+
+        // Check for overlapping bookings
+        for (const booking of facilityBookings) {
+            const existingStart = DateTime.fromISO(booking.start_time, {
+                zone: "utc",
+            });
+            const existingEnd = DateTime.fromISO(booking.end_time, {
+                zone: "utc",
+            });
+            const newStart = DateTime.fromJSDate(
+                facilityBookingData.start_time
+            );
+            const newEnd = DateTime.fromJSDate(facilityBookingData.end_time);
+
+            // Check if new booking overlaps with existing (start or end falls within existing booking)
+            if (
+                (newStart >= existingStart && newStart < existingEnd) ||
+                (newEnd > existingStart && newEnd <= existingEnd) ||
+                (newStart <= existingStart &&
+                    newEnd >= existingEnd &&
+                    facilityBookingData.status === "reserved")
+            ) {
+                dispatch(
+                    setToastMessage({
+                        severity: "error",
+                        summary: "Booking Conflict",
+                        detail: `The selected time overlaps with an existing booking from ${formatDateToLocal(
+                            booking.start_time
+                        )} to ${formatDateToLocal(booking.end_time)}.`,
+                    })
+                );
+                return false;
+            }
+        }
+
+        return true;
     };
 
     return (
@@ -1476,6 +1548,9 @@ function Home() {
                                                                                                     null,
                                                                                             }
                                                                                         );
+                                                                                        fetchFacilityBookings(
+                                                                                            facility.id
+                                                                                        );
                                                                                         facilityOverlayRef.current.toggle(
                                                                                             event
                                                                                         );
@@ -1641,6 +1716,39 @@ function Home() {
                                                     Reserve{" "}
                                                     {selectedFacility?.name}
                                                 </h3>
+                                                {facilityBookings.length > 0 ? (
+                                                    <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 bg-gray-50">
+                                                        <p className="font-semibold">
+                                                            Existing Bookings
+                                                            (Timezone:{" "}
+                                                            {userTimezone}):
+                                                        </p>
+                                                        <ul className="list-disc pl-5">
+                                                            {facilityBookings.map(
+                                                                (booking) => (
+                                                                    <li
+                                                                        key={
+                                                                            booking.id
+                                                                        }
+                                                                    >
+                                                                        {formatDateToLocal(
+                                                                            booking.start_time
+                                                                        )}{" "}
+                                                                        to{" "}
+                                                                        {formatDateToLocal(
+                                                                            booking.end_time
+                                                                        )}
+                                                                    </li>
+                                                                )
+                                                            )}
+                                                        </ul>
+                                                    </div>
+                                                ) : (
+                                                    <p>
+                                                        No existing bookings for
+                                                        this facility today.
+                                                    </p>
+                                                )}
                                                 <div>
                                                     <label>Start Time</label>
                                                     <Calendar
@@ -1707,18 +1815,6 @@ function Home() {
                                                                 ) {
                                                                     handleReserve();
                                                                     facilityOverlayRef.current.hide();
-                                                                } else {
-                                                                    dispatch(
-                                                                        setToastMessage(
-                                                                            {
-                                                                                severity:
-                                                                                    "error",
-                                                                                summary:
-                                                                                    "Invalid Time",
-                                                                                detail: "End time must be after start time, and start time must not be in the past.",
-                                                                            }
-                                                                        )
-                                                                    );
                                                                 }
                                                             },
                                                             reject: () => {
