@@ -481,7 +481,7 @@ function Home() {
         dispatch(
             createRecord({
                 type: "bookings",
-                endPoint: bookingEndPoints.store,
+                endPoint: bookingEndPoints.booking,
                 data: bookingData,
                 returnData: true,
             })
