@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Booking;
 use GuzzleHttp\Client;
+use App\Models\Booking;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class BookingController extends Controller
 {
@@ -17,14 +18,21 @@ class BookingController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate(config('master.MASTER_VALIDATION_ARRAY.BOOKING_MASTER_VALIDATION'));
+        $rules = config('constants.MASTER_VALIDATION_ARRAY.BOOKING_MASTER_VALIDATION');
+        $validation = Validator::make($request->all(), $rules);
+        if ($validation->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation errors',
+                'errors' => $validation->errors()
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
 
         $booking = new Booking;
         $booking->student_id = $request->student_id;
         $booking->facility_id = $request->facility_id;
         $booking->start_time = $request->start_time;
         $booking->end_time = $request->end_time;
-        $booking->status = 'requested';
         $booking->save();
 
         return response()->json([

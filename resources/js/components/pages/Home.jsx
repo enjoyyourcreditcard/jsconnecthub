@@ -476,7 +476,6 @@ function Home() {
             facility_id: selectedFacility?.id,
             start_time: formatDateTimeForMySQL(facilityBookingData.start_time),
             end_time: formatDateTimeForMySQL(facilityBookingData.end_time),
-            status: "requested",
         };
         dispatch(
             createRecord({

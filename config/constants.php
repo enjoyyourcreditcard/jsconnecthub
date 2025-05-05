@@ -54,7 +54,6 @@ return [
             'facility_id' => ['required', 'exists:facilities,id'],
             'start_time' => ['required', 'date_format:Y-m-d H:i:s', 'after_or_equal:now'],
             'end_time' => ['required', 'date_format:Y-m-d H:i:s', 'after:start_time'],
-            'status' => ['required', 'in:requested,reserved,cancelled,closed'],
         ],
     ],
 ];
