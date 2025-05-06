@@ -21,6 +21,8 @@ class MasterService
         'bookings'              => \App\Models\Booking::class,
         'counsels'              => \App\Models\Result::class,
         'support-strategies'    => \App\Models\SupportStrategy::class,
+        'questions'             => \App\Models\Question::class,
+        'radio-options'         => \App\Models\RadioOption::class,
     ];
 
     protected function getModel($type)

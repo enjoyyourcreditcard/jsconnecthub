@@ -14,6 +14,8 @@ return [
         'BOOKING_MASTER_TYPE'           => 'bookings',
         'COUNSEL_MASTER_TYPE'           => 'counsels',
         'SUPPORT_STRATEGY_MASTER_TYPE'  => 'support-strategies',
+        'QUESTION_MASTER_TYPE'          => 'questions',
+        'RADIO_OPTION_MASTER_TYPE'      => 'radio-options',
     ],
 
     'MASTER_VALIDATION_ARRAY' => [

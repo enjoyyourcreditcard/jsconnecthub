@@ -92,6 +92,12 @@ const Header = () => {
                 command: () => navigate("/facilities"),
             });
         }
+        if (permissions.includes("questions view")) {
+            masterSubItems.push({
+                label: "Form Ask Ms Vi",
+                command: () => navigate("/questions"),
+            });
+        }
 
         if (masterSubItems.length > 0) {
             items.push({

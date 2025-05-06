@@ -96,6 +96,11 @@ const AppWrapper = () => {
             element: <ManageFacility />,
             permission: "facilities view",
         },
+        {
+            path: "/questions",
+            element: <Counsel />,
+            permission: "questions view",
+        },
         { path: "/checkin", element: <Checkin />, permission: "checkin view" },
         {
             path: "/facility-reservations",
