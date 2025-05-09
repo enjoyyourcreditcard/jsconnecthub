@@ -5,9 +5,6 @@ namespace App\Http\Controllers\Api;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Services\MasterService;
-use Illuminate\Validation\Rule;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Models\Question;
 use App\Models\RadioOption;
@@ -121,8 +118,6 @@ class MasterApiController extends Controller
         if ($type === 'questions') {
             $data = $request->only(['support_strategy_id', 'order', 'text', 'type']);
             $radioOptions = $request->input('radio_options', []);
-
-            DB::beginTransaction();
             try {
                 $storedQuestion = $this->masterService->create($type, $data);
                 if ($data['type'] === 'radio' && !empty($radioOptions)) {
@@ -133,14 +128,12 @@ class MasterApiController extends Controller
                         ]);
                     }
                 }
-                DB::commit();
                 return response()->json([
                     'status' => true,
                     'message' => "$type created",
                     'result' => $storedQuestion->load('radioOptions')
                 ], Response::HTTP_CREATED);
             } catch (\Exception $e) {
-                DB::rollBack();
                 return response()->json([
                     'status' => false,
                     'message' => 'Failed to create question: ' . $e->getMessage()
@@ -164,7 +157,6 @@ class MasterApiController extends Controller
             $data = $request->only(['support_strategy_id', 'order', 'text', 'type']);
             $radioOptions = $request->input('radio_options', []);
 
-            DB::beginTransaction();
             try {
                 $updatedQuestion = $this->masterService->update($type, $id, $data);
                 if ($data['type'] === 'radio') {
@@ -179,14 +171,12 @@ class MasterApiController extends Controller
                     $this->radioOption->where('question_id', $id)->delete();
                 }
 
-                DB::commit();
                 return response()->json([
                     'status' => true,
                     'message' => "$type updated",
                     'result' => $updatedQuestion->load('radioOptions')
                 ], Response::HTTP_OK);
             } catch (\Exception $e) {
-                DB::rollBack();
                 return response()->json([
                     'status' => false,
                     'message' => 'Failed to update question: ' . $e->getMessage()
@@ -224,7 +214,6 @@ class MasterApiController extends Controller
             $foreignKeys = $this->getForeignKeys($type);
 
             $imported = [];
-            DB::beginTransaction();
 
             foreach ($rows as $index => $row) {
                 $rowData = array_combine($transformedHeaders, $row);
@@ -259,15 +248,12 @@ class MasterApiController extends Controller
                 }
             }
 
-            DB::commit();
-
             return response()->json([
                 'status' => true,
                 'message' => count($imported) . ' ' . ($type) . " imported successfully",
                 'result' => $imported
             ], Response::HTTP_CREATED);
         } catch (\Exception $e) {
-            DB::rollBack();
             return response()->json([
                 'status' => false,
                 'message' => 'Import failed: ' . $e->getMessage()
@@ -278,7 +264,6 @@ class MasterApiController extends Controller
     public function destroy(Request $request, $type, $id)
     {
         if ($type === 'support-strategies') {
-            DB::beginTransaction();
             try {
                 $questions = $this->question->where('support_strategy_id', $id)->get();
 
@@ -290,17 +275,14 @@ class MasterApiController extends Controller
                 }
 
                 $this->masterService->delete($type, $id);
-                DB::commit();
                 return response()->json(['status' => true, 'message' => "support strategies deleted"], Response::HTTP_OK);
             } catch (\Exception $e) {
-                DB::rollBack();
                 return response()->json([
                     'status' => false,
                     'message' => 'Failed to delete support strategy: ' . $e->getMessage()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
         } elseif ($type === 'questions') {
-            DB::beginTransaction();
             try {
                 $question = $this->masterService->getById($type, $id);
 
@@ -309,10 +291,8 @@ class MasterApiController extends Controller
                 }
 
                 $this->masterService->delete($type, $id);
-                DB::commit();
                 return response()->json(['status' => true, 'message' => "$type deleted"], Response::HTTP_OK);
             } catch (\Exception $e) {
-                DB::rollBack();
                 return response()->json([
                     'status' => false,
                     'message' => 'Failed to delete question: ' . $e->getMessage()
