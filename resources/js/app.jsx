@@ -27,6 +27,7 @@ import Checkin from "./components/masters/reports/Checkin";
 import Dashboard from "./components/pages/Dashboard";
 import FacilityReservations from "./components/masters/reports/FacilityReservations";
 import Counsel from "./components/masters/reports/Counsel";
+import ManageQuestion from "./components/masters/ManageQuestion";
 
 const PrivateRoute = ({ element, permission }) => {
     const auth = useAuthUser();
@@ -98,7 +99,7 @@ const AppWrapper = () => {
         },
         {
             path: "/questions",
-            element: <Counsel />,
+            element: <ManageQuestion />,
             permission: "questions view",
         },
         { path: "/checkin", element: <Checkin />, permission: "checkin view" },

@@ -15,7 +15,7 @@ import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
 
-function ManageLevel() {
+function ManageQuestion() {
     const dispatch = useDispatch();
     const isAuthenticated = useIsAuthenticated();
     const [visible, setVisible] = useState(false);
@@ -27,18 +27,22 @@ function ManageLevel() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const {
-        levels: { data: levels = [], endPoints: levelEndPoints },
+        support_strategies: {
+            data: supportStrategies = [],
+            endPoints: strategyEndPoints,
+        },
+        questions: { data: questions = [], endPoints: questionEndPoints },
     } = useSelector((state) => state.global);
 
     const myFetch = () => {
         dispatch(
             getRecords({
-                type: "levels",
-                endPoint: levelEndPoints.collection,
+                type: "support_strategies",
+                endPoint: strategyEndPoints.collection,
             })
         ).then((d) => {
             if (d) {
-                const formattedLevels = d.map((i) => ({
+                const formattedFormQuestion = d.map((i) => ({
                     id: i.id,
                     name: i.name,
                     created_at: i.created_at,
@@ -46,8 +50,8 @@ function ManageLevel() {
                 }));
                 dispatch(
                     setStateData({
-                        type: "levels",
-                        data: formattedLevels,
+                        type: "support_strategies",
+                        data: formattedFormQuestion,
                         key: "data",
                         isMerge: false,
                     })
@@ -61,10 +65,10 @@ function ManageLevel() {
     }, [dispatch]);
 
     const handleEdit = (id) => {
-        const level = levels.find((u) => u.id === id);
-        if (level) {
+        const supprotStrategy = supportStrategies.find((u) => u.id === id);
+        if (supprotStrategy) {
             setFormData({
-                name: level.name,
+                name: supprotStrategy.name,
             });
             setEditId(id);
             setMode("edit");
@@ -91,8 +95,8 @@ function ManageLevel() {
             if (mode === "create") {
                 const success = dispatch(
                     createRecord({
-                        type: "levels",
-                        endPoint: levelEndPoints.store,
+                        type: "support_strategies",
+                        endPoint: strategyEndPoints.store,
                         data: formData,
                     })
                 );
@@ -104,8 +108,8 @@ function ManageLevel() {
             } else {
                 const success = dispatch(
                     updateRecord({
-                        type: "levels",
-                        endPoint: `${levelEndPoints.update}${editId}`,
+                        type: "support_strategies",
+                        endPoint: `${strategyEndPoints.update}${editId}`,
                         data: formData,
                     })
                 );
@@ -130,19 +134,19 @@ function ManageLevel() {
                     {isAuthenticated() ? (
                         <>
                             <DataTable
-                                type="levels"
+                                type="support_strategies"
                                 identifier="id"
                                 hasImport={true}
                                 onFetch={myFetch}
                                 onAdd={handleAdd}
                                 onEdit={handleEdit}
-                                title="Level"
+                                title="Form Ask Ms Vi"
                             />
                             <Dialog
                                 header={
                                     mode === "create"
-                                        ? `Add Level`
-                                        : `Edit Level`
+                                        ? `Add Support Strategy`
+                                        : `Edit Support Strategy`
                                 }
                                 visible={visible}
                                 style={{ width: "400px" }}
@@ -168,7 +172,7 @@ function ManageLevel() {
                                                 style={{ width: "100%" }}
                                                 required
                                                 disabled={loading}
-                                                tooltip="Enter level name"
+                                                tooltip="Enter support strategy name"
                                                 tooltipOptions={{
                                                     position: "bottom",
                                                     mouseTrack: true,
@@ -217,4 +221,4 @@ function ManageLevel() {
     );
 }
 
-export default ManageLevel;
+export default ManageQuestion;

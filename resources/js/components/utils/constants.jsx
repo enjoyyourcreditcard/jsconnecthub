@@ -11,4 +11,5 @@ export const stateKey = {
     bookings: "bookings",
     counsels: "counsels",
     support_strategies: "support_strategies",
+    questions: "questions",
 };
