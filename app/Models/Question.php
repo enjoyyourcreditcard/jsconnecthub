@@ -20,7 +20,8 @@ class Question extends Model
     protected $fillable = [
         'support_strategy_id',
         'order',
-        'text'
+        'text',
+        'type',
     ];
 
     /**

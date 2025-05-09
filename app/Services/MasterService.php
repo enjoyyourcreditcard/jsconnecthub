@@ -195,6 +195,9 @@ class MasterService
                 })
                 ->get();
         }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.QUESTION_TYPE')) {
+            return $q->with('supportStrategy')->get();
+        }
         return $q->get();
     }
 

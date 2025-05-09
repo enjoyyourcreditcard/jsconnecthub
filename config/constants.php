@@ -57,5 +57,14 @@ return [
             'start_time' => ['required', 'date_format:Y-m-d H:i:s', 'after_or_equal:now'],
             'end_time' => ['required', 'date_format:Y-m-d H:i:s', 'after:start_time'],
         ],
+        'SUPPORT_STRATEGY_VALIDATION' => [
+            'name' => ['required', 'string', 'max:100', 'unique:support_strategies,name']
+        ],
+        'QUESTION_VALIDATION' => [
+            'support_strategy_id' => ['required', 'exists:support_strategies,id'],
+            'order' => ['required', 'integer'],
+            'text' => ['required', 'string'],
+            'type' => ['required', 'in:text,radio'],
+        ]
     ],
 ];

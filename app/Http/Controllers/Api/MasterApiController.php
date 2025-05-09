@@ -8,7 +8,6 @@ use App\Services\MasterService;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\Api\Route;
 use App\Http\Controllers\Controller;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Validator;
@@ -38,7 +37,6 @@ class MasterApiController extends Controller
         if ($type === config('constants.MASTER_TYPE_ARRAY.LEVEL_MASTER_TYPE')) {
             $rules = config('constants.MASTER_VALIDATION_ARRAY.LEVEL_MASTER_VALIDATION');
         }
-
         if ($type === config('constants.MASTER_TYPE_ARRAY.CLASS_MASTER_TYPE')) {
             $rules = config('constants.MASTER_VALIDATION_ARRAY.CLASS_MASTER_VALIDATION');
         }
@@ -48,25 +46,20 @@ class MasterApiController extends Controller
         if ($type === config('constants.MASTER_TYPE_ARRAY.ACTIVITY_MASTER_TYPE')) {
             $rules = config('constants.MASTER_VALIDATION_ARRAY.ACTIVITY_MASTER_VALIDATION');
         }
-
-        if ($type === config('constants.MASTER_TYPE_ARRAY.STUDENT_MASTER_TYPE')) {
-            $rules = config('constants.MASTER_VALIDATION_ARRAY.STUDENT_MASTER_VALIDATION');
-        }
-
-        if ($type === config('constants.MASTER_TYPE_ARRAY.ACTIVITY_MASTER_TYPE')) {
-            $rules = config('constants.MASTER_VALIDATION_ARRAY.ACTIVITY_MASTER_VALIDATION');
-        }
-
         if ($type === config('constants.MASTER_TYPE_ARRAY.ROLE_MASTER_TYPE')) {
             $rules = config('constants.MASTER_VALIDATION_ARRAY.ROLE_MASTER_VALIDATION');
         }
-
         if ($type === config('constants.MASTER_TYPE_ARRAY.CHECKIN_MASTER_TYPE')) {
             $rules = config('constants.MASTER_VALIDATION_ARRAY.CHECKIN_MASTER_VALIDATION');
         }
-
         if ($type === config('constants.MASTER_TYPE_ARRAY.BOOKING_MASTER_TYPE')) {
             $rules = config('constants.MASTER_VALIDATION_ARRAY.BOOKING_MASTER_VALIDATION');
+        }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.SUPPORT_STRATEGY_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.SUPPORT_STRATEGY_VALIDATION');
+        }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.QUESTION_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.QUESTION_VALIDATION');
         }
 
         return $rules;
@@ -213,13 +206,13 @@ class MasterApiController extends Controller
         return response()->json(['status' => true, 'message' => "$type deleted"], Response::HTTP_OK);
     }
 
-    // misc
     private function changeImportHeader($type)
     {
         return [
             'class' => ['level' => 'level_id'],
             'students' => ['class' => 'class_id'],
             'checkins' => ['student' => 'student_id', 'activity' => 'activity_id'],
+            'questions' => ['support_strategy' => 'support_strategy_id'],
         ][$type] ?? [];
     }
 
@@ -229,6 +222,7 @@ class MasterApiController extends Controller
             'class' => ['level_id' => 'levels'],
             'students' => ['class_id' => 'class'],
             'checkins' => ['student_id' => 'students', 'activity_id' => 'activities'],
+            'questions' => ['support_strategy_id' => 'support_strategies'],
         ][$type] ?? [];
     }
 
@@ -238,6 +232,7 @@ class MasterApiController extends Controller
             'class' => 'name',
             'levels' => 'name',
             'activities' => 'name',
+            'support_strategies' => 'name',
         ];
 
         $field = $uniqueFields[$type] ?? 'name';

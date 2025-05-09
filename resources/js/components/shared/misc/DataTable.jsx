@@ -38,10 +38,14 @@ const CustomDataTable = ({
     onConfirm = () => {},
     onCancel = () => {},
     onDelete = null,
+    onAddQuestion = () => {},
+    onEditQuestion = () => {},
+    onDeleteQuestion = () => {},
     timeFilter,
     setTimeFilter,
     rangeFilter,
     setRangeFilter,
+    questions = [],
 }) => {
     const dispatch = useDispatch();
     const dt = useRef(null);
@@ -140,7 +144,9 @@ const CustomDataTable = ({
     const handleDelete = (event, id) => {
         confirmPopup({
             target: event.currentTarget,
-            message: `Do you want to delete this ${type}?`,
+            message: `Do you want to delete this ${
+                type === "support_strategies" ? "support strategy" : type
+            }?`,
             icon: "pi pi-info-circle",
             acceptClassName: "p-button-danger",
             accept: () => {
@@ -165,6 +171,18 @@ const CustomDataTable = ({
                         }
                     });
                 }
+            },
+        });
+    };
+
+    const handleQuestionDelete = (event, id) => {
+        confirmPopup({
+            target: event.currentTarget,
+            message: `Do you want to delete this question?`,
+            icon: "pi pi-info-circle",
+            acceptClassName: "p-button-danger",
+            accept: () => {
+                onDeleteQuestion(id);
             },
         });
     };
@@ -439,6 +457,15 @@ const CustomDataTable = ({
                 command: (event) =>
                     handleDelete(event.originalEvent, rowData[identifier]),
             },
+            ...(type === "support_strategies"
+                ? [
+                      {
+                          label: "Add Question",
+                          icon: "pi pi-plus",
+                          command: () => onAddQuestion(rowData[identifier]),
+                      },
+                  ]
+                : []),
         ];
 
         if (type === "bookings") {
@@ -473,6 +500,32 @@ const CustomDataTable = ({
         );
     };
 
+    const questionActionsTemplate = (rowData) => {
+        return (
+            <SplitButton
+                label=""
+                icon="pi pi-cog"
+                model={[
+                    {
+                        label: "Edit",
+                        icon: "pi pi-pencil",
+                        command: () => onEditQuestion(rowData.id),
+                    },
+                    {
+                        label: "Delete",
+                        icon: "pi pi-trash",
+                        command: (event) =>
+                            handleQuestionDelete(
+                                event.originalEvent,
+                                rowData.id
+                            ),
+                    },
+                ]}
+                className="p-button-text"
+            />
+        );
+    };
+
     const formattedData = Array.isArray(collection)
         ? collection.map((item) => ({
               ...item,
@@ -496,43 +549,87 @@ const CustomDataTable = ({
         : [];
 
     const rowExpansionTemplate = (data) => {
-        if (type !== "counsels") return null;
-        const strategyIds = [
-            ...new Set(data.answers.map((a) => a.question.support_strategy_id)),
-        ];
+        if (type !== "support_strategies" && type !== "counsels") return null;
 
-        return (
-            <div className="p-3">
-                {strategyIds.map((strategyId) => {
-                    const strategy = supportStrategies.find(
-                        (s) => s.id === strategyId
-                    );
-                    const strategyName = strategy
-                        ? strategy.name
-                        : `Strategy ${strategyId}`;
-                    const strategyAnswers = data.answers.filter(
-                        (a) => a.question.support_strategy_id === strategyId
-                    );
+        if (type === "counsels") {
+            const strategyIds = [
+                ...new Set(
+                    data.answers.map((a) => a.question.support_strategy_id)
+                ),
+            ];
+            return (
+                <div className="p-3">
+                    {strategyIds.map((strategyId) => {
+                        const strategy = supportStrategies.find(
+                            (s) => s.id === strategyId
+                        );
+                        const strategyName = strategy
+                            ? strategy.name
+                            : `Strategy ${strategyId}`;
+                        const strategyAnswers = data.answers.filter(
+                            (a) => a.question.support_strategy_id === strategyId
+                        );
+                        return (
+                            <div key={strategyId} className="mb-4">
+                                <h5>Section: {strategyName}</h5>
+                                <ul>
+                                    {strategyAnswers.map((answer) => (
+                                        <li key={answer.id}>
+                                            <strong>Question:</strong>{" "}
+                                            {answer.question.text}
+                                            <br />
+                                            <strong>Answer:</strong>{" "}
+                                            {answer.text || "N/A"}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        }
+        if (type === "support_strategies") {
+            const strategyQuestions = Array.isArray(questions)
+                ? questions.filter((q) => q.support_strategy_id === data.id)
+                : [];
 
-                    return (
-                        <div key={strategyId} className="mb-4">
-                            <h5>Section: {strategyName}</h5>
-                            <ul>
-                                {strategyAnswers.map((answer) => (
-                                    <li key={answer.id}>
-                                        <strong>Question:</strong>{" "}
-                                        {answer.question.text}
-                                        <br />
-                                        <strong>Answer:</strong>{" "}
-                                        {answer.text || "N/A"}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    );
-                })}
-            </div>
-        );
+            return (
+                <div className="p-3">
+                    <DataTable
+                        value={strategyQuestions}
+                        dataKey="id"
+                        tableStyle={{ minWidth: "50rem" }}
+                        emptyMessage="No questions found."
+                    >
+                        <Column
+                            field="order"
+                            header="Order"
+                            sortable
+                            style={{ width: "10%" }}
+                        />
+                        <Column
+                            field="text"
+                            header="Question Text"
+                            sortable
+                            style={{ width: "50%" }}
+                        />
+                        <Column
+                            field="type"
+                            header="Type"
+                            sortable
+                            style={{ width: "20%" }}
+                            body={(rowData) => capitalize(rowData.type)}
+                        />
+                        <Column
+                            header="Actions"
+                            body={questionActionsTemplate}
+                            style={{ width: "20%" }}
+                        />
+                    </DataTable>
+                </div>
+            );
+        }
     };
 
     const generateColumns = () => {
@@ -580,7 +677,6 @@ const CustomDataTable = ({
                     column.filter = true;
                 } else if (prop === "status") {
                     column.filter = true;
-                    // column.body = 'tes';
                 }
             }
 
@@ -713,17 +809,19 @@ const CustomDataTable = ({
                 onValueChange={(filteredData) =>
                     setFilteredDataState(filteredData)
                 }
-                expandedRows={type === "counsels" ? expandedRows : null}
+                expandedRows={
+                    type === "support_strategies" || type === "counsels"
+                        ? expandedRows
+                        : null
+                }
                 onRowToggle={
-                    type === "counsels"
+                    type === "support_strategies" || type === "counsels"
                         ? (e) => setExpandedRows(e.data)
                         : undefined
                 }
-                rowExpansionTemplate={
-                    type === "counsels" ? rowExpansionTemplate : undefined
-                }
+                rowExpansionTemplate={rowExpansionTemplate}
             >
-                {type === "counsels" && (
+                {(type === "support_strategies" || type === "counsels") && (
                     <Column
                         expander
                         style={{ width: "3rem" }}
@@ -816,10 +914,14 @@ CustomDataTable.propTypes = {
     onConfirm: PropTypes.func,
     onCancel: PropTypes.func,
     onDelete: PropTypes.func,
+    onAddQuestion: PropTypes.func,
+    onEditQuestion: PropTypes.func,
+    onDeleteQuestion: PropTypes.func,
     timeFilter: PropTypes.string,
     setTimeFilter: PropTypes.func,
     rangeFilter: PropTypes.array,
     setRangeFilter: PropTypes.func,
+    questions: PropTypes.array,
 };
 
 export default CustomDataTable;

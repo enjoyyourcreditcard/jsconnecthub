@@ -5,6 +5,7 @@ import {
     getRecords,
     createRecord,
     updateRecord,
+    deleteRecord,
     setStateData,
 } from "../store/global-slice";
 import Header from "../shared/layout/Header";
@@ -13,16 +14,23 @@ import { Card } from "primereact/card";
 import { Dialog } from "primereact/dialog";
 import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
+import { InputTextarea } from "primereact/inputtextarea";
+import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
 
 function ManageSupportAndQuestions() {
     const dispatch = useDispatch();
     const isAuthenticated = useIsAuthenticated();
-    const [visible, setVisible] = useState(false);
+    const [strategyDialog, setStrategyDialog] = useState(false);
+    const [questionDialog, setQuestionDialog] = useState(false);
     const [mode, setMode] = useState("create");
     const [editId, setEditId] = useState(null);
-    const [formData, setFormData] = useState({
-        name: "",
+    const [strategyFormData, setStrategyFormData] = useState({ name: "" });
+    const [questionFormData, setQuestionFormData] = useState({
+        support_strategy_id: null,
+        order: "",
+        text: "",
+        type: "text",
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -34,7 +42,17 @@ function ManageSupportAndQuestions() {
         questions: { data: questions = [], endPoints: questionEndPoints },
     } = useSelector((state) => state.global);
 
-    const myFetch = () => {
+    const questionTypes = [
+        { label: "Text", value: "text" },
+        { label: "Radio", value: "radio" },
+    ];
+
+    useEffect(() => {
+        fetchSupportStrategies();
+        fetchQuestions();
+    }, [dispatch]);
+
+    const fetchSupportStrategies = () => {
         dispatch(
             getRecords({
                 type: "support_strategies",
@@ -42,7 +60,7 @@ function ManageSupportAndQuestions() {
             })
         ).then((d) => {
             if (d) {
-                const formattedFormQuestion = d.map((i) => ({
+                const formattedData = d.map((i) => ({
                     id: i.id,
                     name: i.name,
                     created_at: i.created_at,
@@ -51,7 +69,7 @@ function ManageSupportAndQuestions() {
                 dispatch(
                     setStateData({
                         type: "support_strategies",
-                        data: formattedFormQuestion,
+                        data: formattedData,
                         key: "data",
                         isMerge: false,
                     })
@@ -60,65 +78,161 @@ function ManageSupportAndQuestions() {
         });
     };
 
-    useEffect(() => {
-        myFetch();
-    }, [dispatch]);
+    const fetchQuestions = () => {
+        dispatch(
+            getRecords({
+                type: "questions",
+                endPoint: questionEndPoints.collection,
+            })
+        ).then((d) => {
+            if (d) {
+                const formattedData = d.map((i) => ({
+                    id: i.id,
+                    support_strategy_id: i.support_strategy_id,
+                    order: i.order,
+                    text: i.text,
+                    type: i.type,
+                    created_at: i.created_at,
+                    updated_at: i.updated_at,
+                }));
+                dispatch(
+                    setStateData({
+                        type: "questions",
+                        data: formattedData,
+                        key: "data",
+                        isMerge: false,
+                    })
+                );
+            }
+        });
+    };
 
-    const handleEdit = (id) => {
-        const supprotStrategy = supportStrategies.find((u) => u.id === id);
-        if (supprotStrategy) {
-            setFormData({
-                name: supprotStrategy.name,
-            });
+    const handleAddStrategy = () => {
+        setMode("create");
+        setStrategyFormData({ name: "" });
+        setStrategyDialog(true);
+    };
+
+    const handleEditStrategy = (id) => {
+        const strategy = supportStrategies.find((s) => s.id === id);
+        if (strategy) {
+            setStrategyFormData({ name: strategy.name });
             setEditId(id);
             setMode("edit");
-            setVisible(true);
+            setStrategyDialog(true);
         }
     };
 
-    const handleAdd = () => {
+    const handleAddQuestion = (supportStrategyId) => {
         setMode("create");
-        setFormData({ name: "" });
-        setVisible(true);
+        setQuestionFormData({
+            support_strategy_id: supportStrategyId,
+            order: "",
+            text: "",
+            type: "text",
+        });
+        setQuestionDialog(true);
     };
 
-    const handleChange = (e) => {
+    const handleEditQuestion = (id) => {
+        const question = questions.find((q) => q.id === id);
+        if (question) {
+            setQuestionFormData({
+                support_strategy_id: question.support_strategy_id,
+                order: question.order,
+                text: question.text,
+                type: question.type,
+            });
+            setEditId(id);
+            setMode("edit");
+            setQuestionDialog(true);
+        }
+    };
+
+    const handleDeleteQuestion = (id) => {
+        dispatch(
+            deleteRecord({
+                endPoint: `${questionEndPoints.delete}${id}`,
+            })
+        ).then((success) => {
+            if (success) {
+                fetchQuestions();
+            }
+        });
+    };
+
+    const handleStrategyChange = (e) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        setStrategyFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = async (e) => {
+    const handleQuestionChange = (e) => {
+        const { name, value } = e.target;
+        setQuestionFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleStrategySubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError("");
         try {
             if (mode === "create") {
-                const success = dispatch(
+                dispatch(
                     createRecord({
                         type: "support_strategies",
                         endPoint: strategyEndPoints.store,
-                        data: formData,
+                        data: strategyFormData,
                     })
                 );
-                if (success) {
-                    setFormData({ name: "" });
-                    setVisible(false);
-                    myFetch();
-                }
             } else {
-                const success = dispatch(
+                dispatch(
                     updateRecord({
                         type: "support_strategies",
                         endPoint: `${strategyEndPoints.update}${editId}`,
-                        data: formData,
+                        data: strategyFormData,
                     })
                 );
-                if (success) {
-                    setFormData({ name: "" });
-                    setVisible(false);
-                    myFetch();
-                }
             }
+            setStrategyFormData({ name: "" });
+            setStrategyDialog(false);
+            fetchSupportStrategies();
+        } catch (err) {
+            setError(err.message || "Operation failed");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleQuestionSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError("");
+        try {
+            if (mode === "create") {
+                dispatch(
+                    createRecord({
+                        type: "questions",
+                        endPoint: questionEndPoints.store,
+                        data: questionFormData,
+                    })
+                );
+            } else {
+                dispatch(
+                    updateRecord({
+                        type: "questions",
+                        endPoint: `${questionEndPoints.update}${editId}`,
+                        data: questionFormData,
+                    })
+                );
+            }
+            setQuestionFormData({
+                support_strategy_id: null,
+                order: "",
+                text: "",
+                type: "text",
+            });
+            setQuestionDialog(false);
+            fetchQuestions();
         } catch (err) {
             setError(err.message || "Operation failed");
         } finally {
@@ -137,22 +251,29 @@ function ManageSupportAndQuestions() {
                                 type="support_strategies"
                                 identifier="id"
                                 hasImport={true}
-                                onFetch={myFetch}
-                                onAdd={handleAdd}
-                                onEdit={handleEdit}
+                                onFetch={fetchSupportStrategies}
+                                onAdd={handleAddStrategy}
+                                onEdit={handleEditStrategy}
+                                onAddQuestion={handleAddQuestion}
+                                onEditQuestion={handleEditQuestion}
+                                onDeleteQuestion={handleDeleteQuestion}
                                 title="Form Ask Ms Vi"
+                                questions={questions}
                             />
                             <Dialog
                                 header={
                                     mode === "create"
-                                        ? `Add Support Strategy`
-                                        : `Edit Support Strategy`
+                                        ? "Add Support Strategy"
+                                        : "Edit Support Strategy"
                                 }
-                                visible={visible}
+                                visible={strategyDialog}
                                 style={{ width: "400px" }}
-                                onHide={() => setVisible(false)}
+                                onHide={() => setStrategyDialog(false)}
                             >
-                                <form onSubmit={handleSubmit} className="mt-8">
+                                <form
+                                    onSubmit={handleStrategySubmit}
+                                    className="mt-8"
+                                >
                                     {error && (
                                         <p
                                             style={{
@@ -167,8 +288,8 @@ function ManageSupportAndQuestions() {
                                         <FloatLabel>
                                             <InputText
                                                 name="name"
-                                                value={formData.name}
-                                                onChange={handleChange}
+                                                value={strategyFormData.name}
+                                                onChange={handleStrategyChange}
                                                 style={{ width: "100%" }}
                                                 required
                                                 disabled={loading}
@@ -193,7 +314,111 @@ function ManageSupportAndQuestions() {
                                             label="Cancel"
                                             icon="pi pi-times"
                                             type="button"
-                                            onClick={() => setVisible(false)}
+                                            onClick={() =>
+                                                setStrategyDialog(false)
+                                            }
+                                            className="p-button-text"
+                                            disabled={loading}
+                                        />
+                                        <Button
+                                            label={
+                                                mode === "create"
+                                                    ? "Create"
+                                                    : "Update"
+                                            }
+                                            icon="pi pi-check"
+                                            type="submit"
+                                            disabled={loading}
+                                            autoFocus
+                                        />
+                                    </div>
+                                </form>
+                            </Dialog>
+                            <Dialog
+                                header={
+                                    mode === "create"
+                                        ? "Add Question"
+                                        : "Edit Question"
+                                }
+                                visible={questionDialog}
+                                style={{ width: "500px" }}
+                                onHide={() => setQuestionDialog(false)}
+                            >
+                                <form
+                                    onSubmit={handleQuestionSubmit}
+                                    className="mt-8"
+                                >
+                                    {error && (
+                                        <p
+                                            style={{
+                                                color: "red",
+                                                marginBottom: "2rem",
+                                            }}
+                                        >
+                                            {error}
+                                        </p>
+                                    )}
+                                    <div style={{ marginBottom: "2rem" }}>
+                                        <FloatLabel>
+                                            <InputText
+                                                name="order"
+                                                value={questionFormData.order}
+                                                onChange={handleQuestionChange}
+                                                style={{ width: "100%" }}
+                                                required
+                                                disabled={loading}
+                                                type="number"
+                                                tooltip="Enter question order"
+                                            />
+                                            <label htmlFor="order">Order</label>
+                                        </FloatLabel>
+                                    </div>
+                                    <div style={{ marginBottom: "2rem" }}>
+                                        <FloatLabel>
+                                            <InputTextarea
+                                                name="text"
+                                                value={questionFormData.text}
+                                                onChange={handleQuestionChange}
+                                                style={{ width: "100%" }}
+                                                required
+                                                disabled={loading}
+                                                rows={4}
+                                                tooltip="Enter question text"
+                                            />
+                                            <label htmlFor="text">
+                                                Question Text
+                                            </label>
+                                        </FloatLabel>
+                                    </div>
+                                    <div style={{ marginBottom: "2rem" }}>
+                                        <FloatLabel>
+                                            <Dropdown
+                                                name="type"
+                                                value={questionFormData.type}
+                                                options={questionTypes}
+                                                onChange={handleQuestionChange}
+                                                style={{ width: "100%" }}
+                                                required
+                                                disabled={loading}
+                                                tooltip="Select question type"
+                                            />
+                                            <label htmlFor="type">Type</label>
+                                        </FloatLabel>
+                                    </div>
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            gap: "10px",
+                                            justifyContent: "flex-end",
+                                        }}
+                                    >
+                                        <Button
+                                            label="Cancel"
+                                            icon="pi pi-times"
+                                            type="button"
+                                            onClick={() =>
+                                                setQuestionDialog(false)
+                                            }
                                             className="p-button-text"
                                             disabled={loading}
                                         />
@@ -213,7 +438,7 @@ function ManageSupportAndQuestions() {
                             </Dialog>
                         </>
                     ) : (
-                        <p>Please log in to view and manage levels.</p>
+                        <p>Please log in to view and manage data.</p>
                     )}
                 </Card>
             </main>
