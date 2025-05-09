@@ -31,7 +31,9 @@ function ManageSupportAndQuestions() {
         order: "",
         text: "",
         type: "text",
+        radio_options: [],
     });
+    const [radioOptionInput, setRadioOptionInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const {
@@ -92,6 +94,9 @@ function ManageSupportAndQuestions() {
                     order: i.order,
                     text: i.text,
                     type: i.type,
+                    radio_options: Array.isArray(i.radio_options)
+                        ? i.radio_options.map((opt) => opt.text)
+                        : [],
                     created_at: i.created_at,
                     updated_at: i.updated_at,
                 }));
@@ -130,7 +135,9 @@ function ManageSupportAndQuestions() {
             order: "",
             text: "",
             type: "text",
+            radio_options: [],
         });
+        setRadioOptionInput("");
         setQuestionDialog(true);
     };
 
@@ -142,9 +149,11 @@ function ManageSupportAndQuestions() {
                 order: question.order,
                 text: question.text,
                 type: question.type,
+                radio_options: question.radio_options || [],
             });
             setEditId(id);
             setMode("edit");
+            setRadioOptionInput("");
             setQuestionDialog(true);
         }
     };
@@ -168,7 +177,30 @@ function ManageSupportAndQuestions() {
 
     const handleQuestionChange = (e) => {
         const { name, value } = e.target;
-        setQuestionFormData((prev) => ({ ...prev, [name]: value }));
+        setQuestionFormData((prev) => ({
+            ...prev,
+            [name]: value,
+            ...(name === "type" && value === "text"
+                ? { radio_options: [] }
+                : {}),
+        }));
+    };
+
+    const addRadioOption = () => {
+        if (radioOptionInput.trim()) {
+            setQuestionFormData((prev) => ({
+                ...prev,
+                radio_options: [...prev.radio_options, radioOptionInput.trim()],
+            }));
+            setRadioOptionInput("");
+        }
+    };
+
+    const removeRadioOption = (index) => {
+        setQuestionFormData((prev) => ({
+            ...prev,
+            radio_options: prev.radio_options.filter((_, i) => i !== index),
+        }));
     };
 
     const handleStrategySubmit = async (e) => {
@@ -208,12 +240,22 @@ function ManageSupportAndQuestions() {
         setLoading(true);
         setError("");
         try {
+            const data = {
+                support_strategy_id: questionFormData.support_strategy_id,
+                order: questionFormData.order,
+                text: questionFormData.text,
+                type: questionFormData.type,
+                ...(questionFormData.type === "radio"
+                    ? { radio_options: questionFormData.radio_options }
+                    : {}),
+            };
+
             if (mode === "create") {
                 dispatch(
                     createRecord({
                         type: "questions",
                         endPoint: questionEndPoints.store,
-                        data: questionFormData,
+                        data,
                     })
                 );
             } else {
@@ -221,7 +263,7 @@ function ManageSupportAndQuestions() {
                     updateRecord({
                         type: "questions",
                         endPoint: `${questionEndPoints.update}${editId}`,
-                        data: questionFormData,
+                        data,
                     })
                 );
             }
@@ -230,7 +272,9 @@ function ManageSupportAndQuestions() {
                 order: "",
                 text: "",
                 type: "text",
+                radio_options: [],
             });
+            setRadioOptionInput("");
             setQuestionDialog(false);
             fetchQuestions();
         } catch (err) {
@@ -405,6 +449,88 @@ function ManageSupportAndQuestions() {
                                             <label htmlFor="type">Type</label>
                                         </FloatLabel>
                                     </div>
+                                    {questionFormData.type === "radio" && (
+                                        <div style={{ marginBottom: "2rem" }}>
+                                            <FloatLabel>
+                                                <InputText
+                                                    value={radioOptionInput}
+                                                    onChange={(e) =>
+                                                        setRadioOptionInput(
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                    style={{ width: "70%" }}
+                                                    disabled={loading}
+                                                    tooltip="Enter a radio option"
+                                                />
+                                                <Button
+                                                    label="Add"
+                                                    icon="pi pi-plus"
+                                                    type="button"
+                                                    onClick={addRadioOption}
+                                                    style={{
+                                                        marginLeft: "10px",
+                                                        width: "25%",
+                                                    }}
+                                                    disabled={
+                                                        loading ||
+                                                        !radioOptionInput.trim()
+                                                    }
+                                                />
+                                                <label htmlFor="radioOption">
+                                                    Radio Option
+                                                </label>
+                                            </FloatLabel>
+                                            <div style={{ marginTop: "1rem" }}>
+                                                {questionFormData.radio_options.map(
+                                                    (option, index) => (
+                                                        <div
+                                                            key={index}
+                                                            style={{
+                                                                display: "flex",
+                                                                alignItems:
+                                                                    "center",
+                                                                marginBottom:
+                                                                    "0.5rem",
+                                                            }}
+                                                        >
+                                                            <span
+                                                                style={{
+                                                                    flex: 1,
+                                                                }}
+                                                            >
+                                                                {option}
+                                                            </span>
+                                                            <Button
+                                                                icon="pi pi-trash"
+                                                                className="p-button-text p-button-danger"
+                                                                onClick={() =>
+                                                                    removeRadioOption(
+                                                                        index
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    loading
+                                                                }
+                                                            />
+                                                        </div>
+                                                    )
+                                                )}
+                                            </div>
+                                            {questionFormData.radio_options
+                                                .length < 2 && (
+                                                <p
+                                                    style={{
+                                                        color: "red",
+                                                        fontSize: "0.9rem",
+                                                    }}
+                                                >
+                                                    At least 2 radio options are
+                                                    required.
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
                                     <div
                                         style={{
                                             display: "flex",
@@ -430,7 +556,14 @@ function ManageSupportAndQuestions() {
                                             }
                                             icon="pi pi-check"
                                             type="submit"
-                                            disabled={loading}
+                                            disabled={
+                                                loading ||
+                                                (questionFormData.type ===
+                                                    "radio" &&
+                                                    questionFormData
+                                                        .radio_options.length <
+                                                        2)
+                                            }
                                             autoFocus
                                         />
                                     </div>

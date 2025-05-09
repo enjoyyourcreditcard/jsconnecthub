@@ -74,6 +74,7 @@ const CustomDataTable = ({
     });
     const [filteredDataState, setFilteredDataState] = useState([]);
     const [expandedRows, setExpandedRows] = useState([]);
+    const [questionExpandedRows, setQuestionExpandedRows] = useState([]);
 
     useEffect(() => {
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -548,6 +549,35 @@ const CustomDataTable = ({
           }))
         : [];
 
+    const questionRowExpansionTemplate = (question) => {
+        if (question.type !== "radio") return null;
+
+        const radioOptions = Array.isArray(question.radio_options)
+            ? question.radio_options
+            : [];
+
+        return (
+            <div className="p-3">
+                <DataTable
+                    value={radioOptions.map((opt, index) => ({
+                        id: index,
+                        text: opt,
+                    }))}
+                    dataKey="id"
+                    tableStyle={{ minWidth: "30rem" }}
+                    emptyMessage="No radio options found."
+                >
+                    <Column
+                        field="text"
+                        header="Radio Option"
+                        sortable
+                        style={{ width: "100%" }}
+                    />
+                </DataTable>
+            </div>
+        );
+    };
+
     const rowExpansionTemplate = (data) => {
         if (type !== "support_strategies" && type !== "counsels") return null;
 
@@ -601,7 +631,15 @@ const CustomDataTable = ({
                         dataKey="id"
                         tableStyle={{ minWidth: "50rem" }}
                         emptyMessage="No questions found."
+                        expandedRows={questionExpandedRows}
+                        onRowToggle={(e) => setQuestionExpandedRows(e.data)}
+                        rowExpansionTemplate={questionRowExpansionTemplate}
                     >
+                        <Column
+                            expander
+                            style={{ width: "3rem" }}
+                            exportable={false}
+                        />
                         <Column
                             field="order"
                             header="Order"
@@ -923,7 +961,16 @@ CustomDataTable.propTypes = {
     setTimeFilter: PropTypes.func,
     rangeFilter: PropTypes.array,
     setRangeFilter: PropTypes.func,
-    questions: PropTypes.array,
+    questions: PropTypes.arrayOf(
+        PropTypes.shape({
+            id: PropTypes.number,
+            support_strategy_id: PropTypes.number,
+            order: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+            text: PropTypes.string,
+            type: PropTypes.string,
+            radio_options: PropTypes.arrayOf(PropTypes.string),
+        })
+    ),
 };
 
 export default CustomDataTable;
