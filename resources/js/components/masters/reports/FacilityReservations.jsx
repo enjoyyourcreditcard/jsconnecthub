@@ -6,6 +6,7 @@ import {
     createRecord,
     updateRecord,
     setStateData,
+    setToastMessage,
 } from "../../store/global-slice";
 import Header from "../../shared/layout/Header";
 import DataTable from "../../shared/misc/DataTable";
@@ -275,6 +276,22 @@ function FacilityReservations() {
         setLoading(true);
         setError("");
 
+        const now = new Date();
+        const startTime = new Date(formData.start_time);
+        const endTime = new Date(formData.end_time);
+
+        if (startTime <= now || endTime <= startTime) {
+            dispatch(
+                setToastMessage({
+                    severity: "error",
+                    summary: "Invalid Time",
+                    detail: "End time must be after start time, and start time must not be in the past.",
+                })
+            );
+            setLoading(false);
+            return;
+        }
+
         const dataToSubmit = {
             student_id: formData.student?.id,
             facility_id: formData.facility?.id,
@@ -284,32 +301,25 @@ function FacilityReservations() {
         };
 
         try {
-            if (mode === "create") {
-                const result = dispatch(
-                    createRecord({
-                        type: "bookings",
-                        endPoint: bookingEndPoints.store,
-                        data: dataToSubmit,
-                        returnData: true,
-                    })
-                );
-                if (result) {
-                    setVisible(false);
-                    myFetch();
-                }
-            } else {
-                const result = dispatch(
-                    updateRecord({
-                        type: "bookings",
-                        endPoint: `${bookingEndPoints.update}${editId}`,
-                        data: dataToSubmit,
-                        returnData: true,
-                    })
-                );
-                if (result) {
-                    setVisible(false);
-                    myFetch();
-                }
+            const result = dispatch(
+                mode === "create"
+                    ? createRecord({
+                          type: "bookings",
+                          endPoint: bookingEndPoints.store,
+                          data: dataToSubmit,
+                          returnData: true,
+                      })
+                    : updateRecord({
+                          type: "bookings",
+                          endPoint: `${bookingEndPoints.update}${editId}`,
+                          data: dataToSubmit,
+                          returnData: true,
+                      })
+            );
+
+            if (result) {
+                setVisible(false);
+                myFetch();
             }
         } catch (err) {
             setError(err.message || "Operation failed");

@@ -15,7 +15,7 @@ import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
 
-function ManageQuestion() {
+function ManageSupportAndQuestions() {
     const dispatch = useDispatch();
     const isAuthenticated = useIsAuthenticated();
     const [visible, setVisible] = useState(false);
@@ -221,4 +221,4 @@ function ManageQuestion() {
     );
 }
 
-export default ManageQuestion;
+export default ManageSupportAndQuestions;
