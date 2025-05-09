@@ -114,6 +114,30 @@ function FacilityReservations() {
         );
     }, [dispatch]);
 
+    // const fetchFacilityBookings = (facilityId) => {
+    //     dispatch(
+    //         getRecords({
+    //             type: "bookings",
+    //             endPoint: `${bookingEndPoints.collection}?facility_id=${facilityId}`,
+    //             key: "data",
+    //         })
+    //     ).then((result) => {
+    //         if (result.length) {
+    //             setFacilityBookings(
+    //                 result
+    //                     .filter((booking) => booking.status === "reserved")
+    //                     .map((booking) => ({
+    //                         id: booking.id,
+    //                         start_time: booking.start_time,
+    //                         end_time: booking.end_time,
+    //                     }))
+    //             );
+    //         } else {
+    //             setFacilityBookings([]);
+    //         }
+    //     });
+    // };
+
     const handleAdd = () => {
         setMode("create");
         setFormData({

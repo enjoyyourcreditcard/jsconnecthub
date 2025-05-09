@@ -9,6 +9,8 @@ use Illuminate\Validation\Rule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Models\Question;
+use App\Models\RadioOption;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Validator;
 
@@ -16,9 +18,11 @@ class MasterApiController extends Controller
 {
     protected $masterService;
 
-    public function __construct(MasterService $masterService)
+    public function __construct(MasterService $masterService, RadioOption $radioOption, Question $question)
     {
         $this->masterService = $masterService;
+        $this->radioOption = $radioOption;
+        $this->question = $question;
 
         $urlMasterType = request()->segment(2);
 
@@ -59,7 +63,14 @@ class MasterApiController extends Controller
             $rules = config('constants.MASTER_VALIDATION_ARRAY.SUPPORT_STRATEGY_VALIDATION');
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.QUESTION_TYPE')) {
-            $rules = config('constants.MASTER_VALIDATION_ARRAY.QUESTION_VALIDATION');
+            $rules = [
+                'support_strategy_id' => ['required', 'exists:support_strategies,id'],
+                'order' => ['required', 'integer', 'min:1'],
+                'text' => ['required', 'string'],
+                'type' => ['required', 'in:text,radio'],
+                'radio_options' => ['required_if:type,radio', 'array', 'min:2'],
+                'radio_options.*' => ['required', 'string', 'max:255'],
+            ];
         }
 
         return $rules;
@@ -107,21 +118,85 @@ class MasterApiController extends Controller
             return $validation;
         }
 
-        $data = $request->all();
-        $result = $this->masterService->create($type, $data);
-        return response()->json(['status' => true, 'message' => "$type created", 'result' => $result], Response::HTTP_CREATED);
+        if ($type === 'questions') {
+            $data = $request->only(['support_strategy_id', 'order', 'text', 'type']);
+            $radioOptions = $request->input('radio_options', []);
+
+            DB::beginTransaction();
+            try {
+                $storedQuestion = $this->masterService->create($type, $data);
+                if ($data['type'] === 'radio' && !empty($radioOptions)) {
+                    foreach ($radioOptions as $option) {
+                        $this->masterService->create('radio-options', [
+                            'question_id' => $storedQuestion->id,
+                            'text' => $option,
+                        ]);
+                    }
+                }
+                DB::commit();
+                return response()->json([
+                    'status' => true,
+                    'message' => "$type created",
+                    'result' => $storedQuestion->load('radioOptions')
+                ], Response::HTTP_CREATED);
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Failed to create question: ' . $e->getMessage()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+        } else {
+            $data = $request->all();
+            $result = $this->masterService->create($type, $data);
+            return response()->json(['status' => true, 'message' => "$type created", 'result' => $result], Response::HTTP_CREATED);
+        }
     }
 
     public function update(Request $request, $type, $id)
     {
-        $validation = $this->doRequestValidation($request, $type, $id);
+        $validation = $this->doRequestValidation($request, $type);
         if ($validation !== true) {
             return $validation;
         }
 
-        $data = $request->all();
-        $result = $this->masterService->update($type, $id, $data);
-        return response()->json(['status' => true, 'message' => "$type updated", 'result' => $result], Response::HTTP_OK);
+        if ($type === 'questions') {
+            $data = $request->only(['support_strategy_id', 'order', 'text', 'type']);
+            $radioOptions = $request->input('radio_options', []);
+
+            DB::beginTransaction();
+            try {
+                $updatedQuestion = $this->masterService->update($type, $id, $data);
+                if ($data['type'] === 'radio') {
+                    $this->radioOption->where('question_id', $id)->delete();
+                    foreach ($radioOptions as $option) {
+                        $this->masterService->create('radio-options', [
+                            'question_id' => $id,
+                            'text' => $option,
+                        ]);
+                    }
+                } else {
+                    $this->radioOption->where('question_id', $id)->delete();
+                }
+
+                DB::commit();
+                return response()->json([
+                    'status' => true,
+                    'message' => "$type updated",
+                    'result' => $updatedQuestion->load('radioOptions')
+                ], Response::HTTP_OK);
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Failed to update question: ' . $e->getMessage()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+        } else {
+            $data = $request->all();
+            $result = $this->masterService->update($type, $id, $data);
+            return response()->json(['status' => true, 'message' => "$type updated", 'result' => $result], Response::HTTP_OK);
+        }
     }
 
     public function import(Request $request, $type)
@@ -202,8 +277,51 @@ class MasterApiController extends Controller
 
     public function destroy(Request $request, $type, $id)
     {
-        $this->masterService->delete($type, $id);
-        return response()->json(['status' => true, 'message' => "$type deleted"], Response::HTTP_OK);
+        if ($type === 'support-strategies') {
+            DB::beginTransaction();
+            try {
+                $questions = $this->question->where('support_strategy_id', $id)->get();
+
+                foreach ($questions as $question) {
+                    if ($question->type === 'radio') {
+                        $this->radioOption->where('question_id', $question->id)->delete();
+                    }
+                    $this->masterService->delete('questions', $question->id);
+                }
+
+                $this->masterService->delete($type, $id);
+                DB::commit();
+                return response()->json(['status' => true, 'message' => "support strategies deleted"], Response::HTTP_OK);
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Failed to delete support strategy: ' . $e->getMessage()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+        } elseif ($type === 'questions') {
+            DB::beginTransaction();
+            try {
+                $question = $this->masterService->getById($type, $id);
+
+                if ($question && $question->type === 'radio') {
+                    $this->radioOption->where('question_id', $id)->delete();
+                }
+
+                $this->masterService->delete($type, $id);
+                DB::commit();
+                return response()->json(['status' => true, 'message' => "$type deleted"], Response::HTTP_OK);
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Failed to delete question: ' . $e->getMessage()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+        } else {
+            $this->masterService->delete($type, $id);
+            return response()->json(['status' => true, 'message' => "$type deleted"], Response::HTTP_OK);
+        }
     }
 
     private function changeImportHeader($type)

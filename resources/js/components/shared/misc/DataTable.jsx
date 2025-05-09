@@ -804,7 +804,9 @@ const CustomDataTable = ({
                 stripedRows
                 scrollable
                 scrollHeight="720px"
-                emptyMessage={`No ${type} found.`}
+                emptyMessage={`No ${
+                    type === "support_strategies" ? "support strategy" : type
+                } found.`}
                 header={header}
                 onValueChange={(filteredData) =>
                     setFilteredDataState(filteredData)

@@ -65,6 +65,8 @@ return [
             'order' => ['required', 'integer'],
             'text' => ['required', 'string'],
             'type' => ['required', 'in:text,radio'],
+            'radio_options' => ['required_if:type,radio', 'array'],
+            'radio_options.*' => ['required', 'string', 'max:255'],
         ]
     ],
 ];
