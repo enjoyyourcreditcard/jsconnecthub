@@ -2,53 +2,58 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Answer;
-use App\Models\Question;
-use App\Models\Result;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use App\Services\MasterService;
+use Illuminate\Support\Facades\DB;
 
 class CounselController extends Controller
 {
+    public function __construct(MasterService $masterService)
+    {
+        $this->masterService = $masterService;
+    }
+
     public function submit(Request $request)
     {
-        $validatedData = $request->validate([
-            'student_id'            => ['required', 'exists:students,id'],
-            'support_strategy_id'   => ['required', 'array', 'max:3'],
-            'support_strategy_id.*' => ['required', 'exists:support_strategies,id'],
-            'question_id'           => ['required', 'array'],
-            'question_id.*'         => ['required', 'exists:questions,id'],
-            'answer'                => ['required', 'array'],
-            'answer.*'              => ['nullable', 'string']
-        ]);
+        $validatedData = $request->validate(config('constants.MASTER_VALIDATION_ARRAY.COUNSEL_VALIDATION'));
 
-        $result = new Result;
+        DB::beginTransaction();
+        try {
+            $counsel = $this->masterService->create('counsels', [
+                'student_id' => $validatedData['student_id'],
+                'support_strategy_id' => $validatedData['support_strategy_id'],
+            ]);
 
-        $result->student_id = $validatedData['student_id'];
+            foreach ($validatedData['question_id'] as $i => $questionId) {
+                $question = $this->masterService->getById('questions', $questionId);
+                $answerData = [
+                    'result_id' => $counsel->id,
+                    'question_id' => $questionId,
+                ];
 
-        $result->save();
+                if ($question->type === 'radio') {
+                    $answerData['radio_option_id'] = $validatedData['answer'][$i];
+                } else {
+                    $answerData['text'] = $validatedData['answer'][$i];
+                }
 
-        for ($i = 0; $i < count($validatedData['question_id']); $i++) {
-            $answer = new Answer;
-
-            $answer->result_id = $result->id;
-
-            $answer->question_id = $validatedData['question_id'][$i];
-
-            if (Question::find($validatedData['question_id'][$i])->type == 'text') {
-                $answer->text = $validatedData['answer'][$i];
-            } else {
-                $answer->radio_option_id = $validatedData['answer'][$i];
+                $this->masterService->create('answers', $answerData);
             }
 
+            DB::commit();
 
-            $answer->save();
+            return response()->json([
+                'status' => true,
+                'message' => 'Counsel created',
+                'result' => $counsel->load('answers')
+            ], Response::HTTP_CREATED);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to create counsel: ' . $e->getMessage()
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
-
-        return response()->json([
-            'status'    => true,
-            'message'   => 'Counsel submitted!',
-            'data'      => $result->load('student.class.level', 'answers.question')
-        ], Response::HTTP_OK);
     }
 }

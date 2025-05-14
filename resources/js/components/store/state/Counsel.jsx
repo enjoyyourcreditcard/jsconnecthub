@@ -9,5 +9,6 @@ export const COUNSEL_STATE = {
         update: "/api/counsels/",
         get: "/api/counsels/",
         delete: "/api/counsels/",
+        submit: "/api/counsel-submit",
     },
 };

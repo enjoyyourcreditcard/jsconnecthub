@@ -62,11 +62,19 @@ return [
         ],
         'QUESTION_VALIDATION' => [
             'support_strategy_id' => ['required', 'exists:support_strategies,id'],
-            'order' => ['required', 'integer'],
+            'order' => ['required', 'integer', 'min:1'],
             'text' => ['required', 'string'],
             'type' => ['required', 'in:text,radio'],
             'radio_options' => ['required_if:type,radio', 'array', 'min:2'],
             'radio_options.*' => ['required', 'string', 'max:255'],
+        ],
+        'COUNSEL_VALIDATION' => [
+            'student_id' => ['required', 'exists:students,id'],
+            'support_strategy_id' => ['required', 'exists:support_strategies,id'],
+            'question_id' => ['required', 'array', 'min:1'],
+            'question_id.*' => ['required', 'exists:questions,id'],
+            'answer' => ['required', 'array', 'min:1'],
+            'answer.*' => ['required'],
         ]
     ],
 ];

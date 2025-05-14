@@ -23,6 +23,7 @@ class MasterService
         'support-strategies'    => \App\Models\SupportStrategy::class,
         'questions'             => \App\Models\Question::class,
         'radio-options'         => \App\Models\RadioOption::class,
+        'answers'               => \App\Models\Answer::class,
     ];
 
     protected function getModel($type)
@@ -151,7 +152,7 @@ class MasterService
                 ->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.COUNSEL_MASTER_TYPE')) {
-            return $q->with(['student', 'answers.question.supportStrategy'])
+            return $q->with(['student', 'answers.question.supportStrategy', 'answers.radioOption'])
                 ->when($request->time, function ($q) use ($request) {
                     switch ($request->time) {
                         case 'today':

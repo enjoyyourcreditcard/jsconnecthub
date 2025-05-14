@@ -600,18 +600,31 @@ const CustomDataTable = ({
                             (a) => a.question.support_strategy_id === strategyId
                         );
                         return (
-                            <div key={strategyId} className="mb-4">
-                                <h5>Section: {strategyName}</h5>
+                            <div key={strategyId}>
+                                <h5 className="mb-4">
+                                    Section: {strategyName}
+                                </h5>
                                 <ul>
-                                    {strategyAnswers.map((answer) => (
-                                        <li key={answer.id}>
-                                            <strong>Question:</strong>{" "}
-                                            {answer.question.text}
-                                            <br />
-                                            <strong>Answer:</strong>{" "}
-                                            {answer.text || "N/A"}
-                                        </li>
-                                    ))}
+                                    {strategyAnswers.map((answer) => {
+                                        console.log(answer);
+                                        const isRadio =
+                                            answer.question.type === "radio";
+                                        const displayAnswer = isRadio
+                                            ? answer.radio_option.text
+                                            : answer.text || "N/A";
+                                        return (
+                                            <li
+                                                key={answer.id}
+                                                className="mb-2"
+                                            >
+                                                <strong>
+                                                    {answer.question.text}
+                                                </strong>
+                                                <br />
+                                                Answer: {displayAnswer}
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             </div>
                         );

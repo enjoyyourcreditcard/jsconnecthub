@@ -21,6 +21,8 @@ import { OverlayPanel } from "primereact/overlaypanel";
 import { Checkbox } from "primereact/checkbox";
 import { InputTextarea } from "primereact/inputtextarea";
 import { Calendar } from "primereact/calendar";
+import { Dropdown } from "primereact/dropdown";
+import { RadioButton } from "primereact/radiobutton";
 import { DateTime } from "luxon";
 import Header from "../shared/layout/Header";
 import "../../../css/home.css";
@@ -40,6 +42,12 @@ function Home() {
         checkin: { data: checkin = [], endPoints: checkinEndPoints },
         bookings: { data: bookings = [], endPoints: bookingEndPoints },
         facilities: { data: facilities = [], endPoints: facilityEndPoints },
+        support_strategies: {
+            data: supportStrategies = [],
+            endPoints: strategyEndPoints,
+        },
+        questions: { data: questions = [], endPoints: questionEndPoints },
+        counsels: { data: counsels = [], endPoints: counselEndPoints },
     } = useSelector((state) => state.global);
     const [activeButton, setActiveButton] = useState(null);
     const [showCard, setShowCard] = useState(false);
@@ -69,6 +77,9 @@ function Home() {
         start_time: null,
         end_time: null,
     });
+    // Ask Ms Vi states
+    const [selectedStrategy, setSelectedStrategy] = useState(null);
+    const [answers, setAnswers] = useState({});
 
     // const socket = io("http://localhost:6001");
 
@@ -124,6 +135,20 @@ function Home() {
                     key: "data",
                 })
             );
+            dispatch(
+                getRecords({
+                    type: "support_strategies",
+                    endPoint: strategyEndPoints.collection,
+                    key: "data",
+                })
+            );
+            dispatch(
+                getRecords({
+                    type: "questions",
+                    endPoint: questionEndPoints.collection,
+                    key: "data",
+                })
+            );
         }
     }, [dispatch, showCard]);
 
@@ -137,6 +162,9 @@ function Home() {
             fetchCheckinsByStudent();
         } else if (studentId && activeButton === "facilities") {
             fetchBookingsByStudent();
+        } else if (studentId && activeButton === "msvi") {
+            setAnswers({});
+            setSelectedStrategy(null);
         }
     };
 
@@ -330,6 +358,8 @@ function Home() {
         setEarlyReason("");
         setError("");
         setFacilityBookingData({ start_time: null, end_time: null });
+        setSelectedStrategy(null);
+        setAnswers({});
     };
 
     const handleCheckin = () => {
@@ -515,7 +545,6 @@ function Home() {
     };
 
     const handleCancelBooking = (bookingId, facilityName) => {
-        console.log(`${bookingEndPoints.cancel}${bookingId}`);
         setLoading(true);
         setError("");
         const cancelData = {
@@ -555,6 +584,98 @@ function Home() {
             })
             .catch((err) => {
                 setError(err.message || "Cancellation failed");
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    };
+
+    const handleAnswerChange = (questionId, value, questionType) => {
+        setAnswers((prev) => ({
+            ...prev,
+            [questionId]: { value, type: questionType },
+        }));
+    };
+
+    const validateAnswers = () => {
+        if (!selectedStrategy) {
+            dispatch(
+                setToastMessage({
+                    severity: "error",
+                    summary: "No Strategy Selected",
+                    detail: "Please select a support strategy.",
+                })
+            );
+            return false;
+        }
+
+        const strategyQuestions = questions.filter(
+            (q) => q.support_strategy_id === selectedStrategy.id
+        );
+        for (const question of strategyQuestions) {
+            if (
+                !answers[question.id] ||
+                (question.type === "text" &&
+                    answers[question.id].value.trim() === "") ||
+                (question.type === "radio" && !answers[question.id].value)
+            ) {
+                dispatch(
+                    setToastMessage({
+                        severity: "error",
+                        summary: "Incomplete Form",
+                        detail: `Please answer the question: ${question.text}`,
+                    })
+                );
+                return false;
+            }
+        }
+        return true;
+    };
+
+    const handleSubmitAnswers = () => {
+        if (!validateAnswers()) return;
+
+        setLoading(true);
+        setError("");
+        const counselData = {
+            student_id: studentId,
+            support_strategy_id: selectedStrategy.id,
+            question_id: [],
+            answer: [],
+        };
+
+        const strategyQuestions = questions
+            .filter((q) => q.support_strategy_id === selectedStrategy.id)
+            .sort((a, b) => a.order - b.order);
+
+        strategyQuestions.forEach((question) => {
+            counselData.question_id.push(question.id);
+            const answer = answers[question.id];
+            counselData.answer.push(
+                answer.type === "text" ? answer.value : parseInt(answer.value)
+            );
+        });
+
+        dispatch(
+            createRecord({
+                type: "counsels",
+                endPoint: counselEndPoints.submit,
+                data: counselData,
+                returnData: true,
+            })
+        )
+            .then((response) => {
+                dispatch(
+                    setToastMessage({
+                        severity: "success",
+                        summary: "Counsel Submitted",
+                        detail: "Your answers have been submitted to Ms Vi! Returning to Launch Pad.",
+                    })
+                );
+                resetState();
+            })
+            .catch((err) => {
+                setError(err.message || "Submission failed");
             })
             .finally(() => {
                 setLoading(false);
@@ -1291,13 +1412,221 @@ function Home() {
                                 {activeButton === "msvi" && (
                                     <StepperPanel header="Ask Ms Vi">
                                         <div className="flex flex-col h-full">
-                                            <div className="flex-grow grid grid-cols-1 justify-start items-center gap-2">
-                                                <p>
-                                                    Ask Ms Vi content goes here.
-                                                </p>
+                                            <div className="flex-grow grid grid-cols-1 justify-start items-center gap-4">
+                                                {studentId ? (
+                                                    <>
+                                                        <div className="mb-4">
+                                                            <h4>
+                                                                Hi "
+                                                                {
+                                                                    students.find(
+                                                                        (s) =>
+                                                                            s.id ===
+                                                                            studentId
+                                                                    )?.name
+                                                                }
+                                                                " from class "
+                                                                {
+                                                                    classes.find(
+                                                                        (c) =>
+                                                                            c.id ===
+                                                                            classId
+                                                                    )?.name
+                                                                }
+                                                                " level "
+                                                                {
+                                                                    levels.find(
+                                                                        (l) =>
+                                                                            l.id ===
+                                                                            levelId
+                                                                    )?.name
+                                                                }
+                                                                ". What Support
+                                                                do you need?
+                                                            </h4>
+                                                        </div>
+                                                        <Dropdown
+                                                            value={
+                                                                selectedStrategy
+                                                            }
+                                                            options={supportStrategies.map(
+                                                                (strategy) => ({
+                                                                    label: strategy.name,
+                                                                    value: strategy,
+                                                                })
+                                                            )}
+                                                            onChange={(e) =>
+                                                                setSelectedStrategy(
+                                                                    e.value
+                                                                )
+                                                            }
+                                                            placeholder="Select a support strategy"
+                                                            className="w-full"
+                                                        />
+                                                        {selectedStrategy && (
+                                                            <div className="mt-4">
+                                                                <h5 className="mb-4 font-bold">
+                                                                    Questions
+                                                                    for{" "}
+                                                                    {
+                                                                        selectedStrategy.name
+                                                                    }
+                                                                </h5>
+                                                                {questions
+                                                                    .filter(
+                                                                        (q) =>
+                                                                            q.support_strategy_id ===
+                                                                            selectedStrategy.id
+                                                                    )
+                                                                    .sort(
+                                                                        (
+                                                                            a,
+                                                                            b
+                                                                        ) =>
+                                                                            a.order -
+                                                                            b.order
+                                                                    )
+                                                                    .map(
+                                                                        (
+                                                                            question
+                                                                        ) => (
+                                                                            <div
+                                                                                key={
+                                                                                    question.id
+                                                                                }
+                                                                                className="mb-4"
+                                                                            >
+                                                                                <label className="block mb-2 font-semibold">
+                                                                                    {
+                                                                                        question.text
+                                                                                    }
+                                                                                    {question.type ===
+                                                                                        "radio" && (
+                                                                                        <span className="text-sm text-gray-600 ml-2">
+                                                                                            (Select
+                                                                                            one)
+                                                                                        </span>
+                                                                                    )}
+                                                                                </label>
+                                                                                {question.type ===
+                                                                                "text" ? (
+                                                                                    <InputTextarea
+                                                                                        value={
+                                                                                            answers[
+                                                                                                question
+                                                                                                    .id
+                                                                                            ]
+                                                                                                ?.value ||
+                                                                                            ""
+                                                                                        }
+                                                                                        onChange={(
+                                                                                            e
+                                                                                        ) =>
+                                                                                            handleAnswerChange(
+                                                                                                question.id,
+                                                                                                e
+                                                                                                    .target
+                                                                                                    .value,
+                                                                                                "text"
+                                                                                            )
+                                                                                        }
+                                                                                        rows={
+                                                                                            3
+                                                                                        }
+                                                                                        className="w-full"
+                                                                                        placeholder="Enter your answer"
+                                                                                    />
+                                                                                ) : (
+                                                                                    <div className="flex flex-col gap-2">
+                                                                                        {(
+                                                                                            question.radio_options ||
+                                                                                            []
+                                                                                        ).map(
+                                                                                            (
+                                                                                                option,
+                                                                                                index
+                                                                                            ) => (
+                                                                                                <div
+                                                                                                    key={
+                                                                                                        option.id ||
+                                                                                                        index
+                                                                                                    }
+                                                                                                    className="flex items-center gap-2"
+                                                                                                >
+                                                                                                    <RadioButton
+                                                                                                        inputId={`option-${
+                                                                                                            question.id
+                                                                                                        }-${
+                                                                                                            option.id ||
+                                                                                                            index
+                                                                                                        }`}
+                                                                                                        name={`question-${question.id}`}
+                                                                                                        value={
+                                                                                                            option.id
+                                                                                                        }
+                                                                                                        onChange={(
+                                                                                                            e
+                                                                                                        ) =>
+                                                                                                            handleAnswerChange(
+                                                                                                                question.id,
+                                                                                                                e.value,
+                                                                                                                "radio"
+                                                                                                            )
+                                                                                                        }
+                                                                                                        checked={
+                                                                                                            answers[
+                                                                                                                question
+                                                                                                                    .id
+                                                                                                            ]
+                                                                                                                ?.value ===
+                                                                                                            option.id
+                                                                                                        }
+                                                                                                    />
+                                                                                                    <label
+                                                                                                        htmlFor={`option-${
+                                                                                                            question.id
+                                                                                                        }-${
+                                                                                                            option.id ||
+                                                                                                            index
+                                                                                                        }`}
+                                                                                                    >
+                                                                                                        {option.text ||
+                                                                                                            option}
+                                                                                                    </label>
+                                                                                                </div>
+                                                                                            )
+                                                                                        )}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        )
+                                                                    )}
+                                                                {questions.filter(
+                                                                    (q) =>
+                                                                        q.support_strategy_id ===
+                                                                        selectedStrategy.id
+                                                                ).length ===
+                                                                    0 && (
+                                                                    <p className="text-gray-600">
+                                                                        No
+                                                                        questions
+                                                                        available
+                                                                        for this
+                                                                        strategy.
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <p>
+                                                        Please select a student
+                                                        to proceed.
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
-                                        <div className="flex pt-2 sm:pt-4 justify-start">
+                                        <div className="flex pt-2 sm:pt-4 justify-between">
                                             <Button
                                                 label="Back"
                                                 severity="secondary"
@@ -1307,7 +1636,7 @@ function Home() {
                                                     confirmPopup({
                                                         target: event.currentTarget,
                                                         message:
-                                                            "Are you sure you want to go back?",
+                                                            "Are you sure you want to go back? Any unsaved answers will be lost.",
                                                         icon: "pi pi-exclamation-triangle",
                                                         accept: () => {
                                                             dispatch(
@@ -1322,7 +1651,10 @@ function Home() {
                                                                 )
                                                             );
                                                             stepperRef.current.prevCallback();
-                                                            setQuestLog([]);
+                                                            setAnswers({});
+                                                            setSelectedStrategy(
+                                                                null
+                                                            );
                                                         },
                                                         reject: () => {
                                                             dispatch(
@@ -1331,7 +1663,7 @@ function Home() {
                                                                         severity:
                                                                             "info",
                                                                         summary:
-                                                                            "Tell me, whats your problem.",
+                                                                            "Tell me, what's your problem?",
                                                                         detail: "Stayed on Ask Ms Vi step",
                                                                     }
                                                                 )
@@ -1350,6 +1682,44 @@ function Home() {
                                                     {error}
                                                 </p>
                                             )}
+                                            <Button
+                                                label="Submit"
+                                                icon="pi pi-check"
+                                                iconPos="right"
+                                                size="small"
+                                                onClick={(event) =>
+                                                    confirmPopup({
+                                                        target: event.currentTarget,
+                                                        message:
+                                                            "Are you sure you want to submit your answers?",
+                                                        icon: "pi pi-exclamation-triangle",
+                                                        accept: () =>
+                                                            handleSubmitAnswers(),
+                                                        reject: () => {
+                                                            dispatch(
+                                                                setToastMessage(
+                                                                    {
+                                                                        severity:
+                                                                            "warn",
+                                                                        summary:
+                                                                            "Action Cancelled",
+                                                                        detail: "Answers not submitted.",
+                                                                    }
+                                                                )
+                                                            );
+                                                        },
+                                                    })
+                                                }
+                                                disabled={
+                                                    !selectedStrategy ||
+                                                    questions.filter(
+                                                        (q) =>
+                                                            q.support_strategy_id ===
+                                                            selectedStrategy?.id
+                                                    ).length === 0 ||
+                                                    loading
+                                                }
+                                            />
                                         </div>
                                     </StepperPanel>
                                 )}
@@ -1629,6 +1999,7 @@ function Home() {
                                             {error && (
                                                 <p
                                                     style={{
+                                                        maxWidth: "200px",
                                                         color: "red",
                                                         marginLeft: "1rem",
                                                     }}

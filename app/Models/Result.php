@@ -18,7 +18,8 @@ class Result extends Model
     public $incrementing    = true;
 
     protected $fillable = [
-        'student_id'
+        'student_id',
+        'support_strategy_id'
     ];
 
     /**
@@ -29,6 +30,11 @@ class Result extends Model
     public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class);
+    }
+
+    public function supportStrategy(): BelongsTo
+    {
+        return $this->belongsTo(SupportStrategy::class);
     }
 
     /**

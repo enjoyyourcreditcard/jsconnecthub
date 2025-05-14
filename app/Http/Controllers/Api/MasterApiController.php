@@ -57,18 +57,14 @@ class MasterApiController extends Controller
         if ($type === config('constants.MASTER_TYPE_ARRAY.BOOKING_MASTER_TYPE')) {
             $rules = config('constants.MASTER_VALIDATION_ARRAY.BOOKING_MASTER_VALIDATION');
         }
-        if ($type === config('constants.MASTER_TYPE_ARRAY.SUPPORT_STRATEGY_TYPE')) {
+        if ($type === config('constants.MASTER_TYPE_ARRAY.SUPPORT_STRATEGY_MASTER_TYPE')) {
             $rules = config('constants.MASTER_VALIDATION_ARRAY.SUPPORT_STRATEGY_VALIDATION');
         }
-        if ($type === config('constants.MASTER_TYPE_ARRAY.QUESTION_TYPE')) {
-            $rules = [
-                'support_strategy_id' => ['required', 'exists:support_strategies,id'],
-                'order' => ['required', 'integer', 'min:1'],
-                'text' => ['required', 'string'],
-                'type' => ['required', 'in:text,radio'],
-                'radio_options' => ['required_if:type,radio', 'array', 'min:2'],
-                'radio_options.*' => ['required', 'string', 'max:255'],
-            ];
+        if ($type === config('constants.MASTER_TYPE_ARRAY.QUESTION_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.QUESTION_VALIDATION');
+        }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.COUNSEL_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.COUNSEL_VALIDATION');
         }
 
         return $rules;
@@ -138,6 +134,41 @@ class MasterApiController extends Controller
                 return response()->json([
                     'status' => false,
                     'message' => 'Failed to create question: ' . $e->getMessage()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+        }
+        if ($type === 'counsels') {
+            try {
+                $counsel = $this->masterService->create('counsels', [
+                    'student_id' => $validation['student_id'],
+                    'support_strategy_id' => $validation['support_strategy_id'],
+                ]);
+
+                foreach ($validation['question_id'] as $i => $questionId) {
+                    $question = $this->masterService->getById('questions', $questionId);
+                    $answerData = [
+                        'result_id' => $counsel->id,
+                        'question_id' => $questionId,
+                    ];
+
+                    if ($question->type === 'text') {
+                        $answerData['text'] = $validation['answer'][$i];
+                    } else {
+                        $answerData['radio_option_id'] = $validation['answer'][$i];
+                    }
+
+                    $this->masterService->create('answers', $answerData);
+                }
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Counsel created',
+                    'result' => $counsel->load('answers')
+                ], Response::HTTP_CREATED);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Failed to create counsel: ' . $e->getMessage()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
         } else {
