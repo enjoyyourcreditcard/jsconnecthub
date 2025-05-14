@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Question;
+use App\Models\RadioOption;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Services\MasterService;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use App\Models\Question;
-use App\Models\RadioOption;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Validator;
 
@@ -214,6 +215,7 @@ class MasterApiController extends Controller
             $foreignKeys = $this->getForeignKeys($type);
 
             $imported = [];
+            DB::beginTransaction();
 
             foreach ($rows as $index => $row) {
                 $rowData = array_combine($transformedHeaders, $row);
@@ -248,12 +250,15 @@ class MasterApiController extends Controller
                 }
             }
 
+            DB::commit();
+
             return response()->json([
                 'status' => true,
                 'message' => count($imported) . ' ' . ($type) . " imported successfully",
                 'result' => $imported
             ], Response::HTTP_CREATED);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'status' => false,
                 'message' => 'Import failed: ' . $e->getMessage()
