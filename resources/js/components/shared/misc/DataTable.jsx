@@ -271,8 +271,10 @@ const CustomDataTable = ({
                     strategyAnswers
                         .map(
                             (a) =>
-                                `- Question: ${a.question.text} Answer: ${
-                                    a.text || "N/A"
+                                `- ${a.question.text} Answer: ${
+                                    a.question.type === "radio"
+                                        ? a.radio_option.text
+                                        : a.text || "N/A"
                                 }`
                         )
                         .join("\n")
