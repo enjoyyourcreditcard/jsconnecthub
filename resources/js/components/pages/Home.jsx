@@ -757,7 +757,8 @@ function Home() {
             <Header />
             <div
                 className={`home-container ${
-                    !showCard && auth() === null ? "with-background" : ""
+                    // !showCard && auth() === null ? "with-background" : ""
+                    auth() === null ? "with-background" : ""
                 }`}
             >
                 {!showCard && (
@@ -768,6 +769,7 @@ function Home() {
                         <div className="grid md:grid-cols-3 gap-2 md:gap-6">
                             <Button
                                 label="Checkin/Checkout"
+                                severity="success"
                                 onClick={() => {
                                     setActiveButton("activities");
                                     setShowCard(true);
@@ -776,6 +778,7 @@ function Home() {
                             />
                             <Button
                                 label="Facility Reservations"
+                                severity="info"
                                 onClick={() => {
                                     setActiveButton("facilities");
                                     setShowCard(true);
@@ -784,6 +787,7 @@ function Home() {
                             />
                             <Button
                                 label="Ask Ms Vi"
+                                severity="warning"
                                 onClick={() => {
                                     setActiveButton("msvi");
                                     setShowCard(true);
@@ -792,8 +796,10 @@ function Home() {
                             />
                         </div>
                         <div className="grid md:grid-cols-2 gap-2 md:gap-6 w-full md:w-1/2 sm:m-auto">
+                            <Button label="Another Link" className="effected" />
                             <Button
                                 label="JSEILPR"
+                                severity="secondary"
                                 onClick={() =>
                                     window.open(
                                         "https://jseilpr.com/",
@@ -802,14 +808,13 @@ function Home() {
                                 }
                                 className="effected"
                             />
-                            <Button label="Another Link" className="effected" />
                         </div>
                     </div>
                 )}
                 {showCard && (
                     <div className="w-11/12 sm:w-11/12 md:w-10/12 xl:w-1/2 flex flex-col gap-4">
                         <Button
-                            icon="pi pi-arrow-left"
+                            icon="pi pi-home"
                             rounded
                             size="small"
                             onClick={handleBack}
@@ -913,7 +918,7 @@ function Home() {
                                         />
                                     </div>
                                 </StepperPanel>
-                                <StepperPanel header="Character">
+                                <StepperPanel header="Name">
                                     <div className="flex flex-col h-full">
                                         <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-32">
                                             {students
@@ -1472,149 +1477,154 @@ function Home() {
                                                                         selectedStrategy.name
                                                                     }
                                                                 </h5>
-                                                                {questions
-                                                                    .filter(
+                                                                <div className="max-h-32 overflow-y-auto">
+                                                                    {questions
+                                                                        .filter(
+                                                                            (
+                                                                                q
+                                                                            ) =>
+                                                                                q.support_strategy_id ===
+                                                                                selectedStrategy.id
+                                                                        )
+                                                                        .sort(
+                                                                            (
+                                                                                a,
+                                                                                b
+                                                                            ) =>
+                                                                                a.order -
+                                                                                b.order
+                                                                        )
+                                                                        .map(
+                                                                            (
+                                                                                question
+                                                                            ) => (
+                                                                                <div
+                                                                                    key={
+                                                                                        question.id
+                                                                                    }
+                                                                                    className="mb-4"
+                                                                                >
+                                                                                    <label className="block mb-2 font-semibold">
+                                                                                        {
+                                                                                            question.text
+                                                                                        }
+                                                                                        {question.type ===
+                                                                                            "radio" && (
+                                                                                            <span className="text-sm text-gray-600 ml-2">
+                                                                                                (Select
+                                                                                                one)
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </label>
+                                                                                    {question.type ===
+                                                                                    "text" ? (
+                                                                                        <InputTextarea
+                                                                                            value={
+                                                                                                answers[
+                                                                                                    question
+                                                                                                        .id
+                                                                                                ]
+                                                                                                    ?.value ||
+                                                                                                ""
+                                                                                            }
+                                                                                            onChange={(
+                                                                                                e
+                                                                                            ) =>
+                                                                                                handleAnswerChange(
+                                                                                                    question.id,
+                                                                                                    e
+                                                                                                        .target
+                                                                                                        .value,
+                                                                                                    "text"
+                                                                                                )
+                                                                                            }
+                                                                                            rows={
+                                                                                                2
+                                                                                            }
+                                                                                            className="w-full"
+                                                                                            placeholder="Enter your answer"
+                                                                                        />
+                                                                                    ) : (
+                                                                                        <div className="flex flex-col gap-2">
+                                                                                            {(
+                                                                                                question.radio_options ||
+                                                                                                []
+                                                                                            ).map(
+                                                                                                (
+                                                                                                    option,
+                                                                                                    index
+                                                                                                ) => (
+                                                                                                    <div
+                                                                                                        key={
+                                                                                                            option.id ||
+                                                                                                            index
+                                                                                                        }
+                                                                                                        className="flex items-center gap-2"
+                                                                                                    >
+                                                                                                        <RadioButton
+                                                                                                            inputId={`option-${
+                                                                                                                question.id
+                                                                                                            }-${
+                                                                                                                option.id ||
+                                                                                                                index
+                                                                                                            }`}
+                                                                                                            name={`question-${question.id}`}
+                                                                                                            value={
+                                                                                                                option.id
+                                                                                                            }
+                                                                                                            onChange={(
+                                                                                                                e
+                                                                                                            ) =>
+                                                                                                                handleAnswerChange(
+                                                                                                                    question.id,
+                                                                                                                    e.value,
+                                                                                                                    "radio"
+                                                                                                                )
+                                                                                                            }
+                                                                                                            checked={
+                                                                                                                answers[
+                                                                                                                    question
+                                                                                                                        .id
+                                                                                                                ]
+                                                                                                                    ?.value ===
+                                                                                                                option.id
+                                                                                                            }
+                                                                                                        />
+                                                                                                        <label
+                                                                                                            htmlFor={`option-${
+                                                                                                                question.id
+                                                                                                            }-${
+                                                                                                                option.id ||
+                                                                                                                index
+                                                                                                            }`}
+                                                                                                        >
+                                                                                                            {option.text ||
+                                                                                                                option}
+                                                                                                        </label>
+                                                                                                    </div>
+                                                                                                )
+                                                                                            )}
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                            )
+                                                                        )}
+                                                                    {questions.filter(
                                                                         (q) =>
                                                                             q.support_strategy_id ===
                                                                             selectedStrategy.id
-                                                                    )
-                                                                    .sort(
-                                                                        (
-                                                                            a,
-                                                                            b
-                                                                        ) =>
-                                                                            a.order -
-                                                                            b.order
-                                                                    )
-                                                                    .map(
-                                                                        (
-                                                                            question
-                                                                        ) => (
-                                                                            <div
-                                                                                key={
-                                                                                    question.id
-                                                                                }
-                                                                                className="mb-4"
-                                                                            >
-                                                                                <label className="block mb-2 font-semibold">
-                                                                                    {
-                                                                                        question.text
-                                                                                    }
-                                                                                    {question.type ===
-                                                                                        "radio" && (
-                                                                                        <span className="text-sm text-gray-600 ml-2">
-                                                                                            (Select
-                                                                                            one)
-                                                                                        </span>
-                                                                                    )}
-                                                                                </label>
-                                                                                {question.type ===
-                                                                                "text" ? (
-                                                                                    <InputTextarea
-                                                                                        value={
-                                                                                            answers[
-                                                                                                question
-                                                                                                    .id
-                                                                                            ]
-                                                                                                ?.value ||
-                                                                                            ""
-                                                                                        }
-                                                                                        onChange={(
-                                                                                            e
-                                                                                        ) =>
-                                                                                            handleAnswerChange(
-                                                                                                question.id,
-                                                                                                e
-                                                                                                    .target
-                                                                                                    .value,
-                                                                                                "text"
-                                                                                            )
-                                                                                        }
-                                                                                        rows={
-                                                                                            3
-                                                                                        }
-                                                                                        className="w-full"
-                                                                                        placeholder="Enter your answer"
-                                                                                    />
-                                                                                ) : (
-                                                                                    <div className="flex flex-col gap-2">
-                                                                                        {(
-                                                                                            question.radio_options ||
-                                                                                            []
-                                                                                        ).map(
-                                                                                            (
-                                                                                                option,
-                                                                                                index
-                                                                                            ) => (
-                                                                                                <div
-                                                                                                    key={
-                                                                                                        option.id ||
-                                                                                                        index
-                                                                                                    }
-                                                                                                    className="flex items-center gap-2"
-                                                                                                >
-                                                                                                    <RadioButton
-                                                                                                        inputId={`option-${
-                                                                                                            question.id
-                                                                                                        }-${
-                                                                                                            option.id ||
-                                                                                                            index
-                                                                                                        }`}
-                                                                                                        name={`question-${question.id}`}
-                                                                                                        value={
-                                                                                                            option.id
-                                                                                                        }
-                                                                                                        onChange={(
-                                                                                                            e
-                                                                                                        ) =>
-                                                                                                            handleAnswerChange(
-                                                                                                                question.id,
-                                                                                                                e.value,
-                                                                                                                "radio"
-                                                                                                            )
-                                                                                                        }
-                                                                                                        checked={
-                                                                                                            answers[
-                                                                                                                question
-                                                                                                                    .id
-                                                                                                            ]
-                                                                                                                ?.value ===
-                                                                                                            option.id
-                                                                                                        }
-                                                                                                    />
-                                                                                                    <label
-                                                                                                        htmlFor={`option-${
-                                                                                                            question.id
-                                                                                                        }-${
-                                                                                                            option.id ||
-                                                                                                            index
-                                                                                                        }`}
-                                                                                                    >
-                                                                                                        {option.text ||
-                                                                                                            option}
-                                                                                                    </label>
-                                                                                                </div>
-                                                                                            )
-                                                                                        )}
-                                                                                    </div>
-                                                                                )}
-                                                                            </div>
-                                                                        )
+                                                                    ).length ===
+                                                                        0 && (
+                                                                        <p className="text-gray-600">
+                                                                            No
+                                                                            questions
+                                                                            available
+                                                                            for
+                                                                            this
+                                                                            strategy.
+                                                                        </p>
                                                                     )}
-                                                                {questions.filter(
-                                                                    (q) =>
-                                                                        q.support_strategy_id ===
-                                                                        selectedStrategy.id
-                                                                ).length ===
-                                                                    0 && (
-                                                                    <p className="text-gray-600">
-                                                                        No
-                                                                        questions
-                                                                        available
-                                                                        for this
-                                                                        strategy.
-                                                                    </p>
-                                                                )}
+                                                                </div>
                                                             </div>
                                                         )}
                                                     </>

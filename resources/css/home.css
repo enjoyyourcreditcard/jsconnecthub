@@ -26,6 +26,8 @@
 
 .home-container.with-background {
     background-image: url("/assets/images/JS-KIOSK-Connect.jpg");
+    background-attachment: fixed;
+    background-position: center 100%;
 }
 
 .p-button.effected {

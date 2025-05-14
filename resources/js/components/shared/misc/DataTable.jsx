@@ -71,6 +71,7 @@ const CustomDataTable = ({
         activity: { value: null },
         facility: { value: null },
         support_strategies: { value: null },
+        ...(type === "bookings" && { status: { value: null } }),
     });
     const [filteredDataState, setFilteredDataState] = useState([]);
     const [expandedRows, setExpandedRows] = useState([]);
@@ -273,7 +274,7 @@ const CustomDataTable = ({
                             (a) =>
                                 `- ${a.question.text} Answer: ${
                                     a.question.type === "radio"
-                                        ? a.radio_option.text
+                                        ? a.radio_option?.text || "N/A"
                                         : a.text || "N/A"
                                 }`
                         )
@@ -608,11 +609,10 @@ const CustomDataTable = ({
                                 </h5>
                                 <ul>
                                     {strategyAnswers.map((answer) => {
-                                        console.log(answer);
                                         const isRadio =
                                             answer.question.type === "radio";
                                         const displayAnswer = isRadio
-                                            ? answer.radio_option.text
+                                            ? answer.radio_option?.text || "N/A"
                                             : answer.text || "N/A";
                                         return (
                                             <li

@@ -54,8 +54,10 @@ class RoleSeeder extends Seeder
         ]);
 
         Role::findByName('Admin1')->givePermissionTo([
-            'students view',
             'activities view',
+            'activities create',
+            'activities edit',
+            'activities delete',
             'checkin view',
             'checkin create',
             'checkin edit',
@@ -63,8 +65,10 @@ class RoleSeeder extends Seeder
         ]);
 
         Role::findByName('Admin2')->givePermissionTo([
-            'students view',
             'facilities view',
+            'facilities create',
+            'facilities edit',
+            'facilities delete',
             'bookings view',
             'bookings create',
             'bookings edit',
@@ -73,7 +77,18 @@ class RoleSeeder extends Seeder
         ]);
 
         Role::findByName('Admin3')->givePermissionTo([
-            'students view',
+            'support-strategies view',
+            'support-strategies create',
+            'support-strategies edit',
+            'support-strategies delete',
+            'questions view',
+            'questions create',
+            'questions edit',
+            'questions delete',
+            'radio-options view',
+            'radio-options create',
+            'radio-options edit',
+            'radio-options delete',
             'counsels view',
             'counsels create',
             'counsels edit',

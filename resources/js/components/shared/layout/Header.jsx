@@ -38,10 +38,10 @@ const Header = () => {
             label: "Home",
             command: () => navigate("/"),
         },
-        {
-            label: "About",
-            command: () => navigate("/about"),
-        },
+        // {
+        //     label: "About",
+        //     command: () => navigate("/about"),
+        // },
     ];
 
     const getMasterItems = () => {
@@ -157,14 +157,14 @@ const Header = () => {
         menuRef.current.toggle(event);
     };
 
-    const logo = (
-        <span
-            className="logo-text"
-            data-full="JS-CONNECT-HUB"
-            data-short="JS"
-            style={{ marginRight: "10px" }}
-        />
-    );
+    // const logo = (
+    //     <span
+    //         className="logo-text"
+    //         data-full="JS-CONNECT-HUB"
+    //         data-short="JS"
+    //         style={{ marginRight: "10px" }}
+    //     />
+    // );
 
     const isHomePage =
         (location.pathname === "/" || location.pathname === "/home") &&
@@ -190,7 +190,7 @@ const Header = () => {
             <div className="flex-auto">
                 <Menubar
                     model={centerItems}
-                    start={logo}
+                    // start={logo}
                     style={{ background: "transparent", border: "none" }}
                     breakpoint="960px"
                 />
