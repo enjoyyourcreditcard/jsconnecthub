@@ -22,6 +22,7 @@ import {
     importRecord,
     setToastMessage,
 } from "../../store/global-slice";
+import { Badge } from "primereact/badge";
 import PropTypes from "prop-types";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -257,7 +258,7 @@ const CustomDataTable = ({
         setSelectedRecords(null);
     };
 
-    const exportCSV = () => dt.current.exportCSV();
+    // const exportCSV = () => dt.current.exportCSV();
 
     const formatAnswersForExport = (item) => {
         if (type !== "counsels" || !item.answers) return "";
@@ -399,7 +400,7 @@ const CustomDataTable = ({
 
         return (
             <div className="flex flex-wrap gap-2">
-                <Button label="CSV" icon="pi pi-file" onClick={exportCSV} />
+                {/* <Button label="CSV" icon="pi pi-file" onClick={exportCSV} /> */}
                 <Button
                     label="Excel"
                     icon="pi pi-file-excel"
@@ -590,6 +591,34 @@ const CustomDataTable = ({
     const formattedData = Array.isArray(collection)
         ? collection.map((item) => ({
               ...item,
+              status: (() => {
+                  if (!item.status) return item.status;
+                  const status = item.status;
+                  if (status === "reserved") {
+                      return (
+                          <Badge
+                              value={capitalize(item.status)}
+                              severity="success"
+                          />
+                      );
+                  } else if (status === "cancelled") {
+                      return (
+                          <Badge
+                              value={capitalize(item.status)}
+                              severity="danger"
+                          />
+                      );
+                  } else if (status === "closed") {
+                      return (
+                          <Badge
+                              value={capitalize(item.status)}
+                              severity="secondary"
+                          />
+                      );
+                  } else {
+                      return <Badge value={capitalize(item.status)} />;
+                  }
+              })(),
               checkin_time: item.checkin_time
                   ? formatDateToLocal(item.checkin_time)
                   : "",

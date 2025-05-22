@@ -1022,7 +1022,7 @@ function Home() {
                                                                             }
                                                                             header={
                                                                                 <div className="flex items-center gap-2">
-                                                                                    <span className="truncate max-w-[100px] inline-block">
+                                                                                    <span className="truncate max-w-[100px] sm:max-w-[240px] inline-block">
                                                                                         {
                                                                                             quest.activityName
                                                                                         }
@@ -1783,7 +1783,7 @@ function Home() {
                                                                             }
                                                                             header={
                                                                                 <div className="flex items-center gap-2">
-                                                                                    <span className="truncate max-w-[100px] inline-block">
+                                                                                    <span className="truncate max-w-[100px] sm:max-w-[200px] inline-block">
                                                                                         {
                                                                                             booking.facilityName
                                                                                         }
