@@ -78,6 +78,12 @@ const CustomDataTable = ({
     const [filteredDataState, setFilteredDataState] = useState([]);
     const [expandedRows, setExpandedRows] = useState([]);
     const [questionExpandedRows, setQuestionExpandedRows] = useState([]);
+    const [size, setSize] = useState("small");
+    const sizeOptions = [
+        { label: "Small", value: "small" },
+        { label: "Normal", value: "normal" },
+        { label: "Large", value: "large" },
+    ];
 
     useEffect(() => {
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -371,6 +377,13 @@ const CustomDataTable = ({
                         disabled={!selectedRecords || !selectedRecords.length}
                     />
                 )}
+                <Dropdown
+                    value={size}
+                    options={sizeOptions}
+                    onChange={(e) => setSize(e.value)}
+                    placeholder="Select Size"
+                    style={{ width: "150px" }}
+                />
             </div>
         );
     };
@@ -465,17 +478,6 @@ const CustomDataTable = ({
         const canDelete = permissions.includes(`${type} delete`);
 
         const actions = [
-            // {
-            //     label: "Edit",
-            //     icon: "pi pi-pencil",
-            //     command: (event) => onEdit(rowData[identifier]),
-            // },
-            // {
-            //     label: "Delete",
-            //     icon: "pi pi-trash",
-            //     command: (event) =>
-            //         handleDelete(event.originalEvent, rowData[identifier]),
-            // },
             ...(canEdit
                 ? [
                       {
@@ -534,35 +536,53 @@ const CustomDataTable = ({
         return actions.length > 0 ? (
             <SplitButton
                 label=""
-                icon="pi pi-cog"
+                size={size}
+                icon="pi pi-search"
+                dropdownIcon="pi pi-cog"
                 model={actions}
-                className="p-button-text"
+                outlined
             />
         ) : null;
     };
 
     const questionActionsTemplate = (rowData) => {
+        const permissions = auth()?.permissions || [];
+        const canEdit = permissions.includes("questions edit");
+        const canDelete = permissions.includes("questions delete");
+
+        const actions = [
+            ...(canEdit
+                ? [
+                      {
+                          label: "Edit",
+                          icon: "pi pi-pencil",
+                          command: () => onEditQuestion(rowData.id),
+                      },
+                  ]
+                : []),
+            ...(canDelete
+                ? [
+                      {
+                          label: "Delete",
+                          icon: "pi pi-trash",
+                          command: (event) =>
+                              handleQuestionDelete(
+                                  event.originalEvent,
+                                  rowData.id
+                              ),
+                      },
+                  ]
+                : []),
+        ];
+
         return (
             <SplitButton
                 label=""
-                icon="pi pi-cog"
-                model={[
-                    {
-                        label: "Edit",
-                        icon: "pi pi-pencil",
-                        command: () => onEditQuestion(rowData.id),
-                    },
-                    {
-                        label: "Delete",
-                        icon: "pi pi-trash",
-                        command: (event) =>
-                            handleQuestionDelete(
-                                event.originalEvent,
-                                rowData.id
-                            ),
-                    },
-                ]}
-                className="p-button-text"
+                size={size}
+                icon="pi pi-search"
+                dropdownIcon="pi pi-cog"
+                model={actions}
+                outlined
             />
         );
     };
@@ -597,12 +617,14 @@ const CustomDataTable = ({
             : [];
 
         return (
-            <div className="p-3">
+            <div>
+                <h5 className="font-bold mb-2">Answers from {question.text}</h5>
                 <DataTable
                     value={radioOptions.map((opt, index) => ({
                         id: index,
                         text: opt,
                     }))}
+                    size={size}
                     dataKey="id"
                     tableStyle={{ minWidth: "30rem" }}
                     emptyMessage="No answers found."
@@ -677,9 +699,13 @@ const CustomDataTable = ({
                 : [];
 
             return (
-                <div className="p-3">
+                <div>
+                    <h5 className="font-bold mb-2">
+                        Questions from {data.name}
+                    </h5>
                     <DataTable
                         value={strategyQuestions}
+                        size={size}
                         dataKey="id"
                         tableStyle={{ minWidth: "50rem" }}
                         emptyMessage="No questions found."
@@ -881,6 +907,7 @@ const CustomDataTable = ({
             <DataTable
                 ref={dt}
                 value={formattedData}
+                size={size}
                 selection={type !== "counsels" ? selectedRecords : null}
                 onSelectionChange={
                     type !== "counsels"
