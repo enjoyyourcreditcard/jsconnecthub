@@ -303,6 +303,7 @@ function ManageSupportAndQuestions() {
                                 onDeleteQuestion={handleDeleteQuestion}
                                 title="Form Ask Ms Vi"
                                 questions={questions}
+                                hasExpand={true}
                             />
                             <Dialog
                                 header={

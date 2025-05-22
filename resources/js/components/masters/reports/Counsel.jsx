@@ -77,18 +77,17 @@ function Counsel() {
             <main style={{ padding: "20px" }}>
                 <Card>
                     {isAuthenticated() ? (
-                        <>
-                            <DataTable
-                                type="counsels"
-                                identifier="id"
-                                onFetch={(params) => myFetch(params)}
-                                title="Counsel"
-                                timeFilter={timeFilter}
-                                setTimeFilter={setTimeFilter}
-                                rangeFilter={rangeFilter}
-                                setRangeFilter={setRangeFilter}
-                            />
-                        </>
+                        <DataTable
+                            type="counsels"
+                            identifier="id"
+                            onFetch={(params) => myFetch(params)}
+                            title="Counsel"
+                            timeFilter={timeFilter}
+                            setTimeFilter={setTimeFilter}
+                            rangeFilter={rangeFilter}
+                            setRangeFilter={setRangeFilter}
+                            hasExpand={true}
+                        />
                     ) : (
                         <p>Please log in to view and manage counsels.</p>
                     )}

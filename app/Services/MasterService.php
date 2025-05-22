@@ -39,7 +39,7 @@ class MasterService
     {
         $q = $this->getModel($type);
         if ($type === config('constants.MASTER_TYPE_ARRAY.LEVEL_MASTER_TYPE')) {
-            return $q->with('classes')->get();
+            return $q->with('classes.students')->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.CLASS_MASTER_TYPE')) {
             return $q->with('level')->get();
@@ -227,11 +227,13 @@ class MasterService
 
     public function delete($type, $id)
     {
-        if ($type === config('constants.MASTER_TYPE_ARRAY.COUNSEL_MASTER_TYPE')) {
-            $model = $this->getModel($type)->findOrFail($id);
-        } else {
-            $model = $this->getModel($type)->findOrFail($id);
-        }
+        $model = $this->getModel($type)->findOrFail($id);
+        $model->delete();
+    }
+
+    public function deleteAll($type)
+    {
+        $model = $this->getModel($type);
         $model->delete();
     }
 }

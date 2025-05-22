@@ -34,6 +34,7 @@ const CustomDataTable = ({
     type,
     identifier = "id",
     hasImport,
+    hasExpand,
     onFetch = () => {},
     onAdd = () => {},
     onEdit = () => {},
@@ -48,7 +49,11 @@ const CustomDataTable = ({
     rangeFilter,
     setRangeFilter,
     questions = [],
+    classes = [],
+    students = [],
 }) => {
+    console.log(classes);
+    console.log(students);
     const auth = useAuthUser();
     const dispatch = useDispatch();
     const dt = useRef(null);
@@ -588,6 +593,48 @@ const CustomDataTable = ({
         );
     };
 
+    const classActionsTemplate = (rowData) => {
+        const permissions = auth()?.permissions || [];
+        const canEdit = permissions.includes("class edit");
+        const canDelete = permissions.includes("class delete");
+
+        const actions = [
+            ...(canEdit
+                ? [
+                      {
+                          label: "Edit",
+                          icon: "pi pi-pencil",
+                          command: () => onEditClass(rowData.id),
+                      },
+                  ]
+                : []),
+            ...(canDelete
+                ? [
+                      {
+                          label: "Delete",
+                          icon: "pi pi-trash",
+                          command: (event) =>
+                              handleClassDelete(
+                                  event.originalEvent,
+                                  rowData.id
+                              ),
+                      },
+                  ]
+                : []),
+        ];
+
+        return (
+            <SplitButton
+                label=""
+                size={size}
+                icon="pi pi-search"
+                dropdownIcon="pi pi-cog"
+                model={actions}
+                outlined
+            />
+        );
+    };
+
     const formattedData = Array.isArray(collection)
         ? collection.map((item) => ({
               ...item,
@@ -670,7 +717,12 @@ const CustomDataTable = ({
     };
 
     const rowExpansionTemplate = (data) => {
-        if (type !== "support_strategies" && type !== "counsels") return null;
+        if (
+            type !== "support_strategies" &&
+            type !== "counsels" &&
+            type !== "levels"
+        )
+            return null;
 
         if (type === "counsels") {
             const strategyIds = [
@@ -727,6 +779,10 @@ const CustomDataTable = ({
                 ? questions.filter((q) => q.support_strategy_id === data.id)
                 : [];
 
+            const allowExpansion = (rowData) => {
+                return rowData[0]?.radio_options.length > 0;
+            };
+
             return (
                 <div>
                     <h5 className="font-bold mb-2">
@@ -743,7 +799,7 @@ const CustomDataTable = ({
                         rowExpansionTemplate={questionRowExpansionTemplate}
                     >
                         <Column
-                            expander
+                            expander={allowExpansion}
                             style={{ width: "3rem" }}
                             exportable={false}
                         />
@@ -773,6 +829,45 @@ const CustomDataTable = ({
                         <Column
                             header="Actions"
                             body={questionActionsTemplate}
+                            style={{ width: "20%" }}
+                        />
+                    </DataTable>
+                </div>
+            );
+        }
+        if (type === "levels") {
+            const levelClasses = Array.isArray(classes)
+                ? classes.filter((q) => q.level_id === data.id)
+                : [];
+
+            const allowExpansion = (rowData) => {
+                console.log(rowData);
+                // return rowData[0]?.radio_options.length > 0;
+            };
+
+            return (
+                <div>
+                    <h5 className="font-bold mb-2">Classes from {data.name}</h5>
+                    <DataTable
+                        value={levelClasses}
+                        size={size}
+                        dataKey="id"
+                        tableStyle={{ minWidth: "50rem" }}
+                        emptyMessage="No classes found."
+                        // expandedRows={questionExpandedRows}
+                        // onRowToggle={(e) => setQuestionExpandedRows(e.data)}
+                        // rowExpansionTemplate={questionRowExpansionTemplate}
+                    >
+                        <Column
+                            expander={allowExpansion}
+                            style={{ width: "3rem" }}
+                            exportable={false}
+                        />
+                        <Column field="name" header="Name" sortable />
+                        <Column field="count" header="Count" sortable />
+                        <Column
+                            header="Actions"
+                            body={classActionsTemplate}
                             style={{ width: "20%" }}
                         />
                     </DataTable>
@@ -962,24 +1057,33 @@ const CustomDataTable = ({
                     setFilteredDataState(filteredData)
                 }
                 expandedRows={
-                    type === "support_strategies" || type === "counsels"
+                    hasExpand &&
+                    (type === "support_strategies" ||
+                        type === "counsels" ||
+                        type === "levels")
                         ? expandedRows
                         : null
                 }
                 onRowToggle={
-                    type === "support_strategies" || type === "counsels"
+                    hasExpand &&
+                    (type === "support_strategies" ||
+                        type === "counsels" ||
+                        type === "levels")
                         ? (e) => setExpandedRows(e.data)
                         : undefined
                 }
                 rowExpansionTemplate={rowExpansionTemplate}
             >
-                {(type === "support_strategies" || type === "counsels") && (
-                    <Column
-                        expander
-                        style={{ width: "3rem" }}
-                        exportable={false}
-                    />
-                )}
+                {hasExpand &&
+                    (type === "support_strategies" ||
+                        type === "counsels" ||
+                        type === "levels") && (
+                        <Column
+                            expander
+                            style={{ width: "3rem" }}
+                            exportable={false}
+                        />
+                    )}
                 {type !== "counsels" && (
                     <Column
                         selectionMode="multiple"
@@ -1060,6 +1164,7 @@ CustomDataTable.propTypes = {
     type: PropTypes.string.isRequired,
     identifier: PropTypes.string,
     hasImport: PropTypes.bool,
+    hasExpand: PropTypes.bool,
     onFetch: PropTypes.func,
     onAdd: PropTypes.func,
     onEdit: PropTypes.func,
@@ -1073,6 +1178,8 @@ CustomDataTable.propTypes = {
     setTimeFilter: PropTypes.func,
     rangeFilter: PropTypes.array,
     setRangeFilter: PropTypes.func,
+    classes: PropTypes.array,
+    students: PropTypes.array,
     questions: PropTypes.arrayOf(
         PropTypes.shape({
             id: PropTypes.number,

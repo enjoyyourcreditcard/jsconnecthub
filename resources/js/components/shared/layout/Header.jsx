@@ -56,6 +56,12 @@ const Header = () => {
         }
 
         const masterSubItems = [];
+        if (permissions.includes("levels view")) {
+            masterSubItems.push({
+                label: "Tes",
+                command: () => navigate("/levels-class-students"),
+            });
+        }
         if (permissions.includes("students view")) {
             masterSubItems.push({
                 label: "Student",

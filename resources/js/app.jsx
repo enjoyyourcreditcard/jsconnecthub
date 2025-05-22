@@ -28,6 +28,7 @@ import Dashboard from "./components/pages/Dashboard";
 import FacilityReservations from "./components/masters/reports/FacilityReservations";
 import Counsel from "./components/masters/reports/Counsel";
 import ManageSupportAndQuestions from "./components/masters/ManageSupportAndQuestions";
+import ManageLevelClassStudent from "./components/masters/ManageLevelClassStudent";
 
 const PrivateRoute = ({ element, permission }) => {
     const auth = useAuthUser();
@@ -77,6 +78,11 @@ const AppWrapper = () => {
         },
         { path: "/users", element: <ManageUser />, permission: "users view" },
         { path: "/class", element: <ManageClass />, permission: "class view" },
+        {
+            path: "/levels-class-students",
+            element: <ManageLevelClassStudent />,
+            permission: "levels view",
+        },
         {
             path: "/levels",
             element: <ManageLevel />,
