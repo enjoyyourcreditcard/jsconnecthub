@@ -119,7 +119,7 @@ class MasterApiController extends Controller
                 $storedQuestion = $this->masterService->create($type, $data);
                 if ($data['type'] === 'radio' && !empty($radioOptions)) {
                     foreach ($radioOptions as $option) {
-                        $this->masterService->create('radio-options', [
+                        $this->masterService->create('radio_options', [
                             'question_id' => $storedQuestion->id,
                             'text' => $option,
                         ]);
@@ -194,7 +194,7 @@ class MasterApiController extends Controller
                 if ($data['type'] === 'radio') {
                     $this->radioOption->where('question_id', $id)->delete();
                     foreach ($radioOptions as $option) {
-                        $this->masterService->create('radio-options', [
+                        $this->masterService->create('radio_options', [
                             'question_id' => $id,
                             'text' => $option,
                         ]);
@@ -299,7 +299,7 @@ class MasterApiController extends Controller
 
     public function destroy(Request $request, $type, $id)
     {
-        if ($type === 'support-strategies') {
+        if ($type === 'support_strategies') {
             try {
                 $questions = $this->question->where('support_strategy_id', $id)->get();
 

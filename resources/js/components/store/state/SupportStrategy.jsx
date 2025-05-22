@@ -4,10 +4,10 @@ export const SUPPORT_STRATEGY_STATE = {
     toastMessage: null,
     alert: {},
     endPoints: {
-        collection: "/api/support-strategies/",
-        store: "/api/support-strategies/",
-        update: "/api/support-strategies/",
-        get: "/api/support-strategies/",
-        delete: "/api/support-strategies/",
+        collection: "/api/support_strategies/",
+        store: "/api/support_strategies/",
+        update: "/api/support_strategies/",
+        get: "/api/support_strategies/",
+        delete: "/api/support_strategies/",
     },
 };

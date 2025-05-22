@@ -46,7 +46,7 @@ function ManageSupportAndQuestions() {
 
     const questionTypes = [
         { label: "Text", value: "text" },
-        { label: "Radio", value: "radio" },
+        { label: "Multiple Choices", value: "radio" },
     ];
 
     useEffect(() => {
@@ -461,7 +461,7 @@ function ManageSupportAndQuestions() {
                                                     }
                                                     style={{ width: "70%" }}
                                                     disabled={loading}
-                                                    tooltip="Enter a radio option"
+                                                    tooltip="Enter a answer"
                                                 />
                                                 <Button
                                                     label="Add"
@@ -478,7 +478,7 @@ function ManageSupportAndQuestions() {
                                                     }
                                                 />
                                                 <label htmlFor="radioOption">
-                                                    Radio Option
+                                                    Answer
                                                 </label>
                                             </FloatLabel>
                                             <div style={{ marginTop: "1rem" }}>
@@ -525,7 +525,7 @@ function ManageSupportAndQuestions() {
                                                         fontSize: "0.9rem",
                                                     }}
                                                 >
-                                                    At least 2 radio options are
+                                                    At least 2 answers are
                                                     required.
                                                 </p>
                                             )}

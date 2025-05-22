@@ -48,6 +48,9 @@ class RoleSeeder extends Seeder
         }
 
         Permission::create(['name' => 'dashboard view']);
+        Permission::create(['name' => 'dashboard-checkin view']);
+        Permission::create(['name' => 'dashboard-bookings view']);
+        Permission::create(['name' => 'dashboard-counsels view']);
 
         Role::findByName('Superadmin')->givePermissionTo([
             'dashboard view'
@@ -62,6 +65,7 @@ class RoleSeeder extends Seeder
             'checkin create',
             'checkin edit',
             'checkin delete',
+            'dashboard-checkin view',
         ]);
 
         Role::findByName('Admin2')->givePermissionTo([
@@ -74,25 +78,27 @@ class RoleSeeder extends Seeder
             'bookings edit',
             'bookings delete',
             'bookings confirm',
+            'dashboard-bookings view',
         ]);
 
         Role::findByName('Admin3')->givePermissionTo([
-            'support-strategies view',
-            'support-strategies create',
-            'support-strategies edit',
-            'support-strategies delete',
+            'support_strategies view',
+            'support_strategies create',
+            'support_strategies edit',
+            'support_strategies delete',
             'questions view',
             'questions create',
             'questions edit',
             'questions delete',
-            'radio-options view',
-            'radio-options create',
-            'radio-options edit',
-            'radio-options delete',
+            'radio_options view',
+            'radio_options create',
+            'radio_options edit',
+            'radio_options delete',
             'counsels view',
             'counsels create',
             'counsels edit',
             'counsels delete',
+            'dashboard-counsels view',
         ]);
     }
 }

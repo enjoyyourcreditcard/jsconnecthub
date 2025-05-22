@@ -47,7 +47,31 @@ const Login = () => {
                     tokenType: "Bearer",
                     authState: response.data.result,
                 });
-                navigate("/home");
+                if (
+                    response.data.result.permissions.includes("dashboard view")
+                ) {
+                    navigate("/dashboard");
+                } else if (
+                    response.data.result.permissions.includes(
+                        "dashboard-checkin view"
+                    )
+                ) {
+                    navigate("/checkin");
+                } else if (
+                    response.data.result.permissions.includes(
+                        "dashboard-bookings view"
+                    )
+                ) {
+                    navigate("/facility-reservations");
+                } else if (
+                    response.data.result.permissions.includes(
+                        "dashboard-counsels view"
+                    )
+                ) {
+                    navigate("/counsels");
+                } else {
+                    navigate("/home");
+                }
             }
         } catch (error) {
             setLoading(false);
@@ -73,12 +97,13 @@ const Login = () => {
 
     return (
         <div
+            className="home-container with-background"
             style={{
                 minHeight: "100vh",
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                backgroundColor: "#f5f5f5",
+                // backgroundColor: "#f5f5f5",
             }}
         >
             <div
@@ -90,7 +115,7 @@ const Login = () => {
                 }}
             >
                 <Button
-                    icon="pi pi-arrow-left"
+                    icon="pi pi-home"
                     rounded
                     onClick={handleBack}
                     style={{

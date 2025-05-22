@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useAuthUser } from "react-auth-kit";
 import { Button } from "primereact/button";
 import { SplitButton } from "primereact/splitbutton";
 import { DataTable } from "primereact/datatable";
@@ -47,6 +48,7 @@ const CustomDataTable = ({
     setRangeFilter,
     questions = [],
 }) => {
+    const auth = useAuthUser();
     const dispatch = useDispatch();
     const dt = useRef(null);
     const overlayPanelRef = useRef(null);
@@ -345,21 +347,30 @@ const CustomDataTable = ({
 
     const leftToolbarTemplate = () => {
         if (type === "counsels") return null;
+
+        const permissions = auth()?.permissions || [];
+        const canCreate = permissions.includes(`${type} create`);
+        const canDelete = permissions.includes(`${type} delete`);
+
         return (
             <div className="flex flex-wrap gap-2">
-                <Button
-                    label="Add"
-                    icon="pi pi-plus"
-                    severity="success"
-                    onClick={onAdd}
-                />
-                <Button
-                    label="Delete"
-                    icon="pi pi-trash"
-                    severity="danger"
-                    onClick={confirmDeleteSelected}
-                    disabled={!selectedRecords || !selectedRecords.length}
-                />
+                {canCreate && (
+                    <Button
+                        label="Add"
+                        icon="pi pi-plus"
+                        severity="success"
+                        onClick={onAdd}
+                    />
+                )}
+                {canDelete && (
+                    <Button
+                        label="Delete"
+                        icon="pi pi-trash"
+                        severity="danger"
+                        onClick={confirmDeleteSelected}
+                        disabled={!selectedRecords || !selectedRecords.length}
+                    />
+                )}
             </div>
         );
     };
@@ -449,18 +460,44 @@ const CustomDataTable = ({
     const actionsTemplate = (rowData) => {
         if (type === "counsels") return null;
 
+        const permissions = auth()?.permissions || [];
+        const canEdit = permissions.includes(`${type} edit`);
+        const canDelete = permissions.includes(`${type} delete`);
+
         const actions = [
-            {
-                label: "Edit",
-                icon: "pi pi-pencil",
-                command: (event) => onEdit(rowData[identifier]),
-            },
-            {
-                label: "Delete",
-                icon: "pi pi-trash",
-                command: (event) =>
-                    handleDelete(event.originalEvent, rowData[identifier]),
-            },
+            // {
+            //     label: "Edit",
+            //     icon: "pi pi-pencil",
+            //     command: (event) => onEdit(rowData[identifier]),
+            // },
+            // {
+            //     label: "Delete",
+            //     icon: "pi pi-trash",
+            //     command: (event) =>
+            //         handleDelete(event.originalEvent, rowData[identifier]),
+            // },
+            ...(canEdit
+                ? [
+                      {
+                          label: "Edit",
+                          icon: "pi pi-pencil",
+                          command: (event) => onEdit(rowData[identifier]),
+                      },
+                  ]
+                : []),
+            ...(canDelete
+                ? [
+                      {
+                          label: "Delete",
+                          icon: "pi pi-trash",
+                          command: (event) =>
+                              handleDelete(
+                                  event.originalEvent,
+                                  rowData[identifier]
+                              ),
+                      },
+                  ]
+                : []),
             ...(type === "support_strategies"
                 ? [
                       {
@@ -494,14 +531,14 @@ const CustomDataTable = ({
             }
         }
 
-        return (
+        return actions.length > 0 ? (
             <SplitButton
                 label=""
                 icon="pi pi-cog"
                 model={actions}
                 className="p-button-text"
             />
-        );
+        ) : null;
     };
 
     const questionActionsTemplate = (rowData) => {
@@ -568,11 +605,11 @@ const CustomDataTable = ({
                     }))}
                     dataKey="id"
                     tableStyle={{ minWidth: "30rem" }}
-                    emptyMessage="No radio options found."
+                    emptyMessage="No answers found."
                 >
                     <Column
                         field="text"
-                        header="Radio Option"
+                        header="Answer"
                         sortable
                         style={{ width: "100%" }}
                     />
@@ -672,7 +709,11 @@ const CustomDataTable = ({
                             header="Type"
                             sortable
                             style={{ width: "20%" }}
-                            body={(rowData) => capitalize(rowData.type)}
+                            body={(rowData) =>
+                                rowData.type === "radio"
+                                    ? "Multiple Choices"
+                                    : capitalize(rowData.type)
+                            }
                         />
                         <Column
                             header="Actions"

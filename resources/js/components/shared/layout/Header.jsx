@@ -68,18 +68,18 @@ const Header = () => {
                 command: () => navigate("/users"),
             });
         }
-        if (permissions.includes("class view")) {
-            masterSubItems.push({
-                label: "Class",
-                command: () => navigate("/class"),
-            });
-        }
-        if (permissions.includes("levels view")) {
-            masterSubItems.push({
-                label: "Level",
-                command: () => navigate("/levels"),
-            });
-        }
+        // if (permissions.includes("class view")) {
+        //     masterSubItems.push({
+        //         label: "Class",
+        //         command: () => navigate("/class"),
+        //     });
+        // }
+        // if (permissions.includes("levels view")) {
+        //     masterSubItems.push({
+        //         label: "Level",
+        //         command: () => navigate("/levels"),
+        //     });
+        // }
         if (permissions.includes("activities view")) {
             masterSubItems.push({
                 label: "Activity",

@@ -20,9 +20,9 @@ class MasterService
         'checkin'               => \App\Models\Checkin::class,
         'bookings'              => \App\Models\Booking::class,
         'counsels'              => \App\Models\Result::class,
-        'support-strategies'    => \App\Models\SupportStrategy::class,
+        'support_strategies'    => \App\Models\SupportStrategy::class,
         'questions'             => \App\Models\Question::class,
-        'radio-options'         => \App\Models\RadioOption::class,
+        'radio_options'         => \App\Models\RadioOption::class,
         'answers'               => \App\Models\Answer::class,
     ];
 

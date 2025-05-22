@@ -13,9 +13,9 @@ return [
         'CHECKIN_MASTER_TYPE'           => 'checkin',
         'BOOKING_MASTER_TYPE'           => 'bookings',
         'COUNSEL_MASTER_TYPE'           => 'counsels',
-        'SUPPORT_STRATEGY_MASTER_TYPE'  => 'support-strategies',
+        'SUPPORT_STRATEGY_MASTER_TYPE'  => 'support_strategies',
         'QUESTION_MASTER_TYPE'          => 'questions',
-        'RADIO_OPTION_MASTER_TYPE'      => 'radio-options',
+        'RADIO_OPTION_MASTER_TYPE'      => 'radio_options',
     ],
 
     'MASTER_VALIDATION_ARRAY' => [
