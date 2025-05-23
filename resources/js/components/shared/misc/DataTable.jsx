@@ -215,10 +215,11 @@ const CustomDataTable = ({
             icon: "pi pi-info-circle",
             acceptClassName: "p-button-danger",
             accept: () => {
-                onClassQuestion(id);
+                onDeleteClass(id);
             },
         });
     };
+
     const handleStudentDelete = (event, id) => {
         confirmPopup({
             target: event.currentTarget,
@@ -290,8 +291,6 @@ const CustomDataTable = ({
         setDeleteRecordsDialog(false);
         setSelectedRecords(null);
     };
-
-    // const exportCSV = () => dt.current.exportCSV();
 
     const formatAnswersForExport = (item) => {
         if (type !== "counsels" || !item.answers) return "";
@@ -433,7 +432,6 @@ const CustomDataTable = ({
 
         return (
             <div className="flex flex-wrap gap-2">
-                {/* <Button label="CSV" icon="pi pi-file" onClick={exportCSV} /> */}
                 <Button
                     label="Excel"
                     icon="pi pi-file-excel"
@@ -517,7 +515,7 @@ const CustomDataTable = ({
                       {
                           label: "Edit",
                           icon: "pi pi-pencil",
-                          command: (event) => onEdit(rowData[identifier]),
+                          command: () => onEdit(rowData[identifier]),
                       },
                   ]
                 : []),
@@ -540,6 +538,15 @@ const CustomDataTable = ({
                           label: "Add Question",
                           icon: "pi pi-plus",
                           command: () => onAddQuestion(rowData[identifier]),
+                      },
+                  ]
+                : []),
+            ...(type === "levels"
+                ? [
+                      {
+                          label: "Add Class",
+                          icon: "pi pi-plus",
+                          command: () => onAddClass(rowData[identifier]),
                       },
                   ]
                 : []),
@@ -649,6 +656,11 @@ const CustomDataTable = ({
                       },
                   ]
                 : []),
+            {
+                label: "Add Student",
+                icon: "pi pi-plus",
+                command: () => onAddStudent(rowData.id),
+            },
         ];
 
         return (
@@ -882,7 +894,7 @@ const CustomDataTable = ({
                 : [];
 
             const allowExpansionForSupportStrategy = (rowData) => {
-                return rowData[0]?.radio_options.length > 0;
+                return rowData[0]?.radio_options?.length > 0;
             };
 
             return (
@@ -1148,9 +1160,8 @@ const CustomDataTable = ({
 
                 return levelClasses.length > 0;
             }
-        } else {
-            return true;
         }
+        return true;
     };
 
     return (

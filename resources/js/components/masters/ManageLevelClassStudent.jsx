@@ -5,6 +5,7 @@ import {
     getRecords,
     createRecord,
     updateRecord,
+    deleteRecord,
     setStateData,
 } from "../store/global-slice";
 import Header from "../shared/layout/Header";
@@ -14,6 +15,7 @@ import { Dialog } from "primereact/dialog";
 import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
+import { Dropdown } from "primereact/dropdown";
 
 function ManageLevelClassStudent() {
     const dispatch = useDispatch();
@@ -26,18 +28,18 @@ function ManageLevelClassStudent() {
     const [formData, setFormData] = useState({ name: "" });
     const [classFormData, setClassFormData] = useState({
         name: "",
-        level_id: "",
+        level_id: null,
     });
     const [studentFormData, setStudentFormData] = useState({
         name: "",
-        class_id: "",
+        class_id: null,
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const {
-        levels: { data: levels = [], endPoints: levelEndPoints },
-        class: { data: classes = [], endPoints: classEndPoints },
-        students: { data: students = [], endPoints: studentEndPoints },
+        levels: { data: levels = [], endPoints: levelEndPoints } = {},
+        class: { data: classes = [], endPoints: classEndPoints } = {},
+        students: { data: students = [], endPoints: studentEndPoints } = {},
     } = useSelector((state) => state.global);
 
     const myFetch = () => {
@@ -112,66 +114,82 @@ function ManageLevelClassStudent() {
         myFetch();
     }, [dispatch]);
 
+    const handleAddLevel = () => {
+        setMode("create");
+        setFormData({ name: "" });
+        setError("");
+        setLevelDialog(true);
+    };
+
     const handleEditLevel = (id) => {
-        const i = levels.find((u) => u.id === id);
-        if (i) {
-            setFormData({
-                name: i.name,
-            });
+        const level = levels.find((u) => u.id === id);
+        if (level) {
+            setFormData({ name: level.name });
             setEditId(id);
             setMode("edit");
+            setError("");
             setLevelDialog(true);
         }
     };
 
+    const handleAddClass = (levelId) => {
+        setMode("create");
+        setClassFormData({ name: "", level_id: levelId });
+        setError("");
+        setClassDialog(true);
+    };
+
     const handleEditClass = (id) => {
-        const i = classes.find((u) => u.id === id);
-        if (i) {
-            setFormData({
-                name: i.name,
-                level_id: i.level_id,
+        const classItem = classes.find((u) => u.id === id);
+        if (classItem) {
+            setClassFormData({
+                name: classItem.name,
+                level_id: classItem.level_id,
             });
             setEditId(id);
             setMode("edit");
+            setError("");
             setClassDialog(true);
         }
     };
 
+    const handleAddStudent = (classId) => {
+        setMode("create");
+        setStudentFormData({ name: "", class_id: classId });
+        setError("");
+        setStudentDialog(true);
+    };
+
     const handleEditStudent = (id) => {
-        const i = students.find((u) => u.id === id);
-        if (i) {
-            setFormData({
-                name: i.name,
-                class_id: i.class_id,
+        const student = students.find((u) => u.id === id);
+        if (student) {
+            setStudentFormData({
+                name: student.name,
+                class_id: student.class_id,
             });
             setEditId(id);
             setMode("edit");
+            setError("");
             setStudentDialog(true);
         }
-    };
-
-    const handleAddLevel = () => {
-        setMode("create");
-        setFormData({ name: "" });
-        setLevelDialog(true);
-    };
-
-    const handleAddClass = () => {
-        setMode("create");
-        setClassFormData({ name: "", level_id: "" });
-        setLevelDialog(true);
-    };
-
-    const handleAddStudent = () => {
-        setMode("create");
-        setStudentFormData({ name: "", class_id: "" });
-        setLevelDialog(true);
     };
 
     const handleDeleteClass = (id) => {
         dispatch(
             deleteRecord({
                 endPoint: `${classEndPoints.delete}${id}`,
+            })
+        ).then((success) => {
+            if (success) {
+                myFetch();
+            }
+        });
+    };
+
+    const handleDeleteStudent = (id) => {
+        dispatch(
+            deleteRecord({
+                endPoint: `${studentEndPoints.delete}${id}`,
             })
         ).then((success) => {
             if (success) {
@@ -199,6 +217,7 @@ function ManageLevelClassStudent() {
         e.preventDefault();
         setLoading(true);
         setError("");
+
         try {
             if (formType === "levels") {
                 if (mode === "create") {
@@ -239,7 +258,7 @@ function ManageLevelClassStudent() {
                     );
                     if (success) {
                         setClassFormData({ name: "", level_id: "" });
-                        setLevelDialog(false);
+                        setClassDialog(false);
                         myFetch();
                     }
                 } else {
@@ -252,7 +271,7 @@ function ManageLevelClassStudent() {
                     );
                     if (success) {
                         setClassFormData({ name: "", level_id: "" });
-                        setLevelDialog(false);
+                        setClassDialog(false);
                         myFetch();
                     }
                 }
@@ -267,7 +286,7 @@ function ManageLevelClassStudent() {
                     );
                     if (success) {
                         setStudentFormData({ name: "", class_id: "" });
-                        setLevelDialog(false);
+                        setStudentDialog(false);
                         myFetch();
                     }
                 } else {
@@ -280,7 +299,7 @@ function ManageLevelClassStudent() {
                     );
                     if (success) {
                         setStudentFormData({ name: "", class_id: "" });
-                        setLevelDialog(false);
+                        setStudentDialog(false);
                         myFetch();
                     }
                 }
@@ -312,15 +331,18 @@ function ManageLevelClassStudent() {
                                 onDeleteClass={handleDeleteClass}
                                 onAddStudent={handleAddStudent}
                                 onEditStudent={handleEditStudent}
+                                onDeleteStudent={handleDeleteStudent}
                                 title="Level-Class-Student"
-                                classes={classes}
-                                students={students}
+                                classes={Array.isArray(classes) ? classes : []}
+                                students={
+                                    Array.isArray(students) ? students : []
+                                }
                             />
                             <Dialog
                                 header={
                                     mode === "create"
-                                        ? `Add Level`
-                                        : `Edit Level`
+                                        ? "Add Level"
+                                        : "Edit Level"
                                 }
                                 visible={levelDialog}
                                 style={{ width: "400px" }}
@@ -343,6 +365,7 @@ function ManageLevelClassStudent() {
                                     <div style={{ marginBottom: "2rem" }}>
                                         <FloatLabel>
                                             <InputText
+                                                id="name"
                                                 name="name"
                                                 value={formData.name}
                                                 onChange={handleChange}
@@ -393,8 +416,8 @@ function ManageLevelClassStudent() {
                             <Dialog
                                 header={
                                     mode === "create"
-                                        ? `Add Class`
-                                        : `Edit Class`
+                                        ? "Add Class"
+                                        : "Edit Class"
                                 }
                                 visible={classDialog}
                                 style={{ width: "400px" }}
@@ -417,8 +440,9 @@ function ManageLevelClassStudent() {
                                     <div style={{ marginBottom: "2rem" }}>
                                         <FloatLabel>
                                             <InputText
+                                                id="name"
                                                 name="name"
-                                                value={formData.name}
+                                                value={classFormData.name}
                                                 onChange={handleClassChange}
                                                 style={{ width: "100%" }}
                                                 required
@@ -431,6 +455,44 @@ function ManageLevelClassStudent() {
                                                 }}
                                             />
                                             <label htmlFor="name">Name</label>
+                                        </FloatLabel>
+                                    </div>
+                                    <div style={{ marginBottom: "2rem" }}>
+                                        <FloatLabel>
+                                            <Dropdown
+                                                id="level_id"
+                                                name="level_id"
+                                                value={classFormData.level_id}
+                                                options={
+                                                    Array.isArray(levels)
+                                                        ? levels.map(
+                                                              (level) => ({
+                                                                  label: level.name,
+                                                                  value: level.id,
+                                                              })
+                                                          )
+                                                        : []
+                                                }
+                                                onChange={handleClassChange}
+                                                style={{ width: "100%" }}
+                                                required
+                                                disabled={loading}
+                                                placeholder={
+                                                    Array.isArray(levels) &&
+                                                    levels.length > 0
+                                                        ? "Select a level"
+                                                        : "No levels available"
+                                                }
+                                                tooltip="Select level for the class"
+                                                tooltipOptions={{
+                                                    position: "bottom",
+                                                    mouseTrack: true,
+                                                    mouseTrackTop: 15,
+                                                }}
+                                            />
+                                            <label htmlFor="level_id">
+                                                Level
+                                            </label>
                                         </FloatLabel>
                                     </div>
                                     <div
@@ -467,8 +529,8 @@ function ManageLevelClassStudent() {
                             <Dialog
                                 header={
                                     mode === "create"
-                                        ? `Add Student`
-                                        : `Edit Student`
+                                        ? "Add Student"
+                                        : "Edit Student"
                                 }
                                 visible={studentDialog}
                                 style={{ width: "400px" }}
@@ -493,8 +555,9 @@ function ManageLevelClassStudent() {
                                     <div style={{ marginBottom: "2rem" }}>
                                         <FloatLabel>
                                             <InputText
+                                                id="name"
                                                 name="name"
-                                                value={formData.name}
+                                                value={studentFormData.name}
                                                 onChange={handleStudentChange}
                                                 style={{ width: "100%" }}
                                                 required
@@ -507,6 +570,44 @@ function ManageLevelClassStudent() {
                                                 }}
                                             />
                                             <label htmlFor="name">Name</label>
+                                        </FloatLabel>
+                                    </div>
+                                    <div style={{ marginBottom: "2rem" }}>
+                                        <FloatLabel>
+                                            <Dropdown
+                                                id="class_id"
+                                                name="class_id"
+                                                value={studentFormData.class_id}
+                                                options={
+                                                    Array.isArray(classes)
+                                                        ? classes.map(
+                                                              (cls) => ({
+                                                                  label: cls.name,
+                                                                  value: cls.id,
+                                                              })
+                                                          )
+                                                        : []
+                                                }
+                                                onChange={handleStudentChange}
+                                                style={{ width: "100%" }}
+                                                required
+                                                disabled={loading}
+                                                placeholder={
+                                                    Array.isArray(classes) &&
+                                                    classes.length > 0
+                                                        ? "Select a class"
+                                                        : "No classes available"
+                                                }
+                                                tooltip="Select class for the student"
+                                                tooltipOptions={{
+                                                    position: "bottom",
+                                                    mouseTrack: true,
+                                                    mouseTrackTop: 15,
+                                                }}
+                                            />
+                                            <label htmlFor="class_id">
+                                                Class
+                                            </label>
                                         </FloatLabel>
                                     </div>
                                     <div
@@ -543,8 +644,8 @@ function ManageLevelClassStudent() {
                         </>
                     ) : (
                         <p>
-                            Please log in to view and manage levels, class, and
-                            students.
+                            Please log in to view and manage levels, classes,
+                            and students.
                         </p>
                     )}
                 </Card>
