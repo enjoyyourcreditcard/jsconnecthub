@@ -1,5 +1,4 @@
 import axios from "axios";
-import { useAuthHeader } from "react-auth-kit";
 
 const api = axios.create({
     baseURL: window.APP_URL || "http://localhost:8000",
@@ -11,7 +10,7 @@ api.get("/sanctum/csrf-cookie").catch((err) =>
 );
 
 export const setAuthToken = (getAuthHeader) => {
-    api.interceptors.request.use(
+    const interceptor = api.interceptors.request.use(
         (config) => {
             const authHeader = getAuthHeader();
             if (authHeader) {
@@ -21,6 +20,8 @@ export const setAuthToken = (getAuthHeader) => {
         },
         (error) => Promise.reject(error)
     );
+
+    return () => api.interceptors.request.eject(interceptor);
 };
 
 export default api;

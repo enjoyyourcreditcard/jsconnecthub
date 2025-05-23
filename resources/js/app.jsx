@@ -56,8 +56,10 @@ const AppWrapper = () => {
     const toast = useRef(null);
 
     useEffect(() => {
-        setAuthToken(authHeader);
+        const eject = setAuthToken(authHeader);
         setAuthReady(true);
+
+        return eject;
     }, [authHeader]);
 
     useEffect(() => {
