@@ -66,7 +66,6 @@ class MasterApiController extends Controller
         if ($type === config('constants.MASTER_TYPE_ARRAY.COUNSEL_MASTER_TYPE')) {
             $rules = config('constants.MASTER_VALIDATION_ARRAY.COUNSEL_VALIDATION');
         }
-
         return $rules;
     }
 
@@ -238,56 +237,153 @@ class MasterApiController extends Controller
                 return response()->json(['status' => false, 'message' => 'File is empty'], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
-            $headerMapping = $this->changeImportHeader($type);
-            $transformedHeaders = array_map(function ($header) use ($headerMapping) {
-                return $headerMapping[strtolower($header)] ?? strtolower($header);
-            }, $headers);
+            if ($request->has_expand && $type === 'levels') {
+                $expectedHeaders = ['Level', 'Class', 'Student'];
+                $normalizedHeaders = array_map('strtolower', $headers);
+                $expectedNormalized = array_map('strtolower', $expectedHeaders);
+                if (!empty(array_diff($expectedNormalized, $normalizedHeaders))) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Invalid file format. Expected columns: ' . implode(', ', $expectedHeaders),
+                    ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                }
 
-            $foreignKeys = $this->getForeignKeys($type);
+                $imported = [];
+                DB::beginTransaction();
 
-            $imported = [];
-            DB::beginTransaction();
+                $levelValidationRules = $this->getRuleValidationByType('levels');
+                $classValidationRules = $this->getRuleValidationByType('class');
+                $studentValidationRules = $this->getRuleValidationByType('students');
 
-            foreach ($rows as $index => $row) {
-                $rowData = array_combine($transformedHeaders, $row);
+                $this->masterService->deleteAll('checkin');
+                $this->masterService->deleteAll('bookings');
+                $this->masterService->deleteAll('counsels');
+                $this->masterService->deleteAll('students');
+                $this->masterService->deleteAll('class');
+                $this->masterService->deleteAll('levels');
 
-                foreach ($foreignKeys as $fk => $relatedType) {
-                    if (isset($rowData[$fk]) && !is_numeric($rowData[$fk])) {
-                        $relatedModel = $this->masterService->getByName($relatedType, $rowData[$fk]);
-                        if ($relatedModel) {
-                            $rowData[$fk] = $relatedModel->id;
-                        } else {
-                            throw new \Exception("Invalid $fk: '{$rowData[$fk]}' not found at row " . ($index + 2));
+                foreach ($rows as $index => $row) {
+                    $rowData = array_combine(array_map('strtolower', $headers), $row);
+                    $rowData = array_change_key_case($rowData, CASE_LOWER);
+
+                    // Validate Level
+                    $levelData = ['name' => trim($rowData['level'])];
+                    $levelValidator = Validator::make($levelData, $levelValidationRules);
+                    if ($levelValidator->fails()) {
+                        throw new \Exception("Level validation failed at row " . ($index + 2) . ": " . implode(", ", $levelValidator->errors()->all()));
+                    }
+
+                    // Find or create Level
+                    $level = $this->masterService->getByName('levels', $levelData['name']);
+                    if (!$level) {
+                        $level = $this->masterService->create('levels', $levelData);
+                        $imported[] = ['type' => 'level', 'data' => $level];
+                    }
+
+                    // Validate and process Class (if provided)
+                    $class = null;
+                    if (!empty(trim($rowData['class']))) {
+                        $classData = [
+                            'level_id' => $level->id,
+                            'name' => trim($rowData['class']),
+                        ];
+                        $classValidator = Validator::make($classData, $classValidationRules);
+                        if ($classValidator->fails()) {
+                            throw new \Exception("Class validation failed at row " . ($index + 2) . ": " . implode(", ", $classValidator->errors()->all()));
+                        }
+
+                        // Find or create Class
+                        $classRequest = new Request($classData);
+                        $class = $this->masterService->getAll('class', $classRequest)->first();
+                        if (!$class) {
+                            $class = $this->masterService->create('class', $classData);
+                            $imported[] = ['type' => 'class', 'data' => $class];
+                        }
+                    }
+
+                    // Validate and process Student (if provided)
+                    if (!empty(trim($rowData['student']))) {
+                        if (!$class) {
+                            throw new \Exception("Student specified without a Class at row " . ($index + 2));
+                        }
+                        $studentData = [
+                            'name' => trim($rowData['student']),
+                            'class_id' => $class->id,
+                        ];
+                        $studentValidator = Validator::make($studentData, $studentValidationRules);
+                        if ($studentValidator->fails()) {
+                            throw new \Exception("Student validation failed at row " . ($index + 2) . ": " . implode(", ", $studentValidator->errors()->all()));
+                        }
+
+                        // Find or create Student
+                        $studentRequest = new Request($studentData);
+                        $student = $this->masterService->getAll('students', $studentRequest)->first();
+                        if (!$student) {
+                            $student = $this->masterService->create('students', $studentData);
+                            $imported[] = ['type' => 'student', 'data' => $student];
                         }
                     }
                 }
 
-                $validationRules = $this->getRuleValidationByType($type);
-                $validator = Validator::make($rowData, $validationRules);
+                DB::commit();
 
-                if ($validator->fails()) {
-                    throw new \Exception("Validation failed at row " . ($index + 2) . ": " . implode(", ", $validator->errors()->all()));
-                }
+                return response()->json([
+                    'status' => true,
+                    'message' => count($imported) . ' records imported successfully',
+                    'result' => $imported,
+                ], Response::HTTP_CREATED);
+            } else {
+                $headerMapping = $this->changeImportHeader($type);
+                $transformedHeaders = array_map(function ($header) use ($headerMapping) {
+                    return $headerMapping[strtolower($header)] ?? strtolower($header);
+                }, $headers);
 
-                try {
-                    $result = $this->masterService->create($type, $rowData);
-                    $imported[] = $result;
-                } catch (\Illuminate\Database\QueryException $e) {
-                    if ($e->getCode() === '23000') {
-                        $field = $this->extractFieldFromUniqueError($e->getMessage(), $type);
-                        throw new \Exception("Duplicate entry for $field: '{$rowData[$field]}' at row " . ($index + 2));
+                $foreignKeys = $this->getForeignKeys($type);
+
+                $imported = [];
+                DB::beginTransaction();
+
+                foreach ($rows as $index => $row) {
+                    $rowData = array_combine($transformedHeaders, $row);
+
+                    foreach ($foreignKeys as $fk => $relatedType) {
+                        if (isset($rowData[$fk]) && !is_numeric($rowData[$fk])) {
+                            $relatedModel = $this->masterService->getByName($relatedType, $rowData[$fk]);
+                            if ($relatedModel) {
+                                $rowData[$fk] = $relatedModel->id;
+                            } else {
+                                throw new \Exception("Invalid $fk: '{$rowData[$fk]}' not found at row " . ($index + 2));
+                            }
+                        }
                     }
-                    throw new \Exception("Error at row " . ($index + 2) . ": Unable to save record");
+
+                    $validationRules = $this->getRuleValidationByType($type);
+                    $validator = Validator::make($rowData, $validationRules);
+
+                    if ($validator->fails()) {
+                        throw new \Exception("Validation failed at row " . ($index + 2) . ": " . implode(", ", $validator->errors()->all()));
+                    }
+
+                    try {
+                        $result = $this->masterService->create($type, $rowData);
+                        $imported[] = $result;
+                    } catch (\Illuminate\Database\QueryException $e) {
+                        if ($e->getCode() === '23000') {
+                            $field = $this->extractFieldFromUniqueError($e->getMessage(), $type);
+                            throw new \Exception("Duplicate entry for $field: '{$rowData[$field]}' at row " . ($index + 2));
+                        }
+                        throw new \Exception("Error at row " . ($index + 2) . ": Unable to save record");
+                    }
                 }
+
+                DB::commit();
+
+                return response()->json([
+                    'status' => true,
+                    'message' => count($imported) . ' ' . ($type) . " imported successfully",
+                    'result' => $imported
+                ], Response::HTTP_CREATED);
             }
-
-            DB::commit();
-
-            return response()->json([
-                'status' => true,
-                'message' => count($imported) . ' ' . ($type) . " imported successfully",
-                'result' => $imported
-            ], Response::HTTP_CREATED);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([

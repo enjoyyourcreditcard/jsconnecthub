@@ -35,17 +35,29 @@ class MasterService
         return new $class;
     }
 
-    public function getAll($type, $request)
+    public function getAll($type, $request = null)
     {
         $q = $this->getModel($type);
         if ($type === config('constants.MASTER_TYPE_ARRAY.LEVEL_MASTER_TYPE')) {
-            return $q->with('classes.students')->get();
+            return $q->with('classes')->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.CLASS_MASTER_TYPE')) {
-            return $q->with('level')->get();
+            return $q->with('level')
+                ->when($request->name, function ($q) use ($request) {
+                    return $q->where('name', $request->name);
+                })
+                ->when($request->level_id, function ($q) use ($request) {
+                    return $q->where('level_id', $request->level_id);
+                })->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.STUDENT_MASTER_TYPE')) {
-            return $q->with('class.level')->get();
+            return $q->with('class.level')
+                ->when($request->name, function ($q) use ($request) {
+                    return $q->where('name', $request->name);
+                })
+                ->when($request->class_id, function ($q) use ($request) {
+                    return $q->where('class_id', $request->class_id);
+                })->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.CHECKIN_MASTER_TYPE')) {
             return $q->with(['student.class.level', 'activity'])
@@ -227,13 +239,60 @@ class MasterService
 
     public function delete($type, $id)
     {
+        if ($type === 'levels') {
+            $classes = $this->getModel('class')->where('level_id', $id)->get();
+
+            foreach ($classes as $class) {
+                $students = $this->getModel('students')->where('class_id', $class->id)->get();
+
+                foreach ($students as $student) {
+                    $this->cascade('students', $student->id);
+                }
+
+                $this->cascade('class', $class->id);
+            }
+
+            $this->cascade($type, $id);
+        } elseif ($type === 'class') {
+            $students = $this->getModel('students')->where('class_id', $id)->get();
+
+            foreach ($students as $students) {
+                $this->cascade('students', $students->id);
+            }
+
+            $this->cascade($type, $id);
+        } elseif ($type === 'students') {
+            $this->cascade($type, $id);
+        }
+
         $model = $this->getModel($type)->findOrFail($id);
         $model->delete();
     }
 
     public function deleteAll($type)
     {
-        $model = $this->getModel($type);
-        $model->delete();
+        $model = $this->getModel($type)->get();
+        $model->each->delete();
+    }
+
+    private function cascade($type, $id)
+    {
+        if ($type === 'levels') {
+            $this->getModel('class')->where('level_id', $id)->delete();
+        }
+        if ($type === 'class') {
+            $this->getModel('students')->where('class_id', $id)->delete();
+        }
+        if ($type === 'students') {
+            $counsels = $this->getModel('counsels')->where('student_id', $id)->get();
+
+            $this->getModel('checkin')->where('student_id', $id)->delete();
+            $this->getModel('bookings')->where('student_id', $id)->delete();
+            foreach ($counsels as $counsel) {
+                $this->getModel('answers')->where('result_id', $counsel->id)->delete();
+            }
+
+            $this->getModel('counsels')->where('student_id', $id)->delete();
+        }
     }
 }

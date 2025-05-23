@@ -293,7 +293,7 @@ export const deleteRecord =
     };
 
 export const importRecord =
-    ({ type = "", endPoint, file, returnData = false }) =>
+    ({ type = "", endPoint, file, returnData = false, hasExpand = false }) =>
     async (dispatch) => {
         dispatch(
             setStateData({
@@ -304,6 +304,9 @@ export const importRecord =
         try {
             const formData = new FormData();
             formData.append("file", file);
+            if (hasExpand) {
+                formData.append("has_expand", true);
+            }
 
             const response = await api.post(endPoint, formData, {
                 headers: {

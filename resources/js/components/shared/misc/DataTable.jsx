@@ -325,44 +325,113 @@ const CustomDataTable = ({
             .join("\n\n");
     };
 
-    const exportExcel = () => {
-        const dataToExport = filteredDataState.map((item) => {
-            const rowData = {};
-            visibleColumns.forEach((col) => {
-                rowData[col.header] = item[col.field] || "";
+    const generateLevelClassStudentData = () => {
+        const data = [];
+        if (hasExpand && type === "levels") {
+            collection.forEach((level) => {
+                const levelClasses = classes.filter(
+                    (cls) => cls.level_id === level.id
+                );
+                if (levelClasses.length === 0) {
+                    data.push({
+                        Level: level.name,
+                        Class: "",
+                        Student: "",
+                    });
+                } else {
+                    levelClasses.forEach((cls) => {
+                        const classStudents = students.filter(
+                            (stu) => stu.class_id === cls.id
+                        );
+                        if (classStudents.length === 0) {
+                            data.push({
+                                Level: level.name,
+                                Class: cls.name,
+                                Student: "",
+                            });
+                        } else {
+                            classStudents.forEach((stu) => {
+                                data.push({
+                                    Level: level.name,
+                                    Class: cls.name,
+                                    Student: stu.name,
+                                });
+                            });
+                        }
+                    });
+                }
             });
-            if (type === "counsels") {
-                rowData["Questions and Answers"] = formatAnswersForExport(item);
-            }
-            return rowData;
-        });
-        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-        XLSX.writeFile(workbook, `${type}_data.xlsx`);
+        }
+        return data;
+    };
+
+    const exportExcel = () => {
+        if (hasExpand && type === "levels") {
+            const dataToExport = generateLevelClassStudentData();
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(
+                workbook,
+                worksheet,
+                "Level-Class-Student"
+            );
+            XLSX.writeFile(workbook, "level_class_student_data.xlsx");
+        } else {
+            const dataToExport = filteredDataState.map((item) => {
+                const rowData = {};
+                visibleColumns.forEach((col) => {
+                    rowData[col.header] = item[col.field] || "";
+                });
+                if (type === "counsels") {
+                    rowData["Questions and Answers"] =
+                        formatAnswersForExport(item);
+                }
+                return rowData;
+            });
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+            XLSX.writeFile(workbook, `${type}_data.xlsx`);
+        }
     };
 
     const exportPDF = () => {
         const doc = new jsPDF();
-        const columns = [
-            ...visibleColumns.map((col) => col.header),
-            ...(type === "counsels" ? ["Questions and Answers"] : []),
-        ];
-        const body = filteredDataState.map((item) => [
-            ...visibleColumns.map((col) => item[col.field] || ""),
-            ...(type === "counsels" ? [formatAnswersForExport(item)] : []),
-        ]);
-        autoTable(doc, {
-            head: [columns],
-            body,
-            styles: { fontSize: 10 },
-            margin: { top: 10 },
-            columnStyles:
-                type === "counsels"
-                    ? { [columns.length - 1]: { cellWidth: 100 } }
-                    : {},
-        });
-        doc.save(`${type}_data.pdf`);
+        if (hasExpand && type === "levels") {
+            const columns = ["Level", "Class", "Student"];
+            const body = generateLevelClassStudentData().map((item) => [
+                item.Level,
+                item.Class,
+                item.Student,
+            ]);
+            autoTable(doc, {
+                head: [columns],
+                body,
+                styles: { fontSize: 10 },
+                margin: { top: 10 },
+            });
+            doc.save("level_class_student_data.pdf");
+        } else {
+            const columns = [
+                ...visibleColumns.map((col) => col.header),
+                ...(type === "counsels" ? ["Questions and Answers"] : []),
+            ];
+            const body = filteredDataState.map((item) => [
+                ...visibleColumns.map((col) => item[col.field] || ""),
+                ...(type === "counsels" ? [formatAnswersForExport(item)] : []),
+            ]);
+            autoTable(doc, {
+                head: [columns],
+                body,
+                styles: { fontSize: 10 },
+                margin: { top: 10 },
+                columnStyles:
+                    type === "counsels"
+                        ? { [columns.length - 1]: { cellWidth: 100 } }
+                        : {},
+            });
+            doc.save(`${type}_data.pdf`);
+        }
     };
 
     const handleFileUpload = (event) => {
@@ -375,6 +444,7 @@ const CustomDataTable = ({
                 endPoint: dataEndPoints.import,
                 file,
                 returnData: true,
+                hasExpand,
             })
         )
             .then((result) => {
