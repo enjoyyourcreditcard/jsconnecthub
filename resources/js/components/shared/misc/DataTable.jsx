@@ -44,6 +44,12 @@ const CustomDataTable = ({
     onAddQuestion = () => {},
     onEditQuestion = () => {},
     onDeleteQuestion = () => {},
+    onAddClass = () => {},
+    onEditClass = () => {},
+    onDeleteClass = () => {},
+    onAddStudent = () => {},
+    onEditStudent = () => {},
+    onDeleteStudent = () => {},
     timeFilter,
     setTimeFilter,
     rangeFilter,
@@ -52,8 +58,6 @@ const CustomDataTable = ({
     classes = [],
     students = [],
 }) => {
-    console.log(classes);
-    console.log(students);
     const auth = useAuthUser();
     const dispatch = useDispatch();
     const dt = useRef(null);
@@ -84,6 +88,7 @@ const CustomDataTable = ({
     const [filteredDataState, setFilteredDataState] = useState([]);
     const [expandedRows, setExpandedRows] = useState([]);
     const [questionExpandedRows, setQuestionExpandedRows] = useState([]);
+    const [classExpandedRows, setClassExpandedRows] = useState([]);
     const [size, setSize] = useState("small");
     const sizeOptions = [
         { label: "Small", value: "small" },
@@ -199,6 +204,29 @@ const CustomDataTable = ({
             acceptClassName: "p-button-danger",
             accept: () => {
                 onDeleteQuestion(id);
+            },
+        });
+    };
+
+    const handleClassDelete = (event, id) => {
+        confirmPopup({
+            target: event.currentTarget,
+            message: `Do you want to delete this class?`,
+            icon: "pi pi-info-circle",
+            acceptClassName: "p-button-danger",
+            accept: () => {
+                onClassQuestion(id);
+            },
+        });
+    };
+    const handleStudentDelete = (event, id) => {
+        confirmPopup({
+            target: event.currentTarget,
+            message: `Do you want to delete this student?`,
+            icon: "pi pi-info-circle",
+            acceptClassName: "p-button-danger",
+            accept: () => {
+                onDeleteStudent(id);
             },
         });
     };
@@ -635,6 +663,48 @@ const CustomDataTable = ({
         );
     };
 
+    const studentActionsTemplate = (rowData) => {
+        const permissions = auth()?.permissions || [];
+        const canEdit = permissions.includes("students edit");
+        const canDelete = permissions.includes("students delete");
+
+        const actions = [
+            ...(canEdit
+                ? [
+                      {
+                          label: "Edit",
+                          icon: "pi pi-pencil",
+                          command: () => onEditStudent(rowData.id),
+                      },
+                  ]
+                : []),
+            ...(canDelete
+                ? [
+                      {
+                          label: "Delete",
+                          icon: "pi pi-trash",
+                          command: (event) =>
+                              handleStudentDelete(
+                                  event.originalEvent,
+                                  rowData.id
+                              ),
+                      },
+                  ]
+                : []),
+        ];
+
+        return (
+            <SplitButton
+                label=""
+                size={size}
+                icon="pi pi-search"
+                dropdownIcon="pi pi-cog"
+                model={actions}
+                outlined
+            />
+        );
+    };
+
     const formattedData = Array.isArray(collection)
         ? collection.map((item) => ({
               ...item,
@@ -716,6 +786,38 @@ const CustomDataTable = ({
         );
     };
 
+    const classRowExpansionTemplate = (item) => {
+        const classStudents = Array.isArray(students)
+            ? students.filter((q) => q.class_id === item.id)
+            : [];
+
+        return (
+            <div>
+                <h5 className="font-bold mb-2">Students from {item.name}</h5>
+                <DataTable
+                    value={classStudents}
+                    size={size}
+                    dataKey="id"
+                    tableStyle={{ minWidth: "50rem" }}
+                    emptyMessage="No students found."
+                >
+                    <Column
+                        header="#"
+                        body={indexTemplate}
+                        style={{ width: "3rem" }}
+                        exportable={false}
+                    />
+                    <Column field="name" header="Name" sortable />
+                    <Column
+                        header="Actions"
+                        body={studentActionsTemplate}
+                        style={{ width: "20%" }}
+                    />
+                </DataTable>
+            </div>
+        );
+    };
+
     const rowExpansionTemplate = (data) => {
         if (
             type !== "support_strategies" &&
@@ -779,7 +881,7 @@ const CustomDataTable = ({
                 ? questions.filter((q) => q.support_strategy_id === data.id)
                 : [];
 
-            const allowExpansion = (rowData) => {
+            const allowExpansionForSupportStrategy = (rowData) => {
                 return rowData[0]?.radio_options.length > 0;
             };
 
@@ -799,7 +901,7 @@ const CustomDataTable = ({
                         rowExpansionTemplate={questionRowExpansionTemplate}
                     >
                         <Column
-                            expander={allowExpansion}
+                            expander={allowExpansionForSupportStrategy}
                             style={{ width: "3rem" }}
                             exportable={false}
                         />
@@ -840,9 +942,12 @@ const CustomDataTable = ({
                 ? classes.filter((q) => q.level_id === data.id)
                 : [];
 
-            const allowExpansion = (rowData) => {
-                console.log(rowData);
-                // return rowData[0]?.radio_options.length > 0;
+            const allowExpansionForClass = (rowData) => {
+                const classStudents = Array.isArray(students)
+                    ? students.filter((q) => q.class_id === rowData[0]?.id)
+                    : [];
+
+                return classStudents.length > 0;
             };
 
             return (
@@ -854,12 +959,18 @@ const CustomDataTable = ({
                         dataKey="id"
                         tableStyle={{ minWidth: "50rem" }}
                         emptyMessage="No classes found."
-                        // expandedRows={questionExpandedRows}
-                        // onRowToggle={(e) => setQuestionExpandedRows(e.data)}
-                        // rowExpansionTemplate={questionRowExpansionTemplate}
+                        expandedRows={classExpandedRows}
+                        onRowToggle={(e) => setClassExpandedRows(e.data)}
+                        rowExpansionTemplate={classRowExpansionTemplate}
                     >
                         <Column
-                            expander={allowExpansion}
+                            expander={allowExpansionForClass}
+                            style={{ width: "3rem" }}
+                            exportable={false}
+                        />
+                        <Column
+                            header="#"
+                            body={indexTemplate}
                             style={{ width: "3rem" }}
                             exportable={false}
                         />
@@ -1020,6 +1131,28 @@ const CustomDataTable = ({
         </div>
     );
 
+    const allowExpansion = (rowData) => {
+        if (hasExpand && (type === "support_strategies" || type === "levels")) {
+            if (type === "support_strategies") {
+                const strategyQuestions = Array.isArray(questions)
+                    ? questions.filter(
+                          (q) => q.support_strategy_id === rowData[0]?.id
+                      )
+                    : [];
+
+                return strategyQuestions.length > 0;
+            } else if (type === "levels") {
+                const levelClasses = Array.isArray(classes)
+                    ? classes.filter((q) => q.level_id === rowData[0]?.id)
+                    : [];
+
+                return levelClasses.length > 0;
+            }
+        } else {
+            return true;
+        }
+    };
+
     return (
         <div>
             <ConfirmPopup />
@@ -1079,7 +1212,7 @@ const CustomDataTable = ({
                         type === "counsels" ||
                         type === "levels") && (
                         <Column
-                            expander
+                            expander={allowExpansion}
                             style={{ width: "3rem" }}
                             exportable={false}
                         />
@@ -1174,6 +1307,12 @@ CustomDataTable.propTypes = {
     onAddQuestion: PropTypes.func,
     onEditQuestion: PropTypes.func,
     onDeleteQuestion: PropTypes.func,
+    onAddClass: PropTypes.func,
+    onEditClass: PropTypes.func,
+    onDeleteClass: PropTypes.func,
+    onAddStudent: PropTypes.func,
+    onEditStudent: PropTypes.func,
+    onDeleteStudent: PropTypes.func,
     timeFilter: PropTypes.string,
     setTimeFilter: PropTypes.func,
     rangeFilter: PropTypes.array,

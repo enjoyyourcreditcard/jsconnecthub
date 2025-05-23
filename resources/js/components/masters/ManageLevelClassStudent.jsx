@@ -18,11 +18,19 @@ import { Button } from "primereact/button";
 function ManageLevelClassStudent() {
     const dispatch = useDispatch();
     const isAuthenticated = useIsAuthenticated();
-    const [visible, setVisible] = useState(false);
+    const [levelDialog, setLevelDialog] = useState(false);
+    const [classDialog, setClassDialog] = useState(false);
+    const [studentDialog, setStudentDialog] = useState(false);
     const [mode, setMode] = useState("create");
     const [editId, setEditId] = useState(null);
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState({ name: "" });
+    const [classFormData, setClassFormData] = useState({
         name: "",
+        level_id: "",
+    });
+    const [studentFormData, setStudentFormData] = useState({
+        name: "",
+        class_id: "",
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -104,22 +112,72 @@ function ManageLevelClassStudent() {
         myFetch();
     }, [dispatch]);
 
-    const handleEdit = (id) => {
-        const level = levels.find((u) => u.id === id);
-        if (level) {
+    const handleEditLevel = (id) => {
+        const i = levels.find((u) => u.id === id);
+        if (i) {
             setFormData({
-                name: level.name,
+                name: i.name,
             });
             setEditId(id);
             setMode("edit");
-            setVisible(true);
+            setLevelDialog(true);
         }
     };
 
-    const handleAdd = () => {
+    const handleEditClass = (id) => {
+        const i = classes.find((u) => u.id === id);
+        if (i) {
+            setFormData({
+                name: i.name,
+                level_id: i.level_id,
+            });
+            setEditId(id);
+            setMode("edit");
+            setClassDialog(true);
+        }
+    };
+
+    const handleEditStudent = (id) => {
+        const i = students.find((u) => u.id === id);
+        if (i) {
+            setFormData({
+                name: i.name,
+                class_id: i.class_id,
+            });
+            setEditId(id);
+            setMode("edit");
+            setStudentDialog(true);
+        }
+    };
+
+    const handleAddLevel = () => {
         setMode("create");
         setFormData({ name: "" });
-        setVisible(true);
+        setLevelDialog(true);
+    };
+
+    const handleAddClass = () => {
+        setMode("create");
+        setClassFormData({ name: "", level_id: "" });
+        setLevelDialog(true);
+    };
+
+    const handleAddStudent = () => {
+        setMode("create");
+        setStudentFormData({ name: "", class_id: "" });
+        setLevelDialog(true);
+    };
+
+    const handleDeleteClass = (id) => {
+        dispatch(
+            deleteRecord({
+                endPoint: `${classEndPoints.delete}${id}`,
+            })
+        ).then((success) => {
+            if (success) {
+                myFetch();
+            }
+        });
     };
 
     const handleChange = (e) => {
@@ -127,36 +185,104 @@ function ManageLevelClassStudent() {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = async (e) => {
+    const handleClassChange = (e) => {
+        const { name, value } = e.target;
+        setClassFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleStudentChange = (e) => {
+        const { name, value } = e.target;
+        setStudentFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = async (e, formType) => {
         e.preventDefault();
         setLoading(true);
         setError("");
         try {
-            if (mode === "create") {
-                const success = dispatch(
-                    createRecord({
-                        type: "levels",
-                        endPoint: levelEndPoints.store,
-                        data: formData,
-                    })
-                );
-                if (success) {
-                    setFormData({ name: "" });
-                    setVisible(false);
-                    myFetch();
+            if (formType === "levels") {
+                if (mode === "create") {
+                    const success = dispatch(
+                        createRecord({
+                            type: "levels",
+                            endPoint: levelEndPoints.store,
+                            data: formData,
+                        })
+                    );
+                    if (success) {
+                        setFormData({ name: "" });
+                        setLevelDialog(false);
+                        myFetch();
+                    }
+                } else {
+                    const success = dispatch(
+                        updateRecord({
+                            type: "levels",
+                            endPoint: `${levelEndPoints.update}${editId}`,
+                            data: formData,
+                        })
+                    );
+                    if (success) {
+                        setFormData({ name: "" });
+                        setLevelDialog(false);
+                        myFetch();
+                    }
                 }
-            } else {
-                const success = dispatch(
-                    updateRecord({
-                        type: "levels",
-                        endPoint: `${levelEndPoints.update}${editId}`,
-                        data: formData,
-                    })
-                );
-                if (success) {
-                    setFormData({ name: "" });
-                    setVisible(false);
-                    myFetch();
+            } else if (formType === "class") {
+                if (mode === "create") {
+                    const success = dispatch(
+                        createRecord({
+                            type: "class",
+                            endPoint: classEndPoints.store,
+                            data: classFormData,
+                        })
+                    );
+                    if (success) {
+                        setClassFormData({ name: "", level_id: "" });
+                        setLevelDialog(false);
+                        myFetch();
+                    }
+                } else {
+                    const success = dispatch(
+                        updateRecord({
+                            type: "class",
+                            endPoint: `${classEndPoints.update}${editId}`,
+                            data: classFormData,
+                        })
+                    );
+                    if (success) {
+                        setClassFormData({ name: "", level_id: "" });
+                        setLevelDialog(false);
+                        myFetch();
+                    }
+                }
+            } else if (formType === "students") {
+                if (mode === "create") {
+                    const success = dispatch(
+                        createRecord({
+                            type: "students",
+                            endPoint: studentEndPoints.store,
+                            data: studentFormData,
+                        })
+                    );
+                    if (success) {
+                        setStudentFormData({ name: "", class_id: "" });
+                        setLevelDialog(false);
+                        myFetch();
+                    }
+                } else {
+                    const success = dispatch(
+                        updateRecord({
+                            type: "students",
+                            endPoint: `${studentEndPoints.update}${editId}`,
+                            data: studentFormData,
+                        })
+                    );
+                    if (success) {
+                        setStudentFormData({ name: "", class_id: "" });
+                        setLevelDialog(false);
+                        myFetch();
+                    }
                 }
             }
         } catch (err) {
@@ -179,8 +305,13 @@ function ManageLevelClassStudent() {
                                 hasImport={true}
                                 hasExpand={true}
                                 onFetch={myFetch}
-                                onAdd={handleAdd}
-                                onEdit={handleEdit}
+                                onAdd={handleAddLevel}
+                                onEdit={handleEditLevel}
+                                onAddClass={handleAddClass}
+                                onEditClass={handleEditClass}
+                                onDeleteClass={handleDeleteClass}
+                                onAddStudent={handleAddStudent}
+                                onEditStudent={handleEditStudent}
                                 title="Level-Class-Student"
                                 classes={classes}
                                 students={students}
@@ -191,11 +322,14 @@ function ManageLevelClassStudent() {
                                         ? `Add Level`
                                         : `Edit Level`
                                 }
-                                visible={visible}
+                                visible={levelDialog}
                                 style={{ width: "400px" }}
-                                onHide={() => setVisible(false)}
+                                onHide={() => setLevelDialog(false)}
                             >
-                                <form onSubmit={handleSubmit} className="mt-8">
+                                <form
+                                    onSubmit={(e) => handleSubmit(e, "levels")}
+                                    className="mt-8"
+                                >
                                     {error && (
                                         <p
                                             style={{
@@ -236,7 +370,159 @@ function ManageLevelClassStudent() {
                                             label="Cancel"
                                             icon="pi pi-times"
                                             type="button"
-                                            onClick={() => setVisible(false)}
+                                            onClick={() =>
+                                                setLevelDialog(false)
+                                            }
+                                            className="p-button-text"
+                                            disabled={loading}
+                                        />
+                                        <Button
+                                            label={
+                                                mode === "create"
+                                                    ? "Create"
+                                                    : "Update"
+                                            }
+                                            icon="pi pi-check"
+                                            type="submit"
+                                            disabled={loading}
+                                            autoFocus
+                                        />
+                                    </div>
+                                </form>
+                            </Dialog>
+                            <Dialog
+                                header={
+                                    mode === "create"
+                                        ? `Add Class`
+                                        : `Edit Class`
+                                }
+                                visible={classDialog}
+                                style={{ width: "400px" }}
+                                onHide={() => setClassDialog(false)}
+                            >
+                                <form
+                                    onSubmit={(e) => handleSubmit(e, "class")}
+                                    className="mt-8"
+                                >
+                                    {error && (
+                                        <p
+                                            style={{
+                                                color: "red",
+                                                marginBottom: "2rem",
+                                            }}
+                                        >
+                                            {error}
+                                        </p>
+                                    )}
+                                    <div style={{ marginBottom: "2rem" }}>
+                                        <FloatLabel>
+                                            <InputText
+                                                name="name"
+                                                value={formData.name}
+                                                onChange={handleClassChange}
+                                                style={{ width: "100%" }}
+                                                required
+                                                disabled={loading}
+                                                tooltip="Enter class name"
+                                                tooltipOptions={{
+                                                    position: "bottom",
+                                                    mouseTrack: true,
+                                                    mouseTrackTop: 15,
+                                                }}
+                                            />
+                                            <label htmlFor="name">Name</label>
+                                        </FloatLabel>
+                                    </div>
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            gap: "10px",
+                                            justifyContent: "flex-end",
+                                        }}
+                                    >
+                                        <Button
+                                            label="Cancel"
+                                            icon="pi pi-times"
+                                            type="button"
+                                            onClick={() =>
+                                                setClassDialog(false)
+                                            }
+                                            className="p-button-text"
+                                            disabled={loading}
+                                        />
+                                        <Button
+                                            label={
+                                                mode === "create"
+                                                    ? "Create"
+                                                    : "Update"
+                                            }
+                                            icon="pi pi-check"
+                                            type="submit"
+                                            disabled={loading}
+                                            autoFocus
+                                        />
+                                    </div>
+                                </form>
+                            </Dialog>
+                            <Dialog
+                                header={
+                                    mode === "create"
+                                        ? `Add Student`
+                                        : `Edit Student`
+                                }
+                                visible={studentDialog}
+                                style={{ width: "400px" }}
+                                onHide={() => setStudentDialog(false)}
+                            >
+                                <form
+                                    onSubmit={(e) =>
+                                        handleSubmit(e, "students")
+                                    }
+                                    className="mt-8"
+                                >
+                                    {error && (
+                                        <p
+                                            style={{
+                                                color: "red",
+                                                marginBottom: "2rem",
+                                            }}
+                                        >
+                                            {error}
+                                        </p>
+                                    )}
+                                    <div style={{ marginBottom: "2rem" }}>
+                                        <FloatLabel>
+                                            <InputText
+                                                name="name"
+                                                value={formData.name}
+                                                onChange={handleStudentChange}
+                                                style={{ width: "100%" }}
+                                                required
+                                                disabled={loading}
+                                                tooltip="Enter student name"
+                                                tooltipOptions={{
+                                                    position: "bottom",
+                                                    mouseTrack: true,
+                                                    mouseTrackTop: 15,
+                                                }}
+                                            />
+                                            <label htmlFor="name">Name</label>
+                                        </FloatLabel>
+                                    </div>
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            gap: "10px",
+                                            justifyContent: "flex-end",
+                                        }}
+                                    >
+                                        <Button
+                                            label="Cancel"
+                                            icon="pi pi-times"
+                                            type="button"
+                                            onClick={() =>
+                                                setStudentDialog(false)
+                                            }
                                             className="p-button-text"
                                             disabled={loading}
                                         />
@@ -257,8 +543,8 @@ function ManageLevelClassStudent() {
                         </>
                     ) : (
                         <p>
-                            Please log in to view and manage
-                            levels-class-students.
+                            Please log in to view and manage levels, class, and
+                            students.
                         </p>
                     )}
                 </Card>
