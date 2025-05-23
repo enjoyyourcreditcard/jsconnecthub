@@ -73,8 +73,9 @@ function ManageLevelClassStudent() {
             if (d) {
                 const formattedClasses = d.map((i) => ({
                     id: i.id,
-                    name: i.name,
                     level_id: i.level_id,
+                    name: i.name,
+                    student_count: i.students.length,
                 }));
                 dispatch(
                     setStateData({

@@ -1166,7 +1166,7 @@ const CustomDataTable = ({
                         <Column
                             expander={(rowData) => {
                                 const classStudents = students.filter(
-                                    (q) => q.class_id === rowData.id
+                                    (q) => q.class_id === rowData[0]?.id
                                 );
                                 return classStudents.length > 0;
                             }}
@@ -1180,7 +1180,11 @@ const CustomDataTable = ({
                             exportable={false}
                         />
                         <Column field="name" header="Name" sortable />
-                        <Column field="count" header="Count" sortable />
+                        <Column
+                            field="student_count"
+                            header="Student Count"
+                            sortable
+                        />
                         <Column
                             header="Actions"
                             body={classActionsTemplate}

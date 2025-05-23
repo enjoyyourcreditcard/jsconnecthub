@@ -42,7 +42,7 @@ class MasterService
             return $q->with('classes')->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.CLASS_MASTER_TYPE')) {
-            return $q->with('level')
+            return $q->with(['level', 'students'])
                 ->when($request->name, function ($q) use ($request) {
                     return $q->where('name', $request->name);
                 })
