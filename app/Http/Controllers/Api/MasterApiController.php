@@ -257,6 +257,7 @@ class MasterApiController extends Controller
 
                 $this->masterService->deleteAll('checkin');
                 $this->masterService->deleteAll('bookings');
+                $this->masterService->deleteAll('answers');
                 $this->masterService->deleteAll('counsels');
                 $this->masterService->deleteAll('students');
                 $this->masterService->deleteAll('class');

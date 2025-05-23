@@ -9,5 +9,6 @@ export const SUPPORT_STRATEGY_STATE = {
         update: "/api/support_strategies/",
         get: "/api/support_strategies/",
         delete: "/api/support_strategies/",
+        import: "/api/support_strategies/import",
     },
 };

@@ -444,7 +444,7 @@ const CustomDataTable = ({
                 endPoint: dataEndPoints.import,
                 file,
                 returnData: true,
-                hasExpand,
+                ...(type === "levels" && hasExpand ? { hasExpand } : {}),
             })
         )
             .then((result) => {

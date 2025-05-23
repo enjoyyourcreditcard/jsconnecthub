@@ -58,14 +58,8 @@ const Header = () => {
         const masterSubItems = [];
         if (permissions.includes("levels view")) {
             masterSubItems.push({
-                label: "Tes",
-                command: () => navigate("/levels-class-students"),
-            });
-        }
-        if (permissions.includes("students view")) {
-            masterSubItems.push({
                 label: "Student",
-                command: () => navigate("/students"),
+                command: () => navigate("/levels-class-students"),
             });
         }
         if (permissions.includes("users view")) {
@@ -74,6 +68,12 @@ const Header = () => {
                 command: () => navigate("/users"),
             });
         }
+        // if (permissions.includes("students view")) {
+        //     masterSubItems.push({
+        //         label: "Student",
+        //         command: () => navigate("/students"),
+        //     });
+        // }
         // if (permissions.includes("class view")) {
         //     masterSubItems.push({
         //         label: "Class",
