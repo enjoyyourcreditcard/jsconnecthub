@@ -5,11 +5,12 @@ import { getRecords, setStateData } from "../../store/global-slice";
 import Header from "../../shared/layout/Header";
 import DataTable from "../../shared/misc/DataTable";
 import { Card } from "primereact/card";
+import { DateTime } from "luxon";
 
 function Counsel() {
     const dispatch = useDispatch();
     const isAuthenticated = useIsAuthenticated();
-    const [timeFilter, setTimeFilter] = useState("today");
+    const [timeFilter, setTimeFilter] = useState("week");
     const [rangeFilter, setRangeFilter] = useState(null);
     const {
         counsels: { data: counsels = [], endPoints: counselEndPoints },
@@ -19,7 +20,33 @@ function Counsel() {
         },
     } = useSelector((state) => state.global);
 
-    const myFetch = (params = { timeFilter: "today" }) => {
+    // Group counsels by created_at date
+    const groupCounselsByDate = (counsels) => {
+        const grouped = counsels.reduce((acc, counsel) => {
+            const date = DateTime.fromISO(counsel.created_at, { zone: "utc" })
+                .setZone("local")
+                .toFormat("yyyy-MM-dd");
+            if (!acc[date]) {
+                acc[date] = [];
+            }
+            acc[date].push(counsel);
+            return acc;
+        }, {});
+        return Object.entries(grouped)
+            .map(([date, counsels]) => ({
+                date,
+                formattedDate: DateTime.fromISO(date).toFormat("dd MMMM yyyy"),
+                counsels,
+                counselCount: counsels.length,
+            }))
+            .sort(
+                (a, b) => DateTime.fromISO(b.date) - DateTime.fromISO(a.date)
+            );
+    };
+
+    const groupedCounsels = groupCounselsByDate(counsels);
+
+    const myFetch = (params = { timeFilter: "week" }) => {
         let url = counselEndPoints.collection;
         if (params.timeFilter) {
             url += `?time=${params.timeFilter}`;
@@ -79,7 +106,7 @@ function Counsel() {
                     {isAuthenticated() ? (
                         <DataTable
                             type="counsels"
-                            identifier="id"
+                            identifier="date"
                             onFetch={(params) => myFetch(params)}
                             title="Counsel"
                             timeFilter={timeFilter}
@@ -87,6 +114,9 @@ function Counsel() {
                             rangeFilter={rangeFilter}
                             setRangeFilter={setRangeFilter}
                             hasExpand={true}
+                            collection={groupedCounsels}
+                            supportStrategies={supportStrategies}
+                            isGrouped={true}
                         />
                     ) : (
                         <p>Please log in to view and manage counsels.</p>
