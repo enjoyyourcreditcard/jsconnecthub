@@ -590,7 +590,7 @@ const CustomDataTable = ({
                             options={getUniqueStrategies()}
                             onChange={(e) => setStrategyFilter(e.value)}
                             placeholder="Support Strategy"
-                            style={{ width: "200px" }}
+                            style={{ width: "256px" }}
                             showClear
                         />
                     </>
@@ -1023,11 +1023,7 @@ const CustomDataTable = ({
                         exportable={false}
                     />
                     <Column field="name" header="Name" sortable />
-                    <Column
-                        header="Actions"
-                        body={studentActionsTemplate}
-                        style={{ width: "20%" }}
-                    />
+                    <Column header="Actions" body={studentActionsTemplate} />
                 </DataTable>
             </div>
         );
@@ -1117,19 +1113,18 @@ const CustomDataTable = ({
                             field="order"
                             header="Order"
                             sortable
-                            style={{ width: "10%" }}
+                            style={{ width: "3rem" }}
                         />
                         <Column
                             field="text"
                             header="Question Text"
                             sortable
-                            style={{ width: "50%" }}
+                            style={{ minWidth: "50%" }}
                         />
                         <Column
                             field="type"
                             header="Type"
                             sortable
-                            style={{ width: "20%" }}
                             body={(rowData) =>
                                 rowData.type === "radio"
                                     ? "Multiple Choices"
@@ -1139,7 +1134,6 @@ const CustomDataTable = ({
                         <Column
                             header="Actions"
                             body={questionActionsTemplate}
-                            style={{ width: "20%" }}
                         />
                     </DataTable>
                 </div>
@@ -1185,11 +1179,7 @@ const CustomDataTable = ({
                             header="Student Count"
                             sortable
                         />
-                        <Column
-                            header="Actions"
-                            body={classActionsTemplate}
-                            style={{ width: "20%" }}
-                        />
+                        <Column header="Actions" body={classActionsTemplate} />
                     </DataTable>
                 </div>
             );
@@ -1313,7 +1303,6 @@ const CustomDataTable = ({
                           header: "Actions",
                           body: actionsTemplate,
                           exportable: false,
-                          headerStyle: { minWidth: "8rem" },
                       },
                   ]
                 : []),
@@ -1504,7 +1493,6 @@ const CustomDataTable = ({
                         header="Actions"
                         body={actionsTemplate}
                         exportable={false}
-                        headerStyle={{ minWidth: "10rem" }}
                     />
                 ) : null}
             </DataTable>
