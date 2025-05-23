@@ -33,7 +33,6 @@ class BookingController extends Controller
         $booking->student_id = $request->student_id;
         $booking->facility_id = $request->facility_id;
         $booking->start_time = $request->start_time;
-        $booking->status = 'reserved';
         $booking->end_time = $request->end_time;
         $booking->save();
 

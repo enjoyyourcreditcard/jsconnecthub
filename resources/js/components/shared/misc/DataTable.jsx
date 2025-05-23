@@ -98,7 +98,7 @@ const CustomDataTable = ({
     const [questionExpandedRows, setQuestionExpandedRows] = useState([]);
     const [classExpandedRows, setClassExpandedRows] = useState([]);
     const [size, setSize] = useState("small");
-    const [studentFilter, setStudentFilter] = useState(null);
+    const [studentFilter, setStudentFilter] = useState("");
     const [strategyFilter, setStrategyFilter] = useState(null);
     const sizeOptions = [
         { label: "Small", value: "small" },
@@ -149,7 +149,9 @@ const CustomDataTable = ({
                 "created_at",
                 "updated_at",
                 "answers",
-                ...(isGrouped ? ["date", "counsels", "counselCount"] : []),
+                ...(type === "counsels" && isGrouped
+                    ? ["date", "counsels"]
+                    : []),
             ];
             const isHiddenField = (field) => {
                 if (defaultHidden.includes(field)) return true;
@@ -392,7 +394,7 @@ const CustomDataTable = ({
             XLSX.writeFile(workbook, "level_class_student_data.xlsx");
         } else if (type === "counsels" && isGrouped) {
             const dataToExport = [];
-            collection.forEach((group) => {
+            filteredDataState.forEach((group) => {
                 group.counsels.forEach((counsel) => {
                     dataToExport.push({
                         Date: formatDateToLocal(counsel.created_at),
@@ -411,7 +413,10 @@ const CustomDataTable = ({
             const dataToExport = filteredDataState.map((item) => {
                 const rowData = {};
                 visibleColumns.forEach((col) => {
-                    rowData[col.header] = item[col.field] || "";
+                    rowData[col.header] =
+                        col.field === "status" && type === "bookings"
+                            ? capitalize(item[col.field] || "")
+                            : item[col.field] || "";
                 });
                 if (type === "counsels") {
                     rowData["Date"] = formatDateToLocal(item.created_at);
@@ -451,7 +456,7 @@ const CustomDataTable = ({
                 "Questions and Answers",
             ];
             const body = [];
-            collection.forEach((group) => {
+            filteredDataState.forEach((group) => {
                 group.counsels.forEach((counsel) => {
                     body.push([
                         formatDateToLocal(counsel.created_at),
@@ -477,7 +482,11 @@ const CustomDataTable = ({
                     : []),
             ];
             const body = filteredDataState.map((item) => [
-                ...visibleColumns.map((col) => item[col.field] || ""),
+                ...visibleColumns.map((col) =>
+                    col.field === "status" && type === "bookings"
+                        ? capitalize(item[col.field] || "")
+                        : item[col.field] || ""
+                ),
                 ...(type === "counsels"
                     ? [
                           formatDateToLocal(item.created_at),
@@ -517,19 +526,6 @@ const CustomDataTable = ({
             })
             .catch((error) => console.error("Import error:", error.message))
             .finally(() => overlayPanelRef.current.hide());
-    };
-
-    const getUniqueStudents = () => {
-        const students = new Set();
-        collection.forEach((group) =>
-            group.counsels.forEach((counsel) => {
-                if (counsel.student) students.add(counsel.student);
-            })
-        );
-        return Array.from(students).map((student) => ({
-            label: student,
-            value: student,
-        }));
     };
 
     const getUniqueStrategies = () => {
@@ -577,14 +573,18 @@ const CustomDataTable = ({
                 )}
                 {type === "counsels" && (
                     <>
-                        <Dropdown
-                            value={studentFilter}
-                            options={getUniqueStudents()}
-                            onChange={(e) => setStudentFilter(e.value)}
-                            placeholder="Student"
-                            style={{ width: "200px" }}
-                            showClear
-                        />
+                        <IconField className="flex items-center w-64">
+                            <InputIcon className="pi pi-search" />
+                            <InputText
+                                type="search"
+                                value={studentFilter}
+                                onChange={(e) =>
+                                    setStudentFilter(e.target.value)
+                                }
+                                placeholder="Search Students"
+                                className="w-full"
+                            />
+                        </IconField>
                         <Dropdown
                             value={strategyFilter}
                             options={getUniqueStrategies()}
@@ -907,7 +907,11 @@ const CustomDataTable = ({
               ...group,
               counsels: group.counsels.filter((counsel) => {
                   const matchesStudent =
-                      !studentFilter || counsel.student === studentFilter;
+                      !studentFilter ||
+                      (counsel.student &&
+                          counsel.student
+                              .toLowerCase()
+                              .includes(studentFilter.toLowerCase()));
                   const matchesStrategy =
                       !strategyFilter ||
                       counsel.support_strategies.includes(strategyFilter);
@@ -917,34 +921,36 @@ const CustomDataTable = ({
         : Array.isArray(collection)
         ? collection.map((item) => ({
               ...item,
-              status: (() => {
-                  if (!item.status) return item.status;
-                  const status = item.status;
-                  if (status === "reserved") {
-                      return (
-                          <Badge
-                              value={capitalize(item.status)}
-                              severity="success"
-                          />
-                      );
-                  } else if (status === "cancelled") {
-                      return (
-                          <Badge
-                              value={capitalize(item.status)}
-                              severity="danger"
-                          />
-                      );
-                  } else if (status === "closed") {
-                      return (
-                          <Badge
-                              value={capitalize(item.status)}
-                              severity="secondary"
-                          />
-                      );
-                  } else {
-                      return <Badge value={capitalize(item.status)} />;
-                  }
-              })(),
+              status:
+                  type === "bookings" && item.status
+                      ? (() => {
+                            const status = item.status;
+                            if (status === "reserved") {
+                                return (
+                                    <Badge
+                                        value={capitalize(status)}
+                                        severity="success"
+                                    />
+                                );
+                            } else if (status === "cancelled") {
+                                return (
+                                    <Badge
+                                        value={capitalize(status)}
+                                        severity="danger"
+                                    />
+                                );
+                            } else if (status === "closed") {
+                                return (
+                                    <Badge
+                                        value={capitalize(status)}
+                                        severity="secondary"
+                                    />
+                                );
+                            } else {
+                                return <Badge value={capitalize(status)} />;
+                            }
+                        })()
+                      : item.status,
               checkin_time: item.checkin_time
                   ? formatDateToLocal(item.checkin_time)
                   : "",
@@ -1045,7 +1051,9 @@ const CustomDataTable = ({
                         rowExpansionTemplate={counselRowExpansionTemplate}
                     >
                         <Column
-                            expander={(rowData) => rowData.answers?.length > 0}
+                            expander={(rowData) =>
+                                rowData[0]?.answers?.length > 0
+                            }
                             style={{ width: "3rem" }}
                             exportable={false}
                         />
@@ -1294,7 +1302,7 @@ const CustomDataTable = ({
 
         return [
             ...dynamicColumns,
-            ...(type !== "counsels" || isGrouped
+            ...(type !== "counsels" && !isGrouped
                 ? [
                       {
                           field: "actions",
@@ -1417,7 +1425,7 @@ const CustomDataTable = ({
             />
             <DataTable
                 ref={dt}
-                value={formattedData}
+                value={filteredDataState}
                 size={size}
                 selection={
                     type !== "counsels" && !isGrouped ? selectedRecords : null
@@ -1486,7 +1494,7 @@ const CustomDataTable = ({
                         filterElement={col.filterElement}
                     />
                 ))}
-                {type !== "counsels" || isGrouped ? (
+                {type !== "counsels" && !isGrouped ? (
                     <Column
                         field="actions"
                         header="Actions"
