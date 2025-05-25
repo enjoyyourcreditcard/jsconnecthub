@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Facility extends Model
 {
@@ -16,6 +17,7 @@ class Facility extends Model
 
     protected $fillable = [
         'name',
+        'parent_id',
     ];
 
     /**
@@ -26,5 +28,25 @@ class Facility extends Model
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
+    }
+
+    /**
+     * Relasi ke parent (self-referencing)
+     *
+     * @return BelongsTo
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Facility::class, 'parent_id');
+    }
+
+    /**
+     * Relasi ke children (self-referencing)
+     *
+     * @return HasMany
+     */
+    public function children(): HasMany
+    {
+        return $this->hasMany(Facility::class, 'parent_id');
     }
 }
