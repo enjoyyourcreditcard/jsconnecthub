@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('facilities', function (Blueprint $table) {
             $table->id();
             $table->string('name', 100)->nullable('false')->unique('facility_name_unique');
+            $table->foreignId('parent_id')->nullable('true')->constrained('facilities')->cascadeOnDelete();
             $table->timestamps();
         });
     }

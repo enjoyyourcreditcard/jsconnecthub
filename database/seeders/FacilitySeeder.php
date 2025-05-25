@@ -14,10 +14,31 @@ class FacilitySeeder extends Seeder
     public function run(): void
     {
         $facilities = [
-            ['name' => 'Classrooms'],
-            ['name' => 'Library'],
-            ['name' => 'Science Laboratories'],
-            ['name' => 'Computer Labs']
+            [
+                'name' => 'Classrooms',
+                'parent_id' => null
+            ], [
+                'name' => 'A01',
+                'parent_id' => 1
+            ], [
+                'name' => 'A02',
+                'parent_id' => 1
+            ], [
+                'name' => 'B01',
+                'parent_id' => 1
+            ], [
+                'name' => 'B02',
+                'parent_id' => 1
+            ], [
+                'name' => 'Library',
+                'parent_id' => null
+            ], [
+                'name' => 'Science Laboratories',
+                'parent_id' => null
+            ], [
+                'name' => 'Computer Labs',
+                'parent_id' => null
+            ],
         ];
 
         Facility::insert($facilities);
