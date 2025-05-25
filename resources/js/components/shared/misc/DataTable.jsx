@@ -170,12 +170,12 @@ const CustomDataTable = ({
         if (!dt.isValid) {
             return "";
         }
-        if (format === 'date') {
+        if (format === "date") {
             return dt.setZone(userTimezone).toFormat("dd MMMM yyyy");
-        } else if (format === 'datetime') {
-            return dt.setZone(userTimezone).toFormat("dd MMMM yyyy, HH:mm:ss z");
         } else {
-            return dt.setZone(userTimezone).toFormat("dd MMMM yyyy, HH:mm:ss z");
+            return dt
+                .setZone(userTimezone)
+                .toFormat("dd MMMM yyyy, HH:mm:ss z");
         }
     };
 
@@ -403,7 +403,7 @@ const CustomDataTable = ({
             filteredDataState.forEach((group) => {
                 group.counsels.forEach((counsel) => {
                     dataToExport.push({
-                        Date: formatDateToLocal(counsel.created_at, 'date'),
+                        Date: formatDateToLocal(counsel.created_at, "date"),
                         Student: counsel.student || "N/A",
                         "Support Strategies": counsel.support_strategies || "",
                         "Questions and Answers":
@@ -419,13 +419,13 @@ const CustomDataTable = ({
             const dataToExport = filteredDataState.map((item) => {
                 const rowData = {};
                 visibleColumns.forEach((col) => {
-                    rowData[col.header] =
-                        col.field === "status" && type === "bookings"
-                            ? capitalize(item[col.field] || "")
-                            : item[col.field] || "";
+                    rowData[col.header] = item[col.field] || "";
                 });
                 if (type === "counsels") {
-                    rowData["Date"] = formatDateToLocal(item.created_at, 'datetime');
+                    rowData["Date"] = formatDateToLocal(
+                        item.created_at,
+                        "datetime"
+                    );
                     rowData["Questions and Answers"] =
                         formatAnswersForExport(item);
                 }
@@ -465,7 +465,7 @@ const CustomDataTable = ({
             filteredDataState.forEach((group) => {
                 group.counsels.forEach((counsel) => {
                     body.push([
-                        formatDateToLocal(counsel.created_at, 'date'),
+                        formatDateToLocal(counsel.created_at, "date"),
                         counsel.student || "N/A",
                         counsel.support_strategies || "",
                         formatAnswersForExport(counsel),
@@ -488,14 +488,10 @@ const CustomDataTable = ({
                     : []),
             ];
             const body = filteredDataState.map((item) => [
-                ...visibleColumns.map((col) =>
-                    col.field === "status" && type === "bookings"
-                        ? capitalize(item[col.field] || "")
-                        : item[col.field] || ""
-                ),
+                ...visibleColumns.map((col) => item[col.field] || ""),
                 ...(type === "counsels"
                     ? [
-                          formatDateToLocal(item.created_at, 'date'),
+                          formatDateToLocal(item.created_at, "date"),
                           formatAnswersForExport(item),
                       ]
                     : []),
