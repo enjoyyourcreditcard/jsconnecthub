@@ -128,7 +128,7 @@ const Login = () => {
                     }}
                 />
                 <div className="card flex justify-center">
-                    <Card title="JS-CONNECT-HUB" className="w-full">
+                    <Card title="Learning Hub" className="w-full">
                         <form onSubmit={handleSubmit}>
                             <div style={{ marginBottom: "20px" }}>
                                 <FloatLabel>

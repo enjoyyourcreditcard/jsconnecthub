@@ -164,13 +164,19 @@ const CustomDataTable = ({
         }
     }, [collection, isGrouped, type]);
 
-    const formatDateToLocal = (utcDate) => {
+    const formatDateToLocal = (utcDate, format = null) => {
         if (!utcDate || !userTimezone) return "";
         const dt = DateTime.fromISO(utcDate, { zone: "utc" });
         if (!dt.isValid) {
             return "";
         }
-        return dt.setZone(userTimezone).toFormat("dd MMMM yyyy");
+        if (format === 'date') {
+            return dt.setZone(userTimezone).toFormat("dd MMMM yyyy");
+        } else if (format === 'datetime') {
+            return dt.setZone(userTimezone).toFormat("dd MMMM yyyy, HH:mm:ss z");
+        } else {
+            return dt.setZone(userTimezone).toFormat("dd MMMM yyyy, HH:mm:ss z");
+        }
     };
 
     const capitalize = (str) => {
@@ -397,7 +403,7 @@ const CustomDataTable = ({
             filteredDataState.forEach((group) => {
                 group.counsels.forEach((counsel) => {
                     dataToExport.push({
-                        Date: formatDateToLocal(counsel.created_at),
+                        Date: formatDateToLocal(counsel.created_at, 'date'),
                         Student: counsel.student || "N/A",
                         "Support Strategies": counsel.support_strategies || "",
                         "Questions and Answers":
@@ -419,7 +425,7 @@ const CustomDataTable = ({
                             : item[col.field] || "";
                 });
                 if (type === "counsels") {
-                    rowData["Date"] = formatDateToLocal(item.created_at);
+                    rowData["Date"] = formatDateToLocal(item.created_at, 'datetime');
                     rowData["Questions and Answers"] =
                         formatAnswersForExport(item);
                 }
@@ -459,7 +465,7 @@ const CustomDataTable = ({
             filteredDataState.forEach((group) => {
                 group.counsels.forEach((counsel) => {
                     body.push([
-                        formatDateToLocal(counsel.created_at),
+                        formatDateToLocal(counsel.created_at, 'date'),
                         counsel.student || "N/A",
                         counsel.support_strategies || "",
                         formatAnswersForExport(counsel),
@@ -489,7 +495,7 @@ const CustomDataTable = ({
                 ),
                 ...(type === "counsels"
                     ? [
-                          formatDateToLocal(item.created_at),
+                          formatDateToLocal(item.created_at, 'date'),
                           formatAnswersForExport(item),
                       ]
                     : []),
@@ -518,7 +524,7 @@ const CustomDataTable = ({
                 endPoint: dataEndPoints.import,
                 file,
                 returnData: true,
-                ...(type === "levels" && hasExpand ? { has_expand: true } : {}),
+                ...(type === "levels" && hasExpand ? { hasExpand } : {}),
             })
         )
             .then((result) => {
@@ -1176,7 +1182,7 @@ const CustomDataTable = ({
                         <Column field="name" header="Name" sortable />
                         <Column
                             field="student_count"
-                            header="Student Count"
+                            header="Total Number of Student"
                             sortable
                         />
                         <Column header="Actions" body={classActionsTemplate} />

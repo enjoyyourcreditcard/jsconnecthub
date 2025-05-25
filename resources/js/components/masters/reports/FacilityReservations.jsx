@@ -319,7 +319,6 @@ function FacilityReservations() {
         const dataToSubmit = {
             student_id: formData.student?.id,
             facility_id: formData.facility?.id,
-            status: "requested",
             start_time: formatDateTimeForMySQL(formData.start_time),
             end_time: formatDateTimeForMySQL(formData.end_time),
         };
