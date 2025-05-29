@@ -17,6 +17,7 @@ import { OverlayPanel } from "primereact/overlaypanel";
 import { FileUpload } from "primereact/fileupload";
 import { Dropdown } from "primereact/dropdown";
 import { Calendar } from "primereact/calendar";
+import { Checkbox } from 'primereact/checkbox';
 import {
     deleteRecord,
     importRecord,
@@ -927,36 +928,7 @@ const CustomDataTable = ({
         : Array.isArray(collection)
         ? collection.map((item) => ({
               ...item,
-              status:
-                  type === "bookings" && item.status
-                      ? (() => {
-                            const status = item.status;
-                            if (status === "reserved") {
-                                return (
-                                    <Badge
-                                        value={capitalize(status)}
-                                        severity="success"
-                                    />
-                                );
-                            } else if (status === "cancelled") {
-                                return (
-                                    <Badge
-                                        value={capitalize(status)}
-                                        severity="danger"
-                                    />
-                                );
-                            } else if (status === "closed") {
-                                return (
-                                    <Badge
-                                        value={capitalize(status)}
-                                        severity="secondary"
-                                    />
-                                );
-                            } else {
-                                return <Badge value={capitalize(status)} />;
-                            }
-                        })()
-                      : item.status,
+              // status: item.status, // Raw status will be handled by column body template
               checkin_time: item.checkin_time
                   ? formatDateToLocal(item.checkin_time)
                   : "",
@@ -1236,6 +1208,48 @@ const CustomDataTable = ({
         );
     };
 
+    const bookingStatusBodyTemplate = (rowData) => {
+        const status = rowData.status; // Raw status string
+        const badgeValue = capitalize(status || "");
+        let badgeSeverity;
+
+        switch (status) {
+            case "reserved":
+                badgeSeverity = "success";
+                break;
+            case "cancelled":
+                badgeSeverity = "danger";
+                break;
+            case "closed":
+                badgeSeverity = "secondary";
+                break;
+            case "requested":
+                badgeSeverity = "info";
+                break;
+            default:
+                badgeSeverity = "info";
+        }
+
+        return (
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+                <Checkbox
+                    inputId={`confirm-${rowData[identifier]}`}
+                    checked={status === "reserved"}
+                    disabled={status !== "requested"}
+                    onChange={(e) => {
+                        if (status === "requested" && e.checked) {
+                            onConfirm(rowData[identifier]);
+                        }
+                    }}
+                    className="mr-2"
+                    tooltip={status === "requested" ? "Confirm reservation" : null}
+                    tooltipOptions={{ position: 'top' }}
+                />
+                <Badge value={badgeValue} severity={badgeSeverity} />
+            </div>
+        );
+    };
+ 
     const generateColumns = () => {
         if (!collection.length) return [];
 
@@ -1269,6 +1283,12 @@ const CustomDataTable = ({
                 sortable: true,
             };
 
+            if (type === "bookings" && prop === "status") {
+                column.body = bookingStatusBodyTemplate;
+            } else if (prop === "created_at" || prop === "updated_at") {
+                column.body = (rowData) => formatDateToLocal(rowData[prop]);
+            }
+ 
             if (type === "checkin") {
                 if (prop === "student") {
                     column.filter = true;
@@ -1366,7 +1386,7 @@ const CustomDataTable = ({
     const header = (
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between w-full">
             <h4 className="m-0">Manage {title}</h4>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4"> {/* Reverted: Removed flex-wrap */}
                 <MultiSelect
                     value={visibleColumns}
                     options={generateColumns().filter(
@@ -1378,7 +1398,7 @@ const CustomDataTable = ({
                     display="chip"
                     placeholder="Select Columns"
                 />
-                <IconField className="flex items-center w-64">
+                {/* <IconField className="flex items-center w-64">
                     <InputIcon className="pi pi-search" />
                     <InputText
                         type="search"
@@ -1387,7 +1407,7 @@ const CustomDataTable = ({
                         placeholder="Search..."
                         className="w-full"
                     />
-                </IconField>
+                </IconField> */}
             </div>
         </div>
     );
