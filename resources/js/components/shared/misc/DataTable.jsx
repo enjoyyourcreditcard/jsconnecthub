@@ -51,6 +51,7 @@ const CustomDataTable = ({
     onAddStudent = () => {},
     onEditStudent = () => {},
     onDeleteStudent = () => {},
+    onEditSubFacility = () => {},
     timeFilter,
     setTimeFilter,
     dateFilter,
@@ -60,6 +61,7 @@ const CustomDataTable = ({
     questions = [],
     classes = [],
     students = [],
+    subFacilities = [],
     collection: propCollection,
     supportStrategies = [],
     isGrouped = false,
@@ -929,6 +931,45 @@ const CustomDataTable = ({
         );
     };
 
+    const subFacilityActionsTemplate = (rowData) => {
+        const permissions = auth()?.permissions || [];
+        const canEdit = permissions.includes("facilities edit");
+        const canDelete = permissions.includes("facilities delete");
+
+        const actions = [
+            ...(canEdit
+                ? [
+                      {
+                          label: "Edit",
+                          icon: "pi pi-pencil",
+                          command: () => onEditSubFacility(rowData.id),
+                      },
+                  ]
+                : []),
+            ...(canDelete
+                ? [
+                      {
+                          label: "Delete",
+                          icon: "pi pi-trash",
+                          command: (event) =>
+                              handleDelete(event.originalEvent, rowData.id),
+                      },
+                  ]
+                : []),
+        ];
+
+        return (
+            <SplitButton
+                label=""
+                size={size}
+                icon="pi pi-search"
+                dropdownIcon="pi pi-cog"
+                model={actions}
+                outlined
+            />
+        );
+    };
+
     const formattedData = isGrouped
         ? collection.map((group) => ({
               ...group,
@@ -1020,7 +1061,7 @@ const CustomDataTable = ({
                         style={{ width: "3rem" }}
                         exportable={false}
                     />
-                    <Column field="name" header="Student Name" sortable />
+                    <Column field="name" header="Student" sortable />
                     <Column header="Actions" body={studentActionsTemplate} />
                 </DataTable>
             </div>
@@ -1067,13 +1108,6 @@ const CustomDataTable = ({
                 </div>
             );
         }
-
-        if (
-            type !== "support_strategies" &&
-            type !== "counsels" &&
-            type !== "levels"
-        )
-            return null;
 
         if (type === "counsels") {
             return counselRowExpansionTemplate(data);
@@ -1171,7 +1205,7 @@ const CustomDataTable = ({
                             style={{ width: "3rem" }}
                             exportable={false}
                         />
-                        <Column field="name" header="Class Name" sortable />
+                        <Column field="name" header="Class" sortable />
                         <Column
                             field="student_count"
                             header="Total Number of Student"
@@ -1182,6 +1216,37 @@ const CustomDataTable = ({
                 </div>
             );
         }
+        if (type === "facilities") {
+            const listSubFacilites = Array.isArray(subFacilities)
+                ? subFacilities.filter((q) => q.parent_id === data.id)
+                : [];
+
+            return (
+                <div className="p-3">
+                    <DataTable
+                        value={listSubFacilites}
+                        size={size}
+                        dataKey="id"
+                        tableStyle={{ minWidth: "50rem" }}
+                        emptyMessage="No sub facilities found."
+                    >
+                        <Column
+                            header="#"
+                            body={indexTemplate}
+                            style={{ width: "3rem" }}
+                            exportable={false}
+                        />
+                        <Column field="name" header="Sub Facilitiy" sortable />
+                        <Column
+                            header="Actions"
+                            body={subFacilityActionsTemplate}
+                        />
+                    </DataTable>
+                </div>
+            );
+        }
+
+        return null;
     };
 
     const counselRowExpansionTemplate = (data) => {
@@ -1409,8 +1474,6 @@ const CustomDataTable = ({
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between w-full">
             <h4 className="m-0">Manage {title}</h4>
             <div className="flex items-center gap-4">
-                {" "}
-                {/* Reverted: Removed flex-wrap */}
                 <MultiSelect
                     value={visibleColumns}
                     options={generateColumns().filter(
@@ -1525,13 +1588,24 @@ const CustomDataTable = ({
                     exportable={false}
                 />
                 {visibleColumns.map((col) => {
-                    const isLevelName =
-                        type === "levels" && hasExpand && col.field === "name";
+                    let headerName;
+                    if (hasExpand && col.field === "name") {
+                        switch (type) {
+                            case "levels":
+                                headerName = "Level";
+                                break;
+                            case "facilities":
+                                headerName = "Facility";
+                                break;
+                            default:
+                                headerName = "Name";
+                        }
+                    }
                     return (
                         <Column
                             key={col.field}
                             field={col.field}
-                            header={isLevelName ? "Level Name" : col.header}
+                            header={headerName}
                             sortable={col.sortable}
                             body={col.body}
                             exportable={col.exportable !== false}
@@ -1610,6 +1684,7 @@ CustomDataTable.propTypes = {
     onAddStudent: PropTypes.func,
     onEditStudent: PropTypes.func,
     onDeleteStudent: PropTypes.func,
+    onEditSubFacility: PropTypes.func,
     timeFilter: PropTypes.string,
     setTimeFilter: PropTypes.func,
     dateFilter: PropTypes.object,
@@ -1618,6 +1693,7 @@ CustomDataTable.propTypes = {
     setRangeFilter: PropTypes.func,
     classes: PropTypes.array,
     students: PropTypes.array,
+    subFacilities: PropTypes.array,
     questions: PropTypes.arrayOf(
         PropTypes.shape({
             id: PropTypes.number,

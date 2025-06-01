@@ -7,6 +7,7 @@ export const stateKey = {
     students: "students",
     activities: "activities",
     facilities: "facilities",
+    sub_facilities: "sub_facilities",
     checkin: "checkin",
     bookings: "bookings",
     counsels: "counsels",

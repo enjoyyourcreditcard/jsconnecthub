@@ -218,6 +218,9 @@ class MasterService
                 })
                 ->get();
         }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.FACILITY_MASTER_TYPE')) {
+            return $q->with(['parent', 'children'])->get();
+        }
         if ($type === config('constants.MASTER_TYPE_ARRAY.QUESTION_MASTER_TYPE')) {
             return $q->with(['supportStrategy', 'radioOptions'])->get();
         }
@@ -263,7 +266,8 @@ class MasterService
             }
 
             $this->cascade($type, $id);
-        } elseif ($type === 'class') {
+        }
+        if ($type === 'class') {
             $students = $this->getModel('students')->where('class_id', $id)->get();
 
             foreach ($students as $students) {
@@ -271,7 +275,11 @@ class MasterService
             }
 
             $this->cascade($type, $id);
-        } elseif ($type === 'students') {
+        }
+        if ($type === 'students') {
+            $this->cascade($type, $id);
+        }
+        if ($type === 'facilities') {
             $this->cascade($type, $id);
         }
 
@@ -303,6 +311,14 @@ class MasterService
             }
 
             $this->getModel('counsels')->where('student_id', $id)->delete();
+        }
+        if ($type === 'facilities') {
+            $subFacilities = $this->getModel($type)->where('parent_id', $id)->get();
+            foreach ($subFacilities as $subFacility) {
+                $bookings = $this->getModel('bookings')->where('facility_id', $subFacility->id)->get();
+                $bookings->each->delete();
+            }
+            $subFacilities->each->delete();
         }
     }
 }

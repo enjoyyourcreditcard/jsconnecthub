@@ -1074,7 +1074,7 @@ function Home() {
                                                 {studentId ? (
                                                     <>
                                                         <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 p-5 flex-grow flex flex-wrap items-center max-h-48 overflow-y-auto">
-                                                            <div className="justify-start mb-4">
+                                                            <div className="justify-start">
                                                                 This is your
                                                                 activities log
                                                                 today (Timezone:{" "}
@@ -1784,7 +1784,7 @@ function Home() {
                                                 {studentId ? (
                                                     <>
                                                         <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 p-5 flex-grow flex flex-wrap items-center max-h-48 overflow-y-auto">
-                                                            <div className="justify-start mb-4">
+                                                            <div className="justify-start">
                                                                 This is your
                                                                 facility booking
                                                                 log today
@@ -1924,54 +1924,59 @@ function Home() {
                                                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                                                 {!isBooked && (
                                                                     <>
-                                                                        {facilities.map(
-                                                                            (
-                                                                                facility
-                                                                            ) => (
-                                                                                <Button
-                                                                                    key={
-                                                                                        facility.id
-                                                                                    }
-                                                                                    label={
-                                                                                        facility.name
-                                                                                    }
-                                                                                    onClick={(
-                                                                                        event
-                                                                                    ) => {
-                                                                                        setSelectedFacility(
-                                                                                            facility
-                                                                                        );
-                                                                                        setFacilityBookingData(
-                                                                                            {
-                                                                                                start_time:
-                                                                                                    null,
-                                                                                                end_time:
-                                                                                                    null,
-                                                                                            }
-                                                                                        );
-                                                                                        fetchFacilityBookings(
-                                                                                            facility.id
-                                                                                        );
-                                                                                        facilityOverlayRef.current.toggle(
-                                                                                            event
-                                                                                        );
-                                                                                    }}
-                                                                                    className={`${
-                                                                                        selectedFacility?.id ===
-                                                                                        facility.id
-                                                                                            ? "bg-blue-500 text-white"
-                                                                                            : "bg-gray-200"
-                                                                                    }`}
-                                                                                    size="small"
-                                                                                    icon={
-                                                                                        selectedFacility?.id ===
-                                                                                        facility.id
-                                                                                            ? "pi pi-check"
-                                                                                            : null
-                                                                                    }
-                                                                                />
+                                                                        {facilities
+                                                                            .filter(
+                                                                                (
+                                                                                    i
+                                                                                ) =>
+                                                                                    i.parent_id
                                                                             )
-                                                                        )}
+                                                                            .map(
+                                                                                (
+                                                                                    facility
+                                                                                ) => (
+                                                                                    <Button
+                                                                                        key={
+                                                                                            facility.id
+                                                                                        }
+                                                                                        label={`${facility.parent.name} (${facility.name})`}
+                                                                                        onClick={(
+                                                                                            event
+                                                                                        ) => {
+                                                                                            setSelectedFacility(
+                                                                                                facility
+                                                                                            );
+                                                                                            setFacilityBookingData(
+                                                                                                {
+                                                                                                    start_time:
+                                                                                                        null,
+                                                                                                    end_time:
+                                                                                                        null,
+                                                                                                }
+                                                                                            );
+                                                                                            fetchFacilityBookings(
+                                                                                                facility.id
+                                                                                            );
+                                                                                            facilityOverlayRef.current.toggle(
+                                                                                                event
+                                                                                            );
+                                                                                        }}
+                                                                                        className={`${
+                                                                                            selectedFacility?.id ===
+                                                                                            facility.id
+                                                                                                ? "bg-blue-500 text-white"
+                                                                                                : "bg-gray-200"
+                                                                                        }`}
+                                                                                        size="small"
+                                                                                        icon={
+                                                                                            selectedFacility?.id ===
+                                                                                            facility.id
+                                                                                                ? "pi pi-check"
+                                                                                                : null
+                                                                                        }
+                                                                                    />
+                                                                                )
+                                                                            )}
                                                                     </>
                                                                 )}
                                                             </div>

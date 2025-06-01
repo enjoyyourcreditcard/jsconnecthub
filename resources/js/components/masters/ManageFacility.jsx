@@ -13,6 +13,7 @@ import { Card } from "primereact/card";
 import { Dialog } from "primereact/dialog";
 import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
+import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
 
 function ManageFacility() {
@@ -23,11 +24,13 @@ function ManageFacility() {
     const [editId, setEditId] = useState(null);
     const [formData, setFormData] = useState({
         name: "",
+        parent_id: null,
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const {
         facilities: { data: facilities = [], endPoints: facilityEndPoints },
+        sub_facilities: { data: subFacilities = [] },
     } = useSelector((state) => state.global);
 
     const myFetch = () => {
@@ -37,7 +40,39 @@ function ManageFacility() {
                 endPoint: facilityEndPoints.collection,
                 key: "data",
             })
-        );
+        ).then((d) => {
+            if (d) {
+                const formattedFacilities = d
+                    .filter((i) => !i.parent_id)
+                    .map((i) => ({
+                        id: i.id,
+                        name: i.name,
+                    }));
+                dispatch(
+                    setStateData({
+                        type: "facilities",
+                        data: formattedFacilities,
+                        key: "data",
+                        isMerge: false,
+                    })
+                );
+                const formattedSubFacilities = d
+                    .filter((i) => i.parent_id)
+                    .map((i) => ({
+                        id: i.id,
+                        name: i.name,
+                        parent_id: i.parent_id,
+                    }));
+                dispatch(
+                    setStateData({
+                        type: "sub_facilities",
+                        data: formattedSubFacilities,
+                        key: "data",
+                        isMerge: false,
+                    })
+                );
+            }
+        });
     };
 
     useEffect(() => {
@@ -58,8 +93,21 @@ function ManageFacility() {
 
     const handleAdd = () => {
         setMode("create");
-        setFormData({ name: "" });
+        setFormData({ name: "", parent_id: null });
         setVisible(true);
+    };
+
+    const handleEditSubFacility = (id) => {
+        const facility = subFacilities.find((u) => u.id === id);
+        if (facility) {
+            setFormData({
+                name: facility.name,
+                parent_id: facility.parent_id,
+            });
+            setEditId(id);
+            setMode("edit");
+            setVisible(true);
+        }
     };
 
     const handleChange = (e) => {
@@ -106,6 +154,16 @@ function ManageFacility() {
         }
     };
 
+    const parentFacilityOptions =
+        facilities.length > 0
+            ? facilities
+                  .filter((f) => !f.parent_id)
+                  .map((f) => ({
+                      label: f.name,
+                      value: f.id,
+                  }))
+            : [];
+
     return (
         <div>
             <Header />
@@ -116,11 +174,18 @@ function ManageFacility() {
                             <DataTable
                                 type="facilities"
                                 identifier="id"
-                                hasImport={true}
+                                // hasImport={true}
+                                hasExpand={true}
                                 onFetch={myFetch}
                                 onAdd={handleAdd}
                                 onEdit={handleEdit}
+                                onEditSubFacility={handleEditSubFacility}
                                 title="Facility"
+                                subFacilities={
+                                    Array.isArray(subFacilities)
+                                        ? subFacilities
+                                        : []
+                                }
                             />
                             <Dialog
                                 header={
@@ -160,6 +225,29 @@ function ManageFacility() {
                                                 }}
                                             />
                                             <label htmlFor="name">Name</label>
+                                        </FloatLabel>
+                                    </div>
+                                    <div style={{ marginBottom: "2rem" }}>
+                                        <FloatLabel>
+                                            <Dropdown
+                                                name="parent_id"
+                                                value={formData.parent_id}
+                                                options={parentFacilityOptions}
+                                                onChange={handleChange}
+                                                style={{ width: "100%" }}
+                                                placeholder="Select Parent Facility"
+                                                disabled={loading}
+                                                tooltip="Select parent facility (optional)"
+                                                tooltipOptions={{
+                                                    position: "bottom",
+                                                    mouseTrack: true,
+                                                    mouseTrackTop: 15,
+                                                }}
+                                                showClear
+                                            />
+                                            <label htmlFor="parent_id">
+                                                Parent Facility
+                                            </label>
                                         </FloatLabel>
                                     </div>
                                     <div
