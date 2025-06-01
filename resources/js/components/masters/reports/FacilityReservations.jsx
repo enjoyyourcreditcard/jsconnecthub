@@ -689,7 +689,7 @@ function FacilityReservations() {
                                                 value={formData.start_time}
                                                 onChange={handleChange}
                                                 timeOnly
-                                                hourFormat="24"
+                                                hourFormat="12"
                                                 style={{ width: "100%" }}
                                                 required
                                                 disabled={
@@ -752,7 +752,7 @@ function FacilityReservations() {
                                                 value={formData.end_time}
                                                 onChange={handleChange}
                                                 timeOnly
-                                                hourFormat="24"
+                                                hourFormat="12"
                                                 style={{ width: "100%" }}
                                                 required
                                                 disabled={

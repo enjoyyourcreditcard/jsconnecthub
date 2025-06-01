@@ -2261,7 +2261,7 @@ function Home() {
                                                             )
                                                         }
                                                         timeOnly={true}
-                                                        hourFormat="24"
+                                                        hourFormat="12"
                                                         style={{
                                                             width: "100%",
                                                         }}
@@ -2398,7 +2398,7 @@ function Home() {
                                                             )
                                                         }
                                                         timeOnly={true}
-                                                        hourFormat="24"
+                                                        hourFormat="12"
                                                         style={{
                                                             width: "100%",
                                                         }}
