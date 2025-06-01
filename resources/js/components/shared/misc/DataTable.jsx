@@ -17,7 +17,7 @@ import { OverlayPanel } from "primereact/overlaypanel";
 import { FileUpload } from "primereact/fileupload";
 import { Dropdown } from "primereact/dropdown";
 import { Calendar } from "primereact/calendar";
-import { Checkbox } from 'primereact/checkbox';
+import { Checkbox } from "primereact/checkbox";
 import {
     deleteRecord,
     importRecord,
@@ -1205,7 +1205,7 @@ const CustomDataTable = ({
     };
 
     const bookingStatusBodyTemplate = (rowData) => {
-        const status = rowData.status; // Raw status string
+        const status = rowData.status;
         const badgeValue = capitalize(status || "");
         let badgeSeverity;
 
@@ -1227,7 +1227,7 @@ const CustomDataTable = ({
         }
 
         return (
-            <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{ display: "flex", alignItems: "center" }}>
                 <Checkbox
                     inputId={`confirm-${rowData[identifier]}`}
                     checked={status === "reserved"}
@@ -1238,14 +1238,16 @@ const CustomDataTable = ({
                         }
                     }}
                     className="mr-2"
-                    tooltip={status === "requested" ? "Confirm reservation" : null}
-                    tooltipOptions={{ position: 'top' }}
+                    tooltip={
+                        status === "requested" ? "Confirm reservation" : null
+                    }
+                    tooltipOptions={{ position: "top" }}
                 />
                 <Badge value={badgeValue} severity={badgeSeverity} />
             </div>
         );
     };
- 
+
     const generateColumns = () => {
         if (!collection.length) return [];
 
@@ -1284,7 +1286,7 @@ const CustomDataTable = ({
             } else if (prop === "created_at" || prop === "updated_at") {
                 column.body = (rowData) => formatDateToLocal(rowData[prop]);
             }
- 
+
             if (type === "checkin") {
                 if (prop === "student") {
                     column.filter = true;
@@ -1382,7 +1384,9 @@ const CustomDataTable = ({
     const header = (
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between w-full">
             <h4 className="m-0">Manage {title}</h4>
-            <div className="flex items-center gap-4"> {/* Reverted: Removed flex-wrap */}
+            <div className="flex items-center gap-4">
+                {" "}
+                {/* Reverted: Removed flex-wrap */}
                 <MultiSelect
                     value={visibleColumns}
                     options={generateColumns().filter(

@@ -74,14 +74,13 @@ function Home() {
     const [error, setError] = useState("");
     const [userTimezone, setUserTimezone] = useState(null);
     const [facilityBookingData, setFacilityBookingData] = useState({
-        startDate: null, // Tanggal mulai
-        startTime: null, // Waktu mulai
-        endDate: null,   // Tanggal selesai
-        endTime: null,   // Waktu selesai
+        startDate: null,
+        startTime: null,
+        endDate: null,
+        endTime: null,
         start_time: null,
-        end_time: null
+        end_time: null,
     });
-    // Ask Ms Vi states
     const [selectedStrategy, setSelectedStrategy] = useState(null);
     const [answers, setAnswers] = useState({});
 
@@ -492,33 +491,27 @@ function Home() {
     };
 
     const formatDateTimeForMySQL = (date) => {
-        if (date === null) { // If date is explicitly null, return null silently
+        if (date === null) {
             return null;
         }
-        // For other falsy values (like undefined) or invalid Date objects, log error
+
         if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
-            console.error("formatDateTimeForMySQL: Received invalid date object", date);
             return null;
         }
         const pad = (n) => String(n).padStart(2, "0");
 
-        // Tambahkan buffer 5 menit ke waktu untuk mengatasi perbedaan waktu server
-        const bufferedDate = new Date(date.getTime() + 5 * 60 * 1000);
-
-        // Use local time instead of UTC for formatting
-        const year = bufferedDate.getFullYear();
-        const month = pad(bufferedDate.getMonth() + 1);
-        const day = pad(bufferedDate.getDate());
-        const hours = pad(bufferedDate.getHours());
-        const minutes = pad(bufferedDate.getMinutes());
+        const year = date.getUTCFullYear();
+        const month = pad(date.getUTCMonth() + 1);
+        const day = pad(date.getUTCDate());
+        const hours = pad(date.getUTCHours());
+        const minutes = pad(date.getUTCMinutes());
 
         return `${year}-${month}-${day} ${hours}:${minutes}:00`;
     };
-    
+
     const combineDateTime = (date, time) => {
         console.log("combineDateTime inputs:", { date, time });
         if (!date || !time) {
-            console.warn("combineDateTime: date or time input is null/undefined. Returning null.", { date, time });
             return null;
         }
 
@@ -526,11 +519,9 @@ function Home() {
         const timeDate = new Date(time);
 
         if (isNaN(result.getTime())) {
-            console.error("combineDateTime: 'date' input is an invalid Date. Returning null.", { dateInput: date });
             return null;
         }
         if (isNaN(timeDate.getTime())) {
-            console.error("combineDateTime: 'time' input is an invalid Date. Returning null.", { timeInput: time });
             return null;
         }
 
@@ -538,10 +529,9 @@ function Home() {
             timeDate.getHours(),
             timeDate.getMinutes(),
             timeDate.getSeconds(),
-            0 // Explicitly set milliseconds to 0
+            0
         );
-        
-        console.log("combineDateTime output (JS Date object):", result);
+
         return result;
     };
 
@@ -549,7 +539,6 @@ function Home() {
         setLoading(true);
         setError("");
 
-        // Ensure start_time and end_time are properly set
         const validationResult = validateBookingTimes();
         if (!validationResult.valid) {
             setLoading(false);
@@ -563,12 +552,10 @@ function Home() {
             end_time: formatDateTimeForMySQL(validationResult.endTime),
         };
 
-        // Log data untuk debugging
-        console.log("Booking data:", bookingData);
-        console.log("Current server time (estimated):", new Date().toISOString());
-
-        // Guard against null or invalid start_time for time difference logging
-        if (bookingData.start_time && !isNaN(new Date(bookingData.start_time).getTime())) {
+        if (
+            bookingData.start_time &&
+            !isNaN(new Date(bookingData.start_time).getTime())
+        ) {
             console.log(
                 "Time difference (minutes):",
                 (new Date(bookingData.start_time).getTime() -
@@ -582,7 +569,6 @@ function Home() {
             );
         }
 
-        // Additional validation
         if (!bookingData.start_time || !bookingData.end_time) {
             setError("Invalid date/time format");
             setLoading(false);
@@ -622,7 +608,9 @@ function Home() {
                 console.error("Booking error:", err);
                 if (err.response && err.response.data) {
                     console.error("Server response:", err.response.data);
-                    setError(err.response.data.message || "Failed to book facility");
+                    setError(
+                        err.response.data.message || "Failed to book facility"
+                    );
                 } else {
                     setError(err.message || "Reservation failed");
                 }
@@ -782,11 +770,12 @@ function Home() {
     };
 
     const validateBookingTimes = () => {
-        // Initial check for presence of all date/time parts
-        if (!facilityBookingData.startDate ||
+        if (
+            !facilityBookingData.startDate ||
             !facilityBookingData.startTime ||
             !facilityBookingData.endDate ||
-            !facilityBookingData.endTime) {
+            !facilityBookingData.endTime
+        ) {
             dispatch(
                 setToastMessage({
                     severity: "error",
@@ -797,10 +786,15 @@ function Home() {
             return { valid: false };
         }
 
-        const combined_start_js_date = combineDateTime(facilityBookingData.startDate, facilityBookingData.startTime);
-        const combined_end_js_date = combineDateTime(facilityBookingData.endDate, facilityBookingData.endTime);
+        const combined_start_js_date = combineDateTime(
+            facilityBookingData.startDate,
+            facilityBookingData.startTime
+        );
+        const combined_end_js_date = combineDateTime(
+            facilityBookingData.endDate,
+            facilityBookingData.endTime
+        );
 
-        // Check if combineDateTime itself failed
         if (!combined_start_js_date || !combined_end_js_date) {
             dispatch(
                 setToastMessage({
@@ -816,9 +810,8 @@ function Home() {
         const start_luxon = DateTime.fromJSDate(combined_start_js_date);
         const end_luxon = DateTime.fromJSDate(combined_end_js_date);
 
-        // Check if Luxon could parse the JS Dates
         if (!start_luxon.isValid || !end_luxon.isValid) {
-             dispatch(
+            dispatch(
                 setToastMessage({
                     severity: "error",
                     summary: "Date Processing Error",
@@ -828,7 +821,6 @@ function Home() {
             return { valid: false };
         }
 
-        // Perform logical time validation
         if (start_luxon < now || end_luxon <= start_luxon) {
             dispatch(
                 setToastMessage({
@@ -840,13 +832,16 @@ function Home() {
             return { valid: false };
         }
 
-        // If all validations pass, update the state and return the combined dates
-        setFacilityBookingData(prev => ({
+        setFacilityBookingData((prev) => ({
             ...prev,
-            start_time: combined_start_js_date, // Still update state for other UI elements
-            end_time: combined_end_js_date   // Still update state for other UI elements
+            start_time: combined_start_js_date,
+            end_time: combined_end_js_date,
         }));
-        return { valid: true, startTime: combined_start_js_date, endTime: combined_end_js_date };
+        return {
+            valid: true,
+            startTime: combined_start_js_date,
+            endTime: combined_end_js_date,
+        };
     };
 
     return (
@@ -2225,18 +2220,23 @@ function Home() {
                                                 <div>
                                                     <label>Start Date</label>
                                                     <Calendar
-                                                        value={facilityBookingData.startDate}
+                                                        value={
+                                                            facilityBookingData.startDate
+                                                        }
                                                         onChange={(e) =>
                                                             setFacilityBookingData(
                                                                 (prev) => ({
                                                                     ...prev,
-                                                                    startDate: e.value,
+                                                                    startDate:
+                                                                        e.value,
                                                                 })
                                                             )
                                                         }
                                                         showTime={false}
                                                         dateFormat="yy-mm-dd"
-                                                        style={{ width: "100%" }}
+                                                        style={{
+                                                            width: "100%",
+                                                        }}
                                                         required
                                                         placeholder="Select start date"
                                                         minDate={new Date()}
@@ -2244,7 +2244,10 @@ function Home() {
                                                         inputClassName="date-time-input"
                                                         monthNavigator
                                                         yearNavigator
-                                                        yearRange="2023:2030"
+                                                        yearRange={`${new Date().getFullYear()}:${
+                                                            new Date().getFullYear() +
+                                                            5
+                                                        }`}
                                                         showOnFocus={true}
                                                         appendTo={document.body}
                                                         touchUI={true}
@@ -2252,17 +2255,26 @@ function Home() {
                                                         readOnlyInput={true}
                                                         icon="pi pi-calendar"
                                                         showIcon={true}
-                                                        footer={(                                                            <div className="p-datepicker-buttonbar">
+                                                        footer={
+                                                            <div className="p-datepicker-buttonbar">
                                                                 <button
                                                                     type="button"
                                                                     className="p-button-text p-button p-component p-button-today"
-                                                                    onClick={(e) => {
+                                                                    onClick={(
+                                                                        e
+                                                                    ) => {
                                                                         e.preventDefault();
-                                                                        const today = new Date();
-                                                                        setFacilityBookingData(prev => ({
-                                                                            ...prev,
-                                                                            startDate: today
-                                                                        }));
+                                                                        const today =
+                                                                            new Date();
+                                                                        setFacilityBookingData(
+                                                                            (
+                                                                                prev
+                                                                            ) => ({
+                                                                                ...prev,
+                                                                                startDate:
+                                                                                    today,
+                                                                            })
+                                                                        );
                                                                     }}
                                                                 >
                                                                     Today
@@ -2271,12 +2283,19 @@ function Home() {
                                                                     <button
                                                                         type="button"
                                                                         className="p-button-text p-button p-component p-button-clear"
-                                                                        onClick={(e) => {
+                                                                        onClick={(
+                                                                            e
+                                                                        ) => {
                                                                             e.preventDefault();
-                                                                            setFacilityBookingData(prev => ({
-                                                                                ...prev,
-                                                                                startDate: null
-                                                                            }));
+                                                                            setFacilityBookingData(
+                                                                                (
+                                                                                    prev
+                                                                                ) => ({
+                                                                                    ...prev,
+                                                                                    startDate:
+                                                                                        null,
+                                                                                })
+                                                                            );
                                                                         }}
                                                                     >
                                                                         Clear
@@ -2284,34 +2303,40 @@ function Home() {
                                                                     <button
                                                                         type="button"
                                                                         className="p-button-text p-button p-component p-button-success"
-                                                                        onClick={(e) => {
+                                                                        onClick={(
+                                                                            e
+                                                                        ) => {
                                                                             e.preventDefault();
-                                                                            // Save data and close calendar
-                                                                            document.body.click(); // Close calendar panel
+                                                                            document.body.click();
                                                                         }}
                                                                     >
                                                                         OK
                                                                     </button>
                                                                 </div>
                                                             </div>
-                                                        )}
+                                                        }
                                                     />
                                                 </div>
                                                 <div>
                                                     <label>Start Time</label>
                                                     <Calendar
-                                                        value={facilityBookingData.startTime}
+                                                        value={
+                                                            facilityBookingData.startTime
+                                                        }
                                                         onChange={(e) =>
                                                             setFacilityBookingData(
                                                                 (prev) => ({
                                                                     ...prev,
-                                                                    startTime: e.value,
+                                                                    startTime:
+                                                                        e.value,
                                                                 })
                                                             )
                                                         }
                                                         timeOnly={true}
                                                         hourFormat="24"
-                                                        style={{ width: "100%" }}
+                                                        style={{
+                                                            width: "100%",
+                                                        }}
                                                         required
                                                         placeholder="Select start time"
                                                         panelClassName="date-time-panel"
@@ -2323,19 +2348,27 @@ function Home() {
                                                         readOnlyInput={true}
                                                         icon="pi pi-clock"
                                                         showIcon={true}
-                                                        stepMinute={5}
-                                                        footer={(
+                                                        stepMinute={30}
+                                                        footer={
                                                             <div className="p-datepicker-buttonbar">
                                                                 <button
                                                                     type="button"
                                                                     className="p-button-text p-button p-component p-button-today"
-                                                                    onClick={(e) => {
+                                                                    onClick={(
+                                                                        e
+                                                                    ) => {
                                                                         e.preventDefault();
-                                                                        const now = new Date();
-                                                                        setFacilityBookingData(prev => ({
-                                                                            ...prev,
-                                                                            startTime: now
-                                                                        }));
+                                                                        const now =
+                                                                            new Date();
+                                                                        setFacilityBookingData(
+                                                                            (
+                                                                                prev
+                                                                            ) => ({
+                                                                                ...prev,
+                                                                                startTime:
+                                                                                    now,
+                                                                            })
+                                                                        );
                                                                     }}
                                                                 >
                                                                     Now
@@ -2344,12 +2377,19 @@ function Home() {
                                                                     <button
                                                                         type="button"
                                                                         className="p-button-text p-button p-component p-button-clear"
-                                                                        onClick={(e) => {
+                                                                        onClick={(
+                                                                            e
+                                                                        ) => {
                                                                             e.preventDefault();
-                                                                            setFacilityBookingData(prev => ({
-                                                                                ...prev,
-                                                                                startTime: null
-                                                                            }));
+                                                                            setFacilityBookingData(
+                                                                                (
+                                                                                    prev
+                                                                                ) => ({
+                                                                                    ...prev,
+                                                                                    startTime:
+                                                                                        null,
+                                                                                })
+                                                                            );
                                                                         }}
                                                                     >
                                                                         Clear
@@ -2357,42 +2397,54 @@ function Home() {
                                                                     <button
                                                                         type="button"
                                                                         className="p-button-text p-button p-component p-button-success"
-                                                                        onClick={(e) => {
+                                                                        onClick={(
+                                                                            e
+                                                                        ) => {
                                                                             e.preventDefault();
-                                                                            // Simpan data dan tutup kalender
-                                                                            document.body.click(); // Menutup panel kalender
+                                                                            document.body.click();
                                                                         }}
                                                                     >
                                                                         OK
                                                                     </button>
                                                                 </div>
                                                             </div>
-                                                        )}
+                                                        }
                                                     />
                                                 </div>
                                                 <div>
                                                     <label>End Date</label>
                                                     <Calendar
-                                                        value={facilityBookingData.endDate}
+                                                        value={
+                                                            facilityBookingData.endDate
+                                                        }
                                                         onChange={(e) =>
                                                             setFacilityBookingData(
                                                                 (prev) => ({
                                                                     ...prev,
-                                                                    endDate: e.value,
+                                                                    endDate:
+                                                                        e.value,
                                                                 })
                                                             )
                                                         }
                                                         showTime={false}
                                                         dateFormat="yy-mm-dd"
-                                                        style={{ width: "100%" }}
+                                                        style={{
+                                                            width: "100%",
+                                                        }}
                                                         required
                                                         placeholder="Select end date"
-                                                        minDate={facilityBookingData.startDate || new Date()}
+                                                        minDate={
+                                                            facilityBookingData.startDate ||
+                                                            new Date()
+                                                        }
                                                         panelClassName="date-time-panel"
                                                         inputClassName="date-time-input"
                                                         monthNavigator
                                                         yearNavigator
-                                                        yearRange="2023:2030"
+                                                        yearRange={`${new Date().getFullYear()}:${
+                                                            new Date().getFullYear() +
+                                                            5
+                                                        }`}
                                                         showOnFocus={true}
                                                         appendTo={document.body}
                                                         touchUI={true}
@@ -2405,18 +2457,23 @@ function Home() {
                                                 <div>
                                                     <label>End Time</label>
                                                     <Calendar
-                                                        value={facilityBookingData.endTime}
+                                                        value={
+                                                            facilityBookingData.endTime
+                                                        }
                                                         onChange={(e) =>
                                                             setFacilityBookingData(
                                                                 (prev) => ({
                                                                     ...prev,
-                                                                    endTime: e.value,
+                                                                    endTime:
+                                                                        e.value,
                                                                 })
                                                             )
                                                         }
                                                         timeOnly={true}
                                                         hourFormat="24"
-                                                        style={{ width: "100%" }}
+                                                        style={{
+                                                            width: "100%",
+                                                        }}
                                                         required
                                                         placeholder="Select end time"
                                                         panelClassName="date-time-panel"
@@ -2428,19 +2485,27 @@ function Home() {
                                                         readOnlyInput={true}
                                                         icon="pi pi-clock"
                                                         showIcon={true}
-                                                        stepMinute={5}
-                                                        footer={(
+                                                        stepMinute={30}
+                                                        footer={
                                                             <div className="p-datepicker-buttonbar">
                                                                 <button
                                                                     type="button"
                                                                     className="p-button-text p-button p-component p-button-today"
-                                                                    onClick={(e) => {
+                                                                    onClick={(
+                                                                        e
+                                                                    ) => {
                                                                         e.preventDefault();
-                                                                        const now = new Date();
-                                                                        setFacilityBookingData(prev => ({
-                                                                            ...prev,
-                                                                            startTime: now
-                                                                        }));
+                                                                        const now =
+                                                                            new Date();
+                                                                        setFacilityBookingData(
+                                                                            (
+                                                                                prev
+                                                                            ) => ({
+                                                                                ...prev,
+                                                                                startTime:
+                                                                                    now,
+                                                                            })
+                                                                        );
                                                                     }}
                                                                 >
                                                                     Now
@@ -2449,12 +2514,19 @@ function Home() {
                                                                     <button
                                                                         type="button"
                                                                         className="p-button-text p-button p-component p-button-clear"
-                                                                        onClick={(e) => {
+                                                                        onClick={(
+                                                                            e
+                                                                        ) => {
                                                                             e.preventDefault();
-                                                                            setFacilityBookingData(prev => ({
-                                                                                ...prev,
-                                                                                startTime: null
-                                                                            }));
+                                                                            setFacilityBookingData(
+                                                                                (
+                                                                                    prev
+                                                                                ) => ({
+                                                                                    ...prev,
+                                                                                    startTime:
+                                                                                        null,
+                                                                                })
+                                                                            );
                                                                         }}
                                                                     >
                                                                         Clear
@@ -2462,17 +2534,18 @@ function Home() {
                                                                     <button
                                                                         type="button"
                                                                         className="p-button-text p-button p-component p-button-success"
-                                                                        onClick={(e) => {
+                                                                        onClick={(
+                                                                            e
+                                                                        ) => {
                                                                             e.preventDefault();
-                                                                            // Simpan data dan tutup kalender
-                                                                            document.body.click(); // Menutup panel kalender
+                                                                            document.body.click();
                                                                         }}
                                                                     >
                                                                         OK
                                                                     </button>
                                                                 </div>
                                                             </div>
-                                                        )}
+                                                        }
                                                     />
                                                 </div>
                                                 <Button
