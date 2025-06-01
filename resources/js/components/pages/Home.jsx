@@ -76,7 +76,6 @@ function Home() {
     const [facilityBookingData, setFacilityBookingData] = useState({
         startDate: null,
         startTime: null,
-        endDate: null,
         endTime: null,
         start_time: null,
         end_time: null,
@@ -330,13 +329,17 @@ function Home() {
             .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     };
 
-    const formatDateToLocal = (utcDate) => {
+    const formatDateToLocal = (utcDate, format = null) => {
         if (!utcDate || !userTimezone) return "";
         const dt = DateTime.fromISO(utcDate, { zone: "utc" });
         if (!dt.isValid) {
             return "";
         }
-        return dt.setZone(userTimezone).toFormat("dd MMMM yyyy, HH:mm:ss z");
+        if (format === "time") {
+            return dt.setZone(userTimezone).toFormat("HH:mm:ss");
+        } else {
+            return dt.setZone(userTimezone).toFormat("dd MMMM yyyy, HH:mm:ss");
+        }
     };
 
     const resetState = () => {
@@ -773,7 +776,6 @@ function Home() {
         if (
             !facilityBookingData.startDate ||
             !facilityBookingData.startTime ||
-            !facilityBookingData.endDate ||
             !facilityBookingData.endTime
         ) {
             dispatch(
@@ -791,7 +793,7 @@ function Home() {
             facilityBookingData.startTime
         );
         const combined_end_js_date = combineDateTime(
-            facilityBookingData.endDate,
+            facilityBookingData.startDate,
             facilityBookingData.endTime
         );
 
@@ -2137,7 +2139,8 @@ function Home() {
                                                                         )}{" "}
                                                                         to{" "}
                                                                         {formatDateToLocal(
-                                                                            booking.end_time
+                                                                            booking.end_time,
+                                                                            "time"
                                                                         )}
                                                                     </li>
                                                                 )
@@ -2150,108 +2153,102 @@ function Home() {
                                                         this facility today.
                                                     </p>
                                                 )}
-                                                <div>
-                                                    <label>Start Date</label>
-                                                    <Calendar
-                                                        value={
-                                                            facilityBookingData.startDate
-                                                        }
-                                                        onChange={(e) =>
-                                                            setFacilityBookingData(
-                                                                (prev) => ({
-                                                                    ...prev,
-                                                                    startDate:
-                                                                        e.value,
-                                                                })
-                                                            )
-                                                        }
-                                                        showTime={false}
-                                                        dateFormat="yy-mm-dd"
-                                                        style={{
-                                                            width: "100%",
-                                                        }}
-                                                        required
-                                                        placeholder="Select start date"
-                                                        minDate={new Date()}
-                                                        panelClassName="date-time-panel"
-                                                        inputClassName="date-time-input"
-                                                        monthNavigator
-                                                        yearNavigator
-                                                        yearRange={`${new Date().getFullYear()}:${
-                                                            new Date().getFullYear() +
-                                                            5
-                                                        }`}
-                                                        showOnFocus={true}
-                                                        appendTo={document.body}
-                                                        touchUI={true}
-                                                        showButtonBar={true}
-                                                        readOnlyInput={true}
-                                                        icon="pi pi-calendar"
-                                                        showIcon={true}
-                                                        footer={
-                                                            <div className="p-datepicker-buttonbar">
+                                                <Calendar
+                                                    value={
+                                                        facilityBookingData.startDate
+                                                    }
+                                                    onChange={(e) =>
+                                                        setFacilityBookingData(
+                                                            (prev) => ({
+                                                                ...prev,
+                                                                startDate:
+                                                                    e.value,
+                                                            })
+                                                        )
+                                                    }
+                                                    showTime={false}
+                                                    dateFormat="yy-mm-dd"
+                                                    style={{
+                                                        width: "100%",
+                                                    }}
+                                                    required
+                                                    placeholder="Select start date"
+                                                    minDate={new Date()}
+                                                    panelClassName="date-time-panel"
+                                                    inputClassName="date-time-input"
+                                                    monthNavigator
+                                                    yearNavigator
+                                                    yearRange={`${new Date().getFullYear()}:${
+                                                        new Date().getFullYear() +
+                                                        5
+                                                    }`}
+                                                    showOnFocus={true}
+                                                    appendTo={document.body}
+                                                    touchUI={true}
+                                                    showButtonBar={true}
+                                                    readOnlyInput={true}
+                                                    footer={
+                                                        <div className="p-datepicker-buttonbar">
+                                                            <button
+                                                                type="button"
+                                                                className="p-button-text p-button p-component p-button-today"
+                                                                onClick={(
+                                                                    e
+                                                                ) => {
+                                                                    e.preventDefault();
+                                                                    const today =
+                                                                        new Date();
+                                                                    setFacilityBookingData(
+                                                                        (
+                                                                            prev
+                                                                        ) => ({
+                                                                            ...prev,
+                                                                            startDate:
+                                                                                today,
+                                                                        })
+                                                                    );
+                                                                }}
+                                                            >
+                                                                Today
+                                                            </button>
+                                                            <div className="p-buttonset">
                                                                 <button
                                                                     type="button"
-                                                                    className="p-button-text p-button p-component p-button-today"
+                                                                    className="p-button-text p-button p-component p-button-clear"
                                                                     onClick={(
                                                                         e
                                                                     ) => {
                                                                         e.preventDefault();
-                                                                        const today =
-                                                                            new Date();
                                                                         setFacilityBookingData(
                                                                             (
                                                                                 prev
                                                                             ) => ({
                                                                                 ...prev,
                                                                                 startDate:
-                                                                                    today,
+                                                                                    null,
                                                                             })
                                                                         );
                                                                     }}
                                                                 >
-                                                                    Today
+                                                                    Clear
                                                                 </button>
-                                                                <div className="p-buttonset">
-                                                                    <button
-                                                                        type="button"
-                                                                        className="p-button-text p-button p-component p-button-clear"
-                                                                        onClick={(
-                                                                            e
-                                                                        ) => {
-                                                                            e.preventDefault();
-                                                                            setFacilityBookingData(
-                                                                                (
-                                                                                    prev
-                                                                                ) => ({
-                                                                                    ...prev,
-                                                                                    startDate:
-                                                                                        null,
-                                                                                })
-                                                                            );
-                                                                        }}
-                                                                    >
-                                                                        Clear
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        className="p-button-text p-button p-component p-button-success"
-                                                                        onClick={(
-                                                                            e
-                                                                        ) => {
-                                                                            e.preventDefault();
-                                                                            document.body.click();
-                                                                        }}
-                                                                    >
-                                                                        OK
-                                                                    </button>
-                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    className="p-button-text p-button p-component p-button-success"
+                                                                    onClick={(
+                                                                        e
+                                                                    ) => {
+                                                                        e.preventDefault();
+                                                                        document.body.click();
+                                                                    }}
+                                                                >
+                                                                    OK
+                                                                </button>
                                                             </div>
-                                                        }
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label>Start Time</label>
+                                                        </div>
+                                                    }
+                                                />
+                                                <div className="flex justify-between w-full gap-2">
                                                     <Calendar
                                                         value={
                                                             facilityBookingData.startTime
@@ -2279,8 +2276,6 @@ function Home() {
                                                         touchUI={true}
                                                         showButtonBar={true}
                                                         readOnlyInput={true}
-                                                        icon="pi pi-clock"
-                                                        showIcon={true}
                                                         stepMinute={30}
                                                         footer={
                                                             <div className="p-datepicker-buttonbar">
@@ -2343,52 +2338,6 @@ function Home() {
                                                             </div>
                                                         }
                                                     />
-                                                </div>
-                                                <div>
-                                                    <label>End Date</label>
-                                                    <Calendar
-                                                        value={
-                                                            facilityBookingData.endDate
-                                                        }
-                                                        onChange={(e) =>
-                                                            setFacilityBookingData(
-                                                                (prev) => ({
-                                                                    ...prev,
-                                                                    endDate:
-                                                                        e.value,
-                                                                })
-                                                            )
-                                                        }
-                                                        showTime={false}
-                                                        dateFormat="yy-mm-dd"
-                                                        style={{
-                                                            width: "100%",
-                                                        }}
-                                                        required
-                                                        placeholder="Select end date"
-                                                        minDate={
-                                                            facilityBookingData.startDate ||
-                                                            new Date()
-                                                        }
-                                                        panelClassName="date-time-panel"
-                                                        inputClassName="date-time-input"
-                                                        monthNavigator
-                                                        yearNavigator
-                                                        yearRange={`${new Date().getFullYear()}:${
-                                                            new Date().getFullYear() +
-                                                            5
-                                                        }`}
-                                                        showOnFocus={true}
-                                                        appendTo={document.body}
-                                                        touchUI={true}
-                                                        showButtonBar={true}
-                                                        readOnlyInput={true}
-                                                        icon="pi pi-calendar"
-                                                        showIcon={true}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label>End Time</label>
                                                     <Calendar
                                                         value={
                                                             facilityBookingData.endTime
@@ -2416,8 +2365,6 @@ function Home() {
                                                         touchUI={true}
                                                         showButtonBar={true}
                                                         readOnlyInput={true}
-                                                        icon="pi pi-clock"
-                                                        showIcon={true}
                                                         stepMinute={30}
                                                         footer={
                                                             <div className="p-datepicker-buttonbar">
@@ -2516,7 +2463,6 @@ function Home() {
                                                     disabled={
                                                         !facilityBookingData.startDate ||
                                                         !facilityBookingData.startTime ||
-                                                        !facilityBookingData.endDate ||
                                                         !facilityBookingData.endTime ||
                                                         loading
                                                     }

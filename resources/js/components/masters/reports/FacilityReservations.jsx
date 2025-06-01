@@ -87,7 +87,9 @@ function FacilityReservations() {
                     student: i.student?.name || "N/A",
                     level: i.student?.class?.level?.name || "N/A",
                     class: i.student?.class?.name || "N/A",
-                    facility: i.facility?.name ? `${i.facility?.parent.name} (${i.facility?.name})` : "N/A",
+                    facility: i.facility?.name
+                        ? `${i.facility?.parent.name} (${i.facility?.name})`
+                        : "N/A",
                     status: i.status,
                     start_time: i.start_time,
                     end_time: i.end_time,
@@ -516,10 +518,12 @@ function FacilityReservations() {
               .filter((s) => s.class_id === formData.class.id)
               .map((i) => ({ id: i.id, label: i.name }))
         : [];
-    const facilityOptions = facilities.map((i) => ({
-        id: i.id,
-        label: i.name,
-    }));
+    const facilityOptions = facilities
+        .filter((i) => i.parent_id)
+        .map((i) => ({
+            id: i.id,
+            label: `${i.parent.name} (${i.name})`,
+        }));
 
     return (
         <div>
@@ -551,7 +555,7 @@ function FacilityReservations() {
                                         : "Edit Facility Reservation"
                                 }
                                 visible={visible}
-                                style={{ width: "400px" }}
+                                style={{ width: "600px" }}
                                 onHide={() => setVisible(false)}
                             >
                                 <form
@@ -647,7 +651,10 @@ function FacilityReservations() {
                                             </label>
                                         </FloatLabel>
                                     </div>
-                                    <div style={{ marginBottom: "2rem" }}>
+                                    <div
+                                        className="w-full flex justify-between"
+                                        style={{ marginBottom: "2rem" }}
+                                    >
                                         <FloatLabel>
                                             <Calendar
                                                 name="start_date"
@@ -658,7 +665,6 @@ function FacilityReservations() {
                                                 required
                                                 disabled={loading}
                                                 minDate={new Date()}
-                                                showIcon
                                                 touchUI
                                                 showButtonBar
                                                 readOnlyInput
@@ -675,8 +681,6 @@ function FacilityReservations() {
                                                 Start Date
                                             </label>
                                         </FloatLabel>
-                                    </div>
-                                    <div style={{ marginBottom: "2rem" }}>
                                         <FloatLabel>
                                             <Calendar
                                                 name="start_time"
@@ -690,7 +694,6 @@ function FacilityReservations() {
                                                     loading ||
                                                     !formData.start_date
                                                 }
-                                                showIcon
                                                 touchUI
                                                 showButtonBar
                                                 readOnlyInput
@@ -704,7 +707,10 @@ function FacilityReservations() {
                                             </label>
                                         </FloatLabel>
                                     </div>
-                                    <div style={{ marginBottom: "2rem" }}>
+                                    <div
+                                        className="w-full flex justify-between"
+                                        style={{ marginBottom: "2rem" }}
+                                    >
                                         <FloatLabel>
                                             <Calendar
                                                 name="end_date"
@@ -721,7 +727,6 @@ function FacilityReservations() {
                                                     formData.start_date ||
                                                     new Date()
                                                 }
-                                                showIcon
                                                 touchUI
                                                 showButtonBar
                                                 readOnlyInput
@@ -738,8 +743,6 @@ function FacilityReservations() {
                                                 End Date
                                             </label>
                                         </FloatLabel>
-                                    </div>
-                                    <div style={{ marginBottom: "2rem" }}>
                                         <FloatLabel>
                                             <Calendar
                                                 name="end_time"
@@ -753,7 +756,6 @@ function FacilityReservations() {
                                                     loading ||
                                                     !formData.end_date
                                                 }
-                                                showIcon
                                                 touchUI
                                                 showButtonBar
                                                 readOnlyInput
