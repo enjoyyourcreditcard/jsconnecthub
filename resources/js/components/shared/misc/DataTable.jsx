@@ -1598,14 +1598,14 @@ const CustomDataTable = ({
                                 headerName = "Facility";
                                 break;
                             default:
-                                headerName = "Name";
+                                headerName = null;
                         }
                     }
                     return (
                         <Column
                             key={col.field}
                             field={col.field}
-                            header={headerName}
+                            header={headerName ? headerName : col.header}
                             sortable={col.sortable}
                             body={col.body}
                             exportable={col.exportable !== false}

@@ -109,7 +109,7 @@ class MasterService
                 ->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.BOOKING_MASTER_TYPE')) {
-            return $q->with(['student.class.level', 'facility'])
+            return $q->with(['student.class.level', 'facility.parent'])
                 ->when($request->student_id, function ($q) use ($request) {
                     return $q->where('student_id', $request->student_id);
                 })

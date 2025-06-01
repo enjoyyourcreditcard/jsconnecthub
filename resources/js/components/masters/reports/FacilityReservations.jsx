@@ -87,7 +87,7 @@ function FacilityReservations() {
                     student: i.student?.name || "N/A",
                     level: i.student?.class?.level?.name || "N/A",
                     class: i.student?.class?.name || "N/A",
-                    facility: i.facility?.name || "N/A",
+                    facility: i.facility?.name ? `${i.facility?.parent.name} (${i.facility?.name})` : "N/A",
                     status: i.status,
                     start_time: i.start_time,
                     end_time: i.end_time,
