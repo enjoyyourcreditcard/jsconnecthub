@@ -17,10 +17,12 @@ import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
 import { InputText } from "primereact/inputtext";
 import { Checkbox } from "primereact/checkbox";
+import { DateTime } from "luxon";
 
 function Checkin() {
     const dispatch = useDispatch();
     const isAuthenticated = useIsAuthenticated();
+    const [userTimezone, setUserTimezone] = useState(null);
     const [visible, setVisible] = useState(false);
     const [mode, setMode] = useState("create");
     const [editId, setEditId] = useState(null);
@@ -37,6 +39,7 @@ function Checkin() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [timeFilter, setTimeFilter] = useState("today");
+    const [dateFilter, setDateFilter] = useState(null);
     const [rangeFilter, setRangeFilter] = useState(null);
     const {
         checkin: { data: checkin = [], endPoints: checkinEndPoints },
@@ -46,11 +49,12 @@ function Checkin() {
         activities: { data: activities = [], endPoints: activityEndPoints },
     } = useSelector((state) => state.global);
 
-    const myFetch = (params = { timeFilter: "today" }) => {
+    const myFetch = (params = {}) => {
         let url = checkinEndPoints.collection;
         if (params.timeFilter) {
             url += `?time=${params.timeFilter}`;
-        } else if (
+        }
+        if (
             params.rangeFilter &&
             params.rangeFilter[0] &&
             params.rangeFilter[1]
@@ -61,6 +65,13 @@ function Checkin() {
             const end = endDate.toISOString();
             url += `?range_time[start]=${start}&range_time[end]=${end}`;
         }
+        if (params.dateFilter) {
+            const formattedDate = DateTime.fromJSDate(params.dateFilter)
+                .setZone(userTimezone)
+                .toFormat("yyyy-MM-dd");
+            url += `?date=${formattedDate}`;
+        }
+
         dispatch(getRecords({ type: "checkin", endPoint: url })).then((d) => {
             if (d) {
                 const formattedCheckin = d.map((i) => ({
@@ -84,6 +95,11 @@ function Checkin() {
             }
         });
     };
+
+    useEffect(() => {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        setUserTimezone(timezone);
+    }, []);
 
     useEffect(() => {
         myFetch();
@@ -286,6 +302,8 @@ function Checkin() {
                                 title="Check In"
                                 timeFilter={timeFilter}
                                 setTimeFilter={setTimeFilter}
+                                dateFilter={dateFilter}
+                                setDateFilter={setDateFilter}
                                 rangeFilter={rangeFilter}
                                 setRangeFilter={setRangeFilter}
                             />

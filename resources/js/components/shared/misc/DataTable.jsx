@@ -17,7 +17,7 @@ import { OverlayPanel } from "primereact/overlaypanel";
 import { FileUpload } from "primereact/fileupload";
 import { Dropdown } from "primereact/dropdown";
 import { Calendar } from "primereact/calendar";
-import { Checkbox } from "primereact/checkbox";
+// import { Checkbox } from "primereact/checkbox";
 import {
     deleteRecord,
     importRecord,
@@ -53,6 +53,8 @@ const CustomDataTable = ({
     onDeleteStudent = () => {},
     timeFilter,
     setTimeFilter,
+    dateFilter,
+    setDateFilter,
     rangeFilter,
     setRangeFilter,
     questions = [],
@@ -604,6 +606,8 @@ const CustomDataTable = ({
                     onChange={(e) => setSize(e.value)}
                     placeholder="Select Size"
                     style={{ width: "150px" }}
+                    tooltip="Select size"
+                    tooltipOptions={{ position: "top" }}
                 />
             </div>
         );
@@ -645,7 +649,7 @@ const CustomDataTable = ({
                     type === "counsels") && (
                     <>
                         <Button
-                            label="Select"
+                            label="Select Date"
                             icon="pi pi-calendar"
                             severity="secondary"
                             onClick={(e) => timeFilterRef.current.toggle(e)}
@@ -657,17 +661,35 @@ const CustomDataTable = ({
                                     options={timeOptions}
                                     onChange={(e) => {
                                         setTimeFilter(e.value);
+                                        setDateFilter(null);
                                         setRangeFilter(null);
                                         onFetch({ timeFilter: e.value });
                                     }}
-                                    placeholder="Select Time Period"
+                                    placeholder="Select Date Period"
                                     style={{ width: "200px" }}
                                     showClear
+                                />
+                                <Calendar
+                                    value={dateFilter}
+                                    onChange={(e) => {
+                                        setDateFilter(e.value);
+                                        setRangeFilter(null);
+                                        setTimeFilter(null);
+                                        if (e.value) {
+                                            onFetch({ dateFilter: e.value });
+                                        }
+                                    }}
+                                    dateFormat="yy-mm-dd"
+                                    placeholder="Select Date"
+                                    style={{ width: "200px" }}
+                                    touchUI
+                                    showButtonBar
                                 />
                                 <Calendar
                                     value={rangeFilter}
                                     onChange={(e) => {
                                         setRangeFilter(e.value);
+                                        setDateFilter(null);
                                         setTimeFilter(null);
                                         if (
                                             e.value &&
@@ -681,6 +703,8 @@ const CustomDataTable = ({
                                     dateFormat="yy-mm-dd"
                                     placeholder="Select Date Range"
                                     style={{ width: "200px" }}
+                                    touchUI
+                                    showButtonBar
                                 />
                             </div>
                         </OverlayPanel>
@@ -952,7 +976,7 @@ const CustomDataTable = ({
             : [];
 
         return (
-            <div>
+            <div className="p-3">
                 <h5 className="font-bold mb-2">Answers from {question.text}</h5>
                 <DataTable
                     value={radioOptions.map((opt, index) => ({
@@ -981,8 +1005,8 @@ const CustomDataTable = ({
             : [];
 
         return (
-            <div>
-                <h5 className="font-bold mb-2">Students from {item.name}</h5>
+            <div className="p-3">
+                {/* <h5 className="font-bold mb-2">Students from {item.name}</h5> */}
                 <DataTable
                     value={classStudents}
                     size={size}
@@ -996,7 +1020,7 @@ const CustomDataTable = ({
                         style={{ width: "3rem" }}
                         exportable={false}
                     />
-                    <Column field="name" header="Name" sortable />
+                    <Column field="name" header="Student Name" sortable />
                     <Column header="Actions" body={studentActionsTemplate} />
                 </DataTable>
             </div>
@@ -1006,7 +1030,7 @@ const CustomDataTable = ({
     const rowExpansionTemplate = (data) => {
         if (isGrouped) {
             return (
-                <div>
+                <div className="p-3">
                     <h5 className="font-bold mb-2">
                         Counsels for {data.formattedDate}
                     </h5>
@@ -1064,7 +1088,7 @@ const CustomDataTable = ({
             };
 
             return (
-                <div>
+                <div className="p-3">
                     <h5 className="font-bold mb-2">
                         Questions from {data.name}
                     </h5>
@@ -1119,8 +1143,8 @@ const CustomDataTable = ({
                 : [];
 
             return (
-                <div>
-                    <h5 className="font-bold mb-2">Classes from {data.name}</h5>
+                <div className="p-3">
+                    {/* <h5 className="font-bold mb-2">Classes from {data.name}</h5> */}
                     <DataTable
                         value={levelClasses}
                         size={size}
@@ -1147,7 +1171,7 @@ const CustomDataTable = ({
                             style={{ width: "3rem" }}
                             exportable={false}
                         />
-                        <Column field="name" header="Name" sortable />
+                        <Column field="name" header="Class Name" sortable />
                         <Column
                             field="student_count"
                             header="Total Number of Student"
@@ -1228,7 +1252,7 @@ const CustomDataTable = ({
 
         return (
             <div style={{ display: "flex", alignItems: "center" }}>
-                <Checkbox
+                {/* <Checkbox
                     inputId={`confirm-${rowData[identifier]}`}
                     checked={status === "reserved"}
                     disabled={status !== "requested"}
@@ -1242,7 +1266,7 @@ const CustomDataTable = ({
                         status === "requested" ? "Confirm reservation" : null
                     }
                     tooltipOptions={{ position: "top" }}
-                />
+                /> */}
                 <Badge value={badgeValue} severity={badgeSeverity} />
             </div>
         );
@@ -1500,19 +1524,23 @@ const CustomDataTable = ({
                     style={{ width: "3rem" }}
                     exportable={false}
                 />
-                {visibleColumns.map((col) => (
-                    <Column
-                        key={col.field}
-                        field={col.field}
-                        header={col.header}
-                        sortable={col.sortable}
-                        body={col.body}
-                        exportable={col.exportable !== false}
-                        headerStyle={col.headerStyle}
-                        filter={col.filter}
-                        filterElement={col.filterElement}
-                    />
-                ))}
+                {visibleColumns.map((col) => {
+                    const isLevelName =
+                        type === "levels" && hasExpand && col.field === "name";
+                    return (
+                        <Column
+                            key={col.field}
+                            field={col.field}
+                            header={isLevelName ? "Level Name" : col.header}
+                            sortable={col.sortable}
+                            body={col.body}
+                            exportable={col.exportable !== false}
+                            headerStyle={col.headerStyle}
+                            filter={col.filter}
+                            filterElement={col.filterElement}
+                        />
+                    );
+                })}
                 {type !== "counsels" && !isGrouped ? (
                     <Column
                         field="actions"
@@ -1584,6 +1612,8 @@ CustomDataTable.propTypes = {
     onDeleteStudent: PropTypes.func,
     timeFilter: PropTypes.string,
     setTimeFilter: PropTypes.func,
+    dateFilter: PropTypes.object,
+    setDateFilter: PropTypes.func,
     rangeFilter: PropTypes.array,
     setRangeFilter: PropTypes.func,
     classes: PropTypes.array,

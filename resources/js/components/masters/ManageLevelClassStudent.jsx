@@ -333,7 +333,7 @@ function ManageLevelClassStudent() {
                                 onAddStudent={handleAddStudent}
                                 onEditStudent={handleEditStudent}
                                 onDeleteStudent={handleDeleteStudent}
-                                title="Level-Class-Student"
+                                title="Student"
                                 classes={Array.isArray(classes) ? classes : []}
                                 students={
                                     Array.isArray(students) ? students : []

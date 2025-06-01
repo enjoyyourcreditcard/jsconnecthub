@@ -10,7 +10,9 @@ import { DateTime } from "luxon";
 function Counsel() {
     const dispatch = useDispatch();
     const isAuthenticated = useIsAuthenticated();
+    const [userTimezone, setUserTimezone] = useState(null);
     const [timeFilter, setTimeFilter] = useState("week");
+    const [dateFilter, setDateFilter] = useState(null);
     const [rangeFilter, setRangeFilter] = useState(null);
     const {
         counsels: { data: counsels = [], endPoints: counselEndPoints },
@@ -20,7 +22,6 @@ function Counsel() {
         },
     } = useSelector((state) => state.global);
 
-    // Group counsels by created_at date
     const groupCounselsByDate = (counsels) => {
         const grouped = counsels.reduce((acc, counsel) => {
             const date = DateTime.fromISO(counsel.created_at, { zone: "utc" })
@@ -46,11 +47,12 @@ function Counsel() {
 
     const groupedCounsels = groupCounselsByDate(counsels);
 
-    const myFetch = (params = { timeFilter: "week" }) => {
+    const myFetch = (params = {}) => {
         let url = counselEndPoints.collection;
         if (params.timeFilter) {
             url += `?time=${params.timeFilter}`;
-        } else if (
+        }
+        if (
             params.rangeFilter &&
             params.rangeFilter[0] &&
             params.rangeFilter[1]
@@ -58,6 +60,12 @@ function Counsel() {
             const start = params.rangeFilter[0].toISOString().split("T")[0];
             const end = params.rangeFilter[1].toISOString().split("T")[0];
             url += `?range_time[start]=${start}&range_time[end]=${end}`;
+        }
+        if (params.dateFilter) {
+            const formattedDate = DateTime.fromJSDate(params.dateFilter)
+                .setZone(userTimezone)
+                .toFormat("yyyy-MM-dd");
+            url += `?date=${formattedDate}`;
         }
         dispatch(getRecords({ type: "counsels", endPoint: url })).then((d) => {
             if (d) {
@@ -88,6 +96,11 @@ function Counsel() {
     };
 
     useEffect(() => {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        setUserTimezone(timezone);
+    }, []);
+
+    useEffect(() => {
         dispatch(
             getRecords({
                 type: "support_strategies",
@@ -111,6 +124,8 @@ function Counsel() {
                             title="Counsel"
                             timeFilter={timeFilter}
                             setTimeFilter={setTimeFilter}
+                            dateFilter={dateFilter}
+                            setDateFilter={setDateFilter}
                             rangeFilter={rangeFilter}
                             setRangeFilter={setRangeFilter}
                             hasExpand={true}

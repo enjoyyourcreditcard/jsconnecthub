@@ -16,14 +16,17 @@ import { FloatLabel } from "primereact/floatlabel";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
+import { DateTime } from "luxon";
 
 function FacilityReservations() {
     const dispatch = useDispatch();
     const isAuthenticated = useIsAuthenticated();
+    const [userTimezone, setUserTimezone] = useState(null);
     const [visible, setVisible] = useState(false);
     const [mode, setMode] = useState("create");
     const [editId, setEditId] = useState(null);
-    const [timeFilter, setTimeFilter] = useState(null);
+    const [timeFilter, setTimeFilter] = useState("week");
+    const [dateFilter, setDateFilter] = useState(null);
     const [rangeFilter, setRangeFilter] = useState(null);
     const [formData, setFormData] = useState({
         level: null,
@@ -46,6 +49,10 @@ function FacilityReservations() {
     } = useSelector((state) => state.global);
 
     const myFetch = (fetchParams = {}) => {
+        let currentDateFilter =
+            fetchParams?.dateFilter !== undefined
+                ? fetchParams.dateFilter
+                : dateFilter;
         let currentFilter =
             fetchParams?.timeFilter !== undefined
                 ? fetchParams.timeFilter
@@ -56,16 +63,24 @@ function FacilityReservations() {
                 : rangeFilter;
 
         let url = bookingEndPoints.collection;
+
         if (currentFilter) {
             url += `?time=${currentFilter}`;
-        } else if (currentRange && currentRange[0] && currentRange[1]) {
+        }
+        if (currentRange && currentRange[0] && currentRange[1]) {
             const start = currentRange[0].toISOString();
             const endDate = new Date(currentRange[1]);
             endDate.setUTCDate(endDate.getUTCDate() + 1);
             const end = endDate.toISOString();
             url += `?range_time[start]=${start}&range_time[end]=${end}`;
         }
-        // If both currentFilter and currentRange are null/undefined, no time/range query param is added.
+        if (currentDateFilter) {
+            const formattedDate = DateTime.fromJSDate(currentDateFilter)
+                .setZone(userTimezone)
+                .toFormat("yyyy-MM-dd");
+            url += `?date=${formattedDate}`;
+        }
+
         dispatch(getRecords({ type: "bookings", endPoint: url })).then((d) => {
             if (d) {
                 const formattedBooking = d.map((i) => ({
@@ -91,7 +106,12 @@ function FacilityReservations() {
     };
 
     useEffect(() => {
-        myFetch(); // Initial fetch will use timeFilter state (null by default now)
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        setUserTimezone(timezone);
+    }, []);
+
+    useEffect(() => {
+        myFetch();
         dispatch(
             getRecords({
                 type: "levels",
@@ -120,31 +140,7 @@ function FacilityReservations() {
                 key: "data",
             })
         );
-    }, [dispatch]); // Reverted dependency array
-
-    // const fetchFacilityBookings = (facilityId) => {
-    //     dispatch(
-    //         getRecords({
-    //             type: "bookings",
-    //             endPoint: `${bookingEndPoints.collection}?facility_id=${facilityId}`,
-    //             key: "data",
-    //         })
-    //     ).then((result) => {
-    //         if (result.length) {
-    //             setFacilityBookings(
-    //                 result
-    //                     .filter((booking) => booking.status === "reserved")
-    //                     .map((booking) => ({
-    //                         id: booking.id,
-    //                         start_time: booking.start_time,
-    //                         end_time: booking.end_time,
-    //                     }))
-    //             );
-    //         } else {
-    //             setFacilityBookings([]);
-    //         }
-    //     });
-    // };
+    }, [dispatch]);
 
     const handleAdd = () => {
         setMode("create");
@@ -549,6 +545,8 @@ function FacilityReservations() {
                                 title="Facility Reservations"
                                 timeFilter={timeFilter}
                                 setTimeFilter={setTimeFilter}
+                                dateFilter={dateFilter}
+                                setDateFilter={setDateFilter}
                                 rangeFilter={rangeFilter}
                                 setRangeFilter={setRangeFilter}
                             />

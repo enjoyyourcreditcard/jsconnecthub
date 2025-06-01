@@ -1075,31 +1075,7 @@ function Home() {
                                                     <>
                                                         <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 p-5 flex-grow flex flex-wrap items-center max-h-48 overflow-y-auto">
                                                             <div className="justify-start mb-4">
-                                                                Hi "
-                                                                {
-                                                                    students.find(
-                                                                        (s) =>
-                                                                            s.id ===
-                                                                            studentId
-                                                                    )?.name
-                                                                }
-                                                                " from class "
-                                                                {
-                                                                    classes.find(
-                                                                        (c) =>
-                                                                            c.id ===
-                                                                            classId
-                                                                    )?.name
-                                                                }
-                                                                " level "
-                                                                {
-                                                                    levels.find(
-                                                                        (l) =>
-                                                                            l.id ===
-                                                                            levelId
-                                                                    )?.name
-                                                                }
-                                                                ". This is your
+                                                                This is your
                                                                 activities log
                                                                 today (Timezone:{" "}
                                                                 {userTimezone}
@@ -1514,32 +1490,8 @@ function Home() {
                                                     <>
                                                         <div className="mb-4">
                                                             <h4>
-                                                                Hi "
-                                                                {
-                                                                    students.find(
-                                                                        (s) =>
-                                                                            s.id ===
-                                                                            studentId
-                                                                    )?.name
-                                                                }
-                                                                " from class "
-                                                                {
-                                                                    classes.find(
-                                                                        (c) =>
-                                                                            c.id ===
-                                                                            classId
-                                                                    )?.name
-                                                                }
-                                                                " level "
-                                                                {
-                                                                    levels.find(
-                                                                        (l) =>
-                                                                            l.id ===
-                                                                            levelId
-                                                                    )?.name
-                                                                }
-                                                                ". What Support
-                                                                do you need?
+                                                                What Support do
+                                                                you need?
                                                             </h4>
                                                         </div>
                                                         <Dropdown
@@ -1833,31 +1785,7 @@ function Home() {
                                                     <>
                                                         <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 p-5 flex-grow flex flex-wrap items-center max-h-48 overflow-y-auto">
                                                             <div className="justify-start mb-4">
-                                                                Hi "
-                                                                {
-                                                                    students.find(
-                                                                        (s) =>
-                                                                            s.id ===
-                                                                            studentId
-                                                                    )?.name
-                                                                }
-                                                                " from class "
-                                                                {
-                                                                    classes.find(
-                                                                        (c) =>
-                                                                            c.id ===
-                                                                            classId
-                                                                    )?.name
-                                                                }
-                                                                " level "
-                                                                {
-                                                                    levels.find(
-                                                                        (l) =>
-                                                                            l.id ===
-                                                                            levelId
-                                                                    )?.name
-                                                                }
-                                                                ". This is your
+                                                                This is your
                                                                 facility booking
                                                                 log today
                                                                 (Timezone:{" "}
