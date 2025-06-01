@@ -17,12 +17,10 @@ import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
 import { InputText } from "primereact/inputtext";
 import { Checkbox } from "primereact/checkbox";
-import { DateTime } from "luxon";
 
 function Checkin() {
     const dispatch = useDispatch();
     const isAuthenticated = useIsAuthenticated();
-    const [userTimezone, setUserTimezone] = useState(null);
     const [visible, setVisible] = useState(false);
     const [mode, setMode] = useState("create");
     const [editId, setEditId] = useState(null);
@@ -66,10 +64,11 @@ function Checkin() {
             url += `?range_time[start]=${start}&range_time[end]=${end}`;
         }
         if (params.dateFilter) {
-            const formattedDate = DateTime.fromJSDate(params.dateFilter)
-                .setZone(userTimezone)
-                .toFormat("yyyy-MM-dd");
-            url += `?date=${formattedDate}`;
+            const start = params.dateFilter.toISOString();
+            const endDate = new Date(params.dateFilter);
+            endDate.setUTCDate(endDate.getUTCDate() + 1);
+            const end = endDate.toISOString();
+            url += `?range_time[start]=${start}&range_time[end]=${end}`;
         }
 
         dispatch(getRecords({ type: "checkin", endPoint: url })).then((d) => {
@@ -95,11 +94,6 @@ function Checkin() {
             }
         });
     };
-
-    useEffect(() => {
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        setUserTimezone(timezone);
-    }, []);
 
     useEffect(() => {
         myFetch();

@@ -57,15 +57,18 @@ function Counsel() {
             params.rangeFilter[0] &&
             params.rangeFilter[1]
         ) {
-            const start = params.rangeFilter[0].toISOString().split("T")[0];
-            const end = params.rangeFilter[1].toISOString().split("T")[0];
+            const start = params.rangeFilter[0].toISOString();
+            const endDate = new Date(params.rangeFilter[1]);
+            endDate.setUTCDate(endDate.getUTCDate() + 1);
+            const end = endDate.toISOString();
             url += `?range_time[start]=${start}&range_time[end]=${end}`;
         }
         if (params.dateFilter) {
-            const formattedDate = DateTime.fromJSDate(params.dateFilter)
-                .setZone(userTimezone)
-                .toFormat("yyyy-MM-dd");
-            url += `?date=${formattedDate}`;
+            const start = params.dateFilter.toISOString();
+            const endDate = new Date(params.dateFilter);
+            endDate.setUTCDate(endDate.getUTCDate() + 1);
+            const end = endDate.toISOString();
+            url += `?range_time[start]=${start}&range_time[end]=${end}`;
         }
         dispatch(getRecords({ type: "counsels", endPoint: url })).then((d) => {
             if (d) {

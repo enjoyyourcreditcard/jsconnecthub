@@ -16,12 +16,10 @@ import { FloatLabel } from "primereact/floatlabel";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
-import { DateTime } from "luxon";
 
 function FacilityReservations() {
     const dispatch = useDispatch();
     const isAuthenticated = useIsAuthenticated();
-    const [userTimezone, setUserTimezone] = useState(null);
     const [visible, setVisible] = useState(false);
     const [mode, setMode] = useState("create");
     const [editId, setEditId] = useState(null);
@@ -75,10 +73,11 @@ function FacilityReservations() {
             url += `?range_time[start]=${start}&range_time[end]=${end}`;
         }
         if (currentDateFilter) {
-            const formattedDate = DateTime.fromJSDate(currentDateFilter)
-                .setZone(userTimezone)
-                .toFormat("yyyy-MM-dd");
-            url += `?date=${formattedDate}`;
+            const start = currentDateFilter.toISOString();
+            const endDate = new Date(currentDateFilter);
+            endDate.setUTCDate(endDate.getUTCDate() + 1);
+            const end = endDate.toISOString();
+            url += `?range_time[start]=${start}&range_time[end]=${end}`;
         }
 
         dispatch(getRecords({ type: "bookings", endPoint: url })).then((d) => {
@@ -104,11 +103,6 @@ function FacilityReservations() {
             }
         });
     };
-
-    useEffect(() => {
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        setUserTimezone(timezone);
-    }, []);
 
     useEffect(() => {
         myFetch();

@@ -93,9 +93,6 @@ class MasterService
                             return $q;
                     }
                 })
-                ->when($request->date, function ($q) use ($request) {
-                    return $q->whereDate('checkin_time', $request->date);
-                })
                 ->when($request->range_time, function ($q) use ($request) {
                     if (
                         is_array($request->range_time) &&
@@ -152,9 +149,6 @@ class MasterService
                             return $q;
                     }
                 })
-                ->when($request->date, function ($q) use ($request) {
-                    return $q->whereDate('start_time', $request->date);
-                })
                 ->when($request->range_time, function ($q) use ($request) {
                     if (
                         is_array($request->range_time) &&
@@ -199,9 +193,6 @@ class MasterService
                         default:
                             return $q;
                     }
-                })
-                ->when($request->date, function ($q) use ($request) {
-                    return $q->whereDate('created_at', $request->date);
                 })
                 ->when($request->range_time, function ($q) use ($request) {
                     if (
