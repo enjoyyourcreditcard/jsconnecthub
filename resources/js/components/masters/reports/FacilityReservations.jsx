@@ -23,15 +23,19 @@ function FacilityReservations() {
     const [visible, setVisible] = useState(false);
     const [mode, setMode] = useState("create");
     const [editId, setEditId] = useState(null);
-    const [timeFilter, setTimeFilter] = useState("today");
+    const [timeFilter, setTimeFilter] = useState(null); // Default to no time filter
     const [rangeFilter, setRangeFilter] = useState(null);
+    // Modifikasi state formData untuk memisahkan tanggal dan waktu
     const [formData, setFormData] = useState({
-        level: null,
-        class: null,
-        student: null,
-        facility: null,
-        start_time: null,
-        end_time: null,
+    level: null,
+    class: null,
+    student: null,
+    facility: null,
+    // Pisahkan tanggal dan waktu
+    start_date: null,
+    start_time: null,
+    end_date: null,
+    end_time: null,
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -43,21 +47,25 @@ function FacilityReservations() {
         facilities: { data: facilities = [], endPoints: facilityEndPoints },
     } = useSelector((state) => state.global);
 
-    const myFetch = (params = { timeFilter: "today" }) => {
+    const myFetch = (fetchParams = {}) => {
+        let currentFilter = fetchParams?.timeFilter !== undefined ? fetchParams.timeFilter : timeFilter;
+        let currentRange = fetchParams?.rangeFilter !== undefined ? fetchParams.rangeFilter : rangeFilter;
+
         let url = bookingEndPoints.collection;
-        if (params.timeFilter) {
-            url += `?time=${params.timeFilter}`;
+        if (currentFilter) {
+            url += `?time=${currentFilter}`;
         } else if (
-            params.rangeFilter &&
-            params.rangeFilter[0] &&
-            params.rangeFilter[1]
+            currentRange &&
+            currentRange[0] &&
+            currentRange[1]
         ) {
-            const start = params.rangeFilter[0].toISOString();
-            const endDate = new Date(params.rangeFilter[1]);
+            const start = currentRange[0].toISOString();
+            const endDate = new Date(currentRange[1]);
             endDate.setUTCDate(endDate.getUTCDate() + 1);
             const end = endDate.toISOString();
             url += `?range_time[start]=${start}&range_time[end]=${end}`;
         }
+        // If both currentFilter and currentRange are null/undefined, no time/range query param is added.
         dispatch(getRecords({ type: "bookings", endPoint: url })).then((d) => {
             if (d) {
                 const formattedBooking = d.map((i) => ({
@@ -83,7 +91,7 @@ function FacilityReservations() {
     };
 
     useEffect(() => {
-        myFetch();
+        myFetch(); // Initial fetch will use timeFilter state (null by default now)
         dispatch(
             getRecords({
                 type: "levels",
@@ -112,7 +120,7 @@ function FacilityReservations() {
                 key: "data",
             })
         );
-    }, [dispatch]);
+    }, [dispatch]); // Reverted dependency array
 
     // const fetchFacilityBookings = (facilityId) => {
     //     dispatch(
@@ -145,7 +153,9 @@ function FacilityReservations() {
             class: null,
             student: null,
             facility: null,
+            start_date: null,
             start_time: null,
+            end_date: null,
             end_time: null,
         });
         setEditId(null);
@@ -177,9 +187,9 @@ function FacilityReservations() {
                 facility: facilityData
                     ? { id: facilityData.id, label: facilityData.name }
                     : null,
-                start_time: booking.start_time
-                    ? new Date(booking.start_time)
-                    : null,
+                start_date: booking.start_time ? new Date(booking.start_time) : null,
+                start_time: booking.start_time ? new Date(booking.start_time) : null,
+                end_date: booking.end_time ? new Date(booking.end_time) : null,
                 end_time: booking.end_time ? new Date(booking.end_time) : null,
             });
             setEditId(id);
@@ -271,15 +281,70 @@ function FacilityReservations() {
     };
 
     const handleChange = (e) => {
-        const { name, value } = e.target ? e.target : e;
+        const { name, value } = e.target ? e.target : e; // Calendar passes {name, value} directly in e
+
         setFormData((prev) => {
             const newData = { ...prev, [name]: value };
+
             if (name === "level") {
                 newData.class = null;
                 newData.student = null;
             } else if (name === "class") {
                 newData.student = null;
+            } else if (name === "start_date" || name === "start_time") {
+                // If start_date or start_time changes, validate against end_date and end_time
+                // Ensure all parts are available before attempting to combine and compare
+                const newStartDate = name === "start_date" ? value : prev.start_date;
+                const newStartTime = name === "start_time" ? value : prev.start_time;
+                const currentEndDate = prev.end_date;
+                const currentEndTime = prev.end_time;
+
+                if (newStartDate && newStartTime && currentEndDate && currentEndTime) {
+                    const newStartDateTime = combineDateAndTime(newStartDate, newStartTime);
+                    const currentEndDateTime = combineDateAndTime(currentEndDate, currentEndTime);
+
+                    if (newStartDateTime && currentEndDateTime && newStartDateTime >= currentEndDateTime) {
+                        newData.end_date = null;
+                        newData.end_time = null;
+                        dispatch(
+                            setToastMessage({
+                                severity: "info",
+                                summary: "Waktu Akhir Direset",
+                                detail: "Waktu akhir telah direset karena waktu mulai diubah.",
+                            })
+                        );
+                    }
+                }
             }
+            // If end_date is set before start_date, and end_date is earlier than start_date, reset end_date
+            if (name === "end_date" && newData.start_date && value && new Date(value) < new Date(newData.start_date)) {
+                newData.end_date = null;
+                 dispatch(
+                    setToastMessage({
+                        severity: "warn",
+                        summary: "Tanggal Akhir Tidak Valid",
+                        detail: "Tanggal akhir tidak boleh sebelum tanggal mulai.",
+                    })
+                );
+            }
+            // If end_time is set, and start_date, start_time, end_date are set,
+            // and the resulting endDateTime is before startDateTime, reset end_time
+            if (name === "end_time" && newData.start_date && newData.start_time && newData.end_date && value) {
+                const startDateTime = combineDateAndTime(newData.start_date, newData.start_time);
+                const endDateTime = combineDateAndTime(newData.end_date, value);
+                if (startDateTime && endDateTime && endDateTime <= startDateTime) {
+                    newData.end_time = null;
+                    dispatch(
+                        setToastMessage({
+                            severity: "warn",
+                            summary: "Waktu Akhir Tidak Valid",
+                            detail: "Waktu akhir harus setelah waktu mulai.",
+                        })
+                    );
+                }
+            }
+
+
             return newData;
         });
     };
@@ -287,29 +352,88 @@ function FacilityReservations() {
     const formatDateTimeForMySQL = (date) => {
         if (!date) return null;
         const pad = (n) => String(n).padStart(2, "0");
-        const year = date.getUTCFullYear();
-        const month = pad(date.getUTCMonth() + 1);
-        const day = pad(date.getUTCDate());
-        const hours = pad(date.getUTCHours());
-        const minutes = pad(date.getUTCMinutes());
-        return `${year}-${month}-${day} ${hours}:${minutes}:00`;
+        // Gunakan waktu lokal, bukan UTC
+        const year = date.getFullYear();
+        const month = pad(date.getMonth() + 1);
+        const day = pad(date.getDate());
+        const hours = pad(date.getHours());
+        const minutes = pad(date.getMinutes());
+        const seconds = pad(date.getSeconds());
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     };
 
+    // Tambahkan fungsi untuk menggabungkan tanggal dan waktu
+    const combineDateAndTime = (date, time) => {
+        if (!date || !time) return null;
+        
+        const combinedDate = new Date(date);
+        const timeDate = new Date(time);
+        
+        combinedDate.setHours(
+            timeDate.getHours(),
+            timeDate.getMinutes(),
+            timeDate.getSeconds()
+        );
+        
+        return combinedDate;
+    };
+    
+    // Modifikasi handleSubmit untuk menggabungkan tanggal dan waktu sebelum mengirim
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError("");
-
-        const now = new Date();
-        const startTime = new Date(formData.start_time);
-        const endTime = new Date(formData.end_time);
-
-        if (startTime <= now || endTime <= startTime) {
+    
+        // Validasi data yang diperlukan
+        if (!formData.student?.id || !formData.facility?.id || 
+            !formData.start_date || !formData.start_time || 
+            !formData.end_date || !formData.end_time) {
             dispatch(
                 setToastMessage({
                     severity: "error",
-                    summary: "Invalid Time",
-                    detail: "End time must be after start time, and start time must not be in the past.",
+                    summary: "Data Tidak Lengkap",
+                    detail: "Semua field harus diisi.",
+                })
+            );
+            setLoading(false);
+            return;
+        }
+    
+        const now = new Date();
+        const startDateTime = combineDateAndTime(formData.start_date, formData.start_time);
+        const endDateTime = combineDateAndTime(formData.end_date, formData.end_time);
+    
+        // Validasi waktu
+        if (!startDateTime || !endDateTime) {
+            dispatch(
+                setToastMessage({
+                    severity: "error",
+                    summary: "Format Tanggal/Waktu Tidak Valid",
+                    detail: "Pastikan tanggal dan waktu mulai serta selesai valid.",
+                })
+            );
+            setLoading(false);
+            return;
+        }
+
+        if (startDateTime <= now) {
+            dispatch(
+                setToastMessage({
+                    severity: "error",
+                    summary: "Waktu Tidak Valid",
+                    detail: "Waktu mulai harus di masa depan.",
+                })
+            );
+            setLoading(false);
+            return;
+        }
+    
+        if (endDateTime <= startDateTime) {
+            dispatch(
+                setToastMessage({
+                    severity: "error",
+                    summary: "Waktu Tidak Valid",
+                    detail: "Waktu selesai harus setelah waktu mulai.",
                 })
             );
             setLoading(false);
@@ -319,8 +443,8 @@ function FacilityReservations() {
         const dataToSubmit = {
             student_id: formData.student?.id,
             facility_id: formData.facility?.id,
-            start_time: formatDateTimeForMySQL(formData.start_time),
-            end_time: formatDateTimeForMySQL(formData.end_time),
+            start_time: formatDateTimeForMySQL(startDateTime),
+            end_time: formatDateTimeForMySQL(endDateTime),
         };
 
         try {
@@ -395,15 +519,18 @@ function FacilityReservations() {
                                         : "Edit Facility Reservation"
                                 }
                                 visible={visible}
-                                style={{ width: "400px" }}
+                                style={{ width: "400px" }} // Reverted to fixed width
                                 onHide={() => setVisible(false)}
                             >
-                                <form onSubmit={handleSubmit} className="mt-8">
+                                <form onSubmit={handleSubmit} className="mt-8 reservation-form">
                                     {error && (
                                         <p
                                             style={{
                                                 color: "red",
                                                 marginBottom: "2rem",
+                                                backgroundColor: "#fee2e2",
+                                                padding: "0.75rem",
+                                                borderRadius: "8px",
                                             }}
                                         >
                                             {error}
@@ -488,21 +615,77 @@ function FacilityReservations() {
                                     <div style={{ marginBottom: "2rem" }}>
                                         <FloatLabel>
                                             <Calendar
-                                                name="start_time"
-                                                value={formData.start_time}
+                                                name="start_date"
+                                                value={formData.start_date}
                                                 onChange={handleChange}
-                                                showTime
-                                                hourFormat="24"
                                                 dateFormat="yy-mm-dd"
                                                 style={{ width: "100%" }}
                                                 required
                                                 disabled={loading}
-                                                placeholder="Select start time"
+                                                placeholder="Select start date"
                                                 minDate={new Date()}
+                                                showIcon
+                                                touchUI
+                                                showButtonBar
+                                                readOnlyInput
+                                                appendTo={document.body}
+                                                panelClassName="date-time-panel"
+                                                inputClassName="date-time-input"
+                                                monthNavigator
+                                                yearNavigator
+                                                yearRange={`${new Date().getFullYear()}:${new Date().getFullYear() + 5}`}
                                             />
-                                            <label htmlFor="start_time">
-                                                Start Time
-                                            </label>
+                                            <label htmlFor="start_date">Start Date</label>
+                                        </FloatLabel>
+                                    </div>
+                                    <div style={{ marginBottom: "2rem" }}>
+                                        <FloatLabel>
+                                            <Calendar
+                                                name="start_time"
+                                                value={formData.start_time}
+                                                onChange={handleChange}
+                                                timeOnly
+                                                hourFormat="24"
+                                                style={{ width: "100%" }}
+                                                required
+                                                disabled={loading || !formData.start_date}
+                                                placeholder="Select start time"
+                                                showIcon
+                                                touchUI
+                                                showButtonBar
+                                                readOnlyInput
+                                                appendTo={document.body}
+                                                panelClassName="date-time-panel"
+                                                inputClassName="date-time-input"
+                                                stepMinute={5}
+                                            />
+                                            <label htmlFor="start_time">Start Time</label>
+                                        </FloatLabel>
+                                    </div>
+                                    <div style={{ marginBottom: "2rem" }}>
+                                        <FloatLabel>
+                                            <Calendar
+                                                name="end_date"
+                                                value={formData.end_date}
+                                                onChange={handleChange}
+                                                dateFormat="yy-mm-dd"
+                                                style={{ width: "100%" }}
+                                                required
+                                                disabled={loading || !formData.start_date}
+                                                placeholder="Select end date"
+                                                minDate={formData.start_date || new Date()}
+                                                showIcon
+                                                touchUI
+                                                showButtonBar
+                                                readOnlyInput
+                                                appendTo={document.body}
+                                                panelClassName="date-time-panel"
+                                                inputClassName="date-time-input"
+                                                monthNavigator
+                                                yearNavigator
+                                                yearRange={`${new Date().getFullYear()}:${new Date().getFullYear() + 5}`}
+                                            />
+                                            <label htmlFor="end_date">End Date</label>
                                         </FloatLabel>
                                     </div>
                                     <div style={{ marginBottom: "2rem" }}>
@@ -511,21 +694,28 @@ function FacilityReservations() {
                                                 name="end_time"
                                                 value={formData.end_time}
                                                 onChange={handleChange}
-                                                showTime
+                                                timeOnly
                                                 hourFormat="24"
-                                                dateFormat="yy-mm-dd"
                                                 style={{ width: "100%" }}
                                                 required
-                                                disabled={loading}
+                                                disabled={loading || !formData.end_date}
                                                 placeholder="Select end time"
-                                                minDate={new Date()}
+                                                showIcon
+                                                touchUI
+                                                showButtonBar
+                                                readOnlyInput
+                                                appendTo={document.body}
+                                                panelClassName="date-time-panel"
+                                                inputClassName="date-time-input"
+                                                stepMinute={5}
+                                                // minTime validation is tricky with PrimeReact Calendar when date might change.
+                                                // The logic in handleChange handles ensuring end_time is after start_time.
                                             />
-                                            <label htmlFor="end_time">
-                                                End Time
-                                            </label>
+                                            <label htmlFor="end_time">End Time</label>
                                         </FloatLabel>
                                     </div>
                                     <div
+                                        className="reservation-form-buttons"
                                         style={{
                                             display: "flex",
                                             gap: "10px",
@@ -541,15 +731,11 @@ function FacilityReservations() {
                                             disabled={loading}
                                         />
                                         <Button
-                                            label={
-                                                mode === "create"
-                                                    ? "Create"
-                                                    : "Update"
-                                            }
+                                            label={mode === "create" ? "Create" : "Update"}
                                             icon="pi pi-check"
                                             type="submit"
                                             disabled={loading}
-                                            autoFocus
+                                            className="p-button-outlined"
                                         />
                                     </div>
                                 </form>
