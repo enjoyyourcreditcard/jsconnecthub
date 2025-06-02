@@ -55,7 +55,10 @@ function Dashboard() {
                 })
             );
         }
-        if (userPermissions.includes("dashboard view")) {
+        if (
+            userPermissions.includes("dashboard view") ||
+            userPermissions.includes("dashboard-bookings view")
+        ) {
             dispatch(
                 getRecords({
                     type: "facilities",
@@ -233,7 +236,8 @@ function Dashboard() {
                             />
                         </Card>
                     )}
-                    {permissions.includes("dashboard view") && (
+                    {(permissions.includes("dashboard view") ||
+                        permissions.includes("dashboard-bookings view")) && (
                         <Card title="Reservation Overview">
                             <div className="flex flex-col md:flex-row gap-4">
                                 <div className="md:w-1/2">

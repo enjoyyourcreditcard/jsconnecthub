@@ -38,8 +38,18 @@ const PrivateRoute = ({ element, permission }) => {
         return <Navigate to="/login" replace />;
     }
 
-    if (permission && !permissions.includes(permission)) {
-        return <Navigate to="/home" replace />;
+    if (permission) {
+        const requiredPermissions = Array.isArray(permission)
+            ? permission
+            : [permission];
+
+        const hasPermission = requiredPermissions.some((p) =>
+            permissions.includes(p)
+        );
+
+        if (!hasPermission) {
+            return <Navigate to="/home" replace />;
+        }
     }
 
     return element;
@@ -76,7 +86,7 @@ const AppWrapper = () => {
         {
             path: "/dashboard",
             element: <Dashboard />,
-            permission: "dashboard view",
+            permission: ["dashboard view", "dashboard-bookings view"],
         },
         { path: "/users", element: <ManageUser />, permission: "users view" },
         { path: "/class", element: <ManageClass />, permission: "class view" },

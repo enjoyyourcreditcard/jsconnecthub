@@ -48,7 +48,10 @@ const Header = () => {
         const permissions = auth()?.permissions || [];
         const items = [];
 
-        if (permissions.includes("dashboard view")) {
+        if (
+            permissions.includes("dashboard view") ||
+            permissions.includes("dashboard-bookings view")
+        ) {
             items.push({
                 label: "Dashboard",
                 command: () => navigate("/dashboard"),
