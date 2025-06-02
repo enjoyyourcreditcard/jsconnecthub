@@ -6,6 +6,7 @@ import Header from "../shared/layout/Header";
 import { Tree } from "primereact/tree";
 import { Card } from "primereact/card";
 import { Calendar } from "primereact/calendar";
+import { Dropdown } from "primereact/dropdown";
 import { DateTime } from "luxon";
 import { ScrollPanel } from "primereact/scrollpanel";
 
@@ -16,12 +17,17 @@ function Dashboard() {
         levels: { data: levels = [], endPoints: levelEndPoints },
         students: { data: students = [], endPoints: studentEndPoints },
         bookings: { data: bookings = [], endPoints: bookingEndPoints },
+        facilities: {
+            data: facilities = [],
+            endPoints: facilityEndPoints,
+        } = {},
     } = useSelector((state) => state.global);
     const auth = useAuthUser();
     const [nodes, setNodes] = useState([]);
     const [date, setDate] = useState(new Date());
     const [permissions, setPermissions] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [selectedFacility, setSelectedFacility] = useState(null);
 
     useEffect(() => {
         const userPermissions = auth()?.permissions || [];
@@ -49,27 +55,47 @@ function Dashboard() {
                 })
             );
         }
-    }, [dispatch]);
-
-    useEffect(() => {
-        if (permissions.includes("dashboard view") && date) {
-            setLoading(true);
-
-            const start = DateTime.fromJSDate(date)
-                .startOf("day")
-                .toUTC()
-                .toISO();
-            const end = DateTime.fromJSDate(date).endOf("day").toUTC().toISO();
-
+        if (userPermissions.includes("dashboard view")) {
             dispatch(
                 getRecords({
-                    type: "bookings",
-                    endPoint: `${bookingEndPoints.collection}?range_time[start]=${start}&range_time[end]=${end}`,
+                    type: "facilities",
+                    endPoint: facilityEndPoints.collection,
                     key: "data",
                 })
-            )
-                .then((result) => {
-                    if (Array.isArray(result) && result.length === 0) {
+            );
+
+            if (date) {
+                setLoading(true);
+
+                const start = DateTime.fromJSDate(date)
+                    .startOf("day")
+                    .toUTC()
+                    .toISO();
+                const end = DateTime.fromJSDate(date)
+                    .endOf("day")
+                    .toUTC()
+                    .toISO();
+
+                dispatch(
+                    getRecords({
+                        type: "bookings",
+                        endPoint: `${bookingEndPoints.collection}?range_time[start]=${start}&range_time[end]=${end}`,
+                        key: "data",
+                    })
+                )
+                    .then((result) => {
+                        if (Array.isArray(result) && result.length === 0) {
+                            dispatch(
+                                setStateData({
+                                    type: "bookings",
+                                    data: [],
+                                    key: "data",
+                                })
+                            );
+                        }
+                    })
+                    .catch((err) => {
+                        console.error("Error fetching bookings:", err);
                         dispatch(
                             setStateData({
                                 type: "bookings",
@@ -77,12 +103,9 @@ function Dashboard() {
                                 key: "data",
                             })
                         );
-                    }
-                })
-                .catch((err) => {
-                    console.log(err);
-                })
-                .finally(() => setLoading(false));
+                    })
+                    .finally(() => setLoading(false));
+            }
         }
     }, [dispatch, date]);
 
@@ -114,6 +137,16 @@ function Dashboard() {
         return <span>{node.label}</span>;
     };
 
+    const facilityOptions = [
+        { label: "All Facilities", value: 0 },
+        ...facilities
+            .filter((i) => i.parent_id)
+            .map((facility) => ({
+                label: `${facility.parent.name} (${facility.name})`,
+                value: facility.id,
+            })),
+    ];
+
     const getTimeSlots = () => {
         const slots = [];
         for (let hour = 0; hour < 24; hour++) {
@@ -136,23 +169,29 @@ function Dashboard() {
     const populateBookings = () => {
         const slots = getTimeSlots();
         if (Array.isArray(bookings) && bookings.length > 0) {
-            bookings.forEach((booking) => {
-                const start = DateTime.fromISO(booking.start_time);
-                const endTime = DateTime.fromISO(booking.end_time);
-                const startHour = start.hour;
-                const startMinute = start.minute;
-                const slotIndex =
-                    startMinute < 30 ? startHour * 2 : startHour * 2 + 1;
+            bookings
+                .filter((booking) =>
+                    selectedFacility
+                        ? booking.facility_id === selectedFacility
+                        : true
+                )
+                .forEach((booking) => {
+                    const start = DateTime.fromISO(booking.start_time);
+                    const endTime = DateTime.fromISO(booking.end_time);
+                    const startHour = start.hour;
+                    const startMinute = start.minute;
+                    const slotIndex =
+                        startMinute < 30 ? startHour * 2 : startHour * 2 + 1;
 
-                if (slotIndex < slots.length) {
-                    slots[slotIndex].bookings.push({
-                        ...booking,
-                        duration: endTime.diff(start, "minutes").minutes,
-                        startTime: start.toFormat("HH:mm"),
-                        endTime: endTime.toFormat("HH:mm"),
-                    });
-                }
-            });
+                    if (slotIndex < slots.length) {
+                        slots[slotIndex].bookings.push({
+                            ...booking,
+                            duration: endTime.diff(start, "minutes").minutes,
+                            startTime: start.toFormat("HH:mm"),
+                            endTime: endTime.toFormat("HH:mm"),
+                        });
+                    }
+                });
         }
         return slots;
     };
@@ -190,7 +229,6 @@ function Dashboard() {
                                 filterMode="lenient"
                                 filterPlaceholder="Search"
                                 nodeTemplate={nodeTemplate}
-                                className="slds"
                                 style={{ padding: "0", maxHeight: "480px" }}
                             />
                         </Card>
@@ -199,6 +237,18 @@ function Dashboard() {
                         <Card title="Reservation Overview">
                             <div className="flex flex-col md:flex-row gap-4">
                                 <div className="md:w-1/2">
+                                    <div className="mb-4">
+                                        <Dropdown
+                                            value={selectedFacility}
+                                            options={facilityOptions}
+                                            onChange={(e) =>
+                                                setSelectedFacility(e.value)
+                                            }
+                                            placeholder="Select Facility"
+                                            style={{ width: "100%" }}
+                                            showClear
+                                        />
+                                    </div>
                                     <Calendar
                                         value={date}
                                         onChange={(e) => setDate(e.value)}
@@ -239,7 +289,8 @@ function Dashboard() {
                                                 }}
                                             >
                                                 <span>
-                                                    No bookings for this date.
+                                                    No bookings for this date
+                                                    and this facility.
                                                 </span>
                                             </div>
                                         ) : (
