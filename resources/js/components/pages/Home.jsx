@@ -32,7 +32,6 @@ function Home() {
     const toast = useRef(null);
     const stepperRef = useRef(null);
     const overlayRef = useRef(null);
-    const facilityOverlayRef = useRef(null);
     const dispatch = useDispatch();
     const {
         class: { data: classes = [], endPoints: classEndPoints },
@@ -67,19 +66,15 @@ function Home() {
     const [questLog, setQuestLog] = useState([]);
     const [bookingId, setBookingId] = useState(null);
     const [selectedFacility, setSelectedFacility] = useState(null);
+    const [selectedLocation, setSelectedLocation] = useState(null);
     const [isBooked, setIsBooked] = useState(false);
     const [bookingLog, setBookingLog] = useState([]);
     const [facilityBookings, setFacilityBookings] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [userTimezone, setUserTimezone] = useState(null);
-    const [facilityBookingData, setFacilityBookingData] = useState({
-        startDate: null,
-        startTime: null,
-        endTime: null,
-        start_time: null,
-        end_time: null,
-    });
+    const [bookingDate, setBookingDate] = useState(null);
+    const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
     const [selectedStrategy, setSelectedStrategy] = useState(null);
     const [answers, setAnswers] = useState({});
 
@@ -355,6 +350,7 @@ function Home() {
         setBookingId(null);
         setSelectedActivity(null);
         setSelectedFacility(null);
+        setSelectedLocation(null);
         setEditableActivity("");
         setShowCustomActivityInput(false);
         setIsCheckedIn(false);
@@ -363,7 +359,8 @@ function Home() {
         setIsEarlyCheckout(false);
         setEarlyReason("");
         setError("");
-        setFacilityBookingData({ start_time: null, end_time: null });
+        setBookingDate(null);
+        setSelectedTimeSlots([]);
         setSelectedStrategy(null);
         setAnswers({});
     };
@@ -494,83 +491,44 @@ function Home() {
     };
 
     const formatDateTimeForMySQL = (date) => {
-        if (date === null) {
-            return null;
-        }
-
         if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
             return null;
         }
         const pad = (n) => String(n).padStart(2, "0");
-
         const year = date.getUTCFullYear();
         const month = pad(date.getUTCMonth() + 1);
         const day = pad(date.getUTCDate());
         const hours = pad(date.getUTCHours());
         const minutes = pad(date.getUTCMinutes());
-
         return `${year}-${month}-${day} ${hours}:${minutes}:00`;
-    };
-
-    const combineDateTime = (date, time) => {
-        console.log("combineDateTime inputs:", { date, time });
-        if (!date || !time) {
-            return null;
-        }
-
-        const result = new Date(date);
-        const timeDate = new Date(time);
-
-        if (isNaN(result.getTime())) {
-            return null;
-        }
-        if (isNaN(timeDate.getTime())) {
-            return null;
-        }
-
-        result.setHours(
-            timeDate.getHours(),
-            timeDate.getMinutes(),
-            timeDate.getSeconds(),
-            0
-        );
-
-        return result;
     };
 
     const handleReserve = () => {
         setLoading(true);
         setError("");
 
-        const validationResult = validateBookingTimes();
-        if (!validationResult.valid) {
+        if (!bookingDate || !selectedTimeSlots.length) {
+            dispatch(
+                setToastMessage({
+                    severity: "error",
+                    summary: "Missing Information",
+                    detail: "Please select a date and at least one time slot.",
+                })
+            );
             setLoading(false);
             return;
         }
 
+        const updatedTimeSlots = updateTimeSlots();
+        const startTime = updatedTimeSlots[selectedTimeSlots[0]].start;
+        const endTime = updatedTimeSlots[selectedTimeSlots[selectedTimeSlots.length - 1]].end;
+
         const bookingData = {
             student_id: studentId,
             facility_id: selectedFacility?.id,
-            start_time: formatDateTimeForMySQL(validationResult.startTime),
-            end_time: formatDateTimeForMySQL(validationResult.endTime),
+            start_time: formatDateTimeForMySQL(startTime),
+            end_time: formatDateTimeForMySQL(endTime),
         };
-
-        if (
-            bookingData.start_time &&
-            !isNaN(new Date(bookingData.start_time).getTime())
-        ) {
-            console.log(
-                "Time difference (minutes):",
-                (new Date(bookingData.start_time).getTime() -
-                    new Date().getTime()) /
-                    (1000 * 60)
-            );
-        } else {
-            console.warn(
-                "Skipping time difference calculation: bookingData.start_time is null, undefined, or invalid.",
-                { startTime: bookingData.start_time }
-            );
-        }
 
         if (!bookingData.start_time || !bookingData.end_time) {
             setError("Invalid date/time format");
@@ -609,14 +567,7 @@ function Home() {
             })
             .catch((err) => {
                 console.error("Booking error:", err);
-                if (err.response && err.response.data) {
-                    console.error("Server response:", err.response.data);
-                    setError(
-                        err.response.data.message || "Failed to book facility"
-                    );
-                } else {
-                    setError(err.message || "Reservation failed");
-                }
+                setError(err.message || "Reservation failed");
             })
             .finally(() => {
                 setLoading(false);
@@ -772,78 +723,59 @@ function Home() {
         );
     };
 
-    const validateBookingTimes = () => {
-        if (
-            !facilityBookingData.startDate ||
-            !facilityBookingData.startTime ||
-            !facilityBookingData.endTime
-        ) {
-            dispatch(
-                setToastMessage({
-                    severity: "error",
-                    summary: "Missing Information",
-                    detail: "Please select start date, start time, end date, and end time.",
-                })
-            );
-            return { valid: false };
+    const timeSlots = [
+        { label: "2:00 PM - 2:30 PM", start: null, end: null, index: 0 },
+        { label: "2:30 PM - 3:00 PM", start: null, end: null, index: 1 },
+        { label: "3:00 PM - 3:30 PM", start: null, end: null, index: 2 },
+        { label: "3:30 PM - 4:00 PM", start: null, end: null, index: 3 },
+        { label: "4:00 PM - 4:30 PM", start: null, end: null, index: 4 },
+        { label: "4:30 PM - 5:00 PM", start: null, end: null, index: 5 },
+    ];
+
+    const updateTimeSlots = () => {
+        if (!bookingDate) return timeSlots;
+        return timeSlots.map((slot, index) => {
+            const startHour = 14 + Math.floor(index / 2);
+            const startMinute = index % 2 === 0 ? 0 : 30;
+            const endHour = startMinute === 30 ? startHour + 1 : startHour;
+            const endMinute = startMinute === 30 ? 0 : 30;
+            return {
+                ...slot,
+                start: new Date(
+                    bookingDate.getFullYear(),
+                    bookingDate.getMonth(),
+                    bookingDate.getDate(),
+                    startHour,
+                    startMinute
+                ),
+                end: new Date(
+                    bookingDate.getFullYear(),
+                    bookingDate.getMonth(),
+                    bookingDate.getDate(),
+                    endHour,
+                    endMinute
+                ),
+            };
+        });
+    };
+
+    const handleTimeSlotChange = (index) => {
+        let newSelectedSlots = [...selectedTimeSlots];
+        if (newSelectedSlots.includes(index)) {
+            newSelectedSlots = newSelectedSlots.filter((i) => i !== index);
+        } else {
+            newSelectedSlots.push(index);
+            newSelectedSlots.sort((a, b) => a - b);
+            if (newSelectedSlots.length > 1) {
+                const minIndex = Math.min(...newSelectedSlots);
+                const maxIndex = Math.max(...newSelectedSlots);
+                newSelectedSlots = Array.from(
+                    { length: maxIndex - minIndex + 1 },
+                    (_, i) => minIndex + i
+                );
+            }
         }
-
-        const combined_start_js_date = combineDateTime(
-            facilityBookingData.startDate,
-            facilityBookingData.startTime
-        );
-        const combined_end_js_date = combineDateTime(
-            facilityBookingData.startDate,
-            facilityBookingData.endTime
-        );
-
-        if (!combined_start_js_date || !combined_end_js_date) {
-            dispatch(
-                setToastMessage({
-                    severity: "error",
-                    summary: "Invalid Date/Time Input",
-                    detail: "The selected date or time values are not valid. Please check your selections.",
-                })
-            );
-            return { valid: false };
-        }
-
-        const now = DateTime.now().plus({ minutes: 5 });
-        const start_luxon = DateTime.fromJSDate(combined_start_js_date);
-        const end_luxon = DateTime.fromJSDate(combined_end_js_date);
-
-        if (!start_luxon.isValid || !end_luxon.isValid) {
-            dispatch(
-                setToastMessage({
-                    severity: "error",
-                    summary: "Date Processing Error",
-                    detail: "There was an issue processing the selected dates. Please ensure they are correct and try again.",
-                })
-            );
-            return { valid: false };
-        }
-
-        if (start_luxon < now || end_luxon <= start_luxon) {
-            dispatch(
-                setToastMessage({
-                    severity: "error",
-                    summary: "Invalid Time Range",
-                    detail: "End time must be after start time. Start time must be at least 5 minutes in the future.",
-                })
-            );
-            return { valid: false };
-        }
-
-        setFacilityBookingData((prev) => ({
-            ...prev,
-            start_time: combined_start_js_date,
-            end_time: combined_end_js_date,
-        }));
-        return {
-            valid: true,
-            startTime: combined_start_js_date,
-            endTime: combined_end_js_date,
-        };
+        setSelectedTimeSlots(newSelectedSlots);
     };
 
     return (
@@ -1779,213 +1711,380 @@ function Home() {
                                         </div>
                                     </StepperPanel>
                                 )}
+
+                                {/* facilities reservation */}
                                 {activeButton === "facilities" && (
-                                    <StepperPanel header="Facilities Booking">
+                                    <StepperPanel header="Location">
                                         <div className="flex flex-col h-full">
-                                            <div className="flex-grow grid grid-cols-1 items-center gap-2">
-                                                {studentId ? (
-                                                    <>
-                                                        <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 p-5 flex-grow flex flex-wrap items-center max-h-48 overflow-y-auto">
-                                                            <div className="justify-start">
-                                                                This is your
-                                                                facility booking
-                                                                log today
-                                                                (Timezone:{" "}
-                                                                {userTimezone}
-                                                                ):
-                                                            </div>
-                                                            <Accordion className="w-full">
-                                                                {bookingLog.map(
-                                                                    (
-                                                                        booking
-                                                                    ) => (
-                                                                        <AccordionTab
-                                                                            key={
-                                                                                booking.id
-                                                                            }
-                                                                            header={
-                                                                                <div className="flex items-center gap-2">
-                                                                                    <span className="truncate max-w-[100px] sm:max-w-[200px] inline-block">
-                                                                                        {
-                                                                                            booking.facilityName
-                                                                                        }
-                                                                                    </span>
-                                                                                    <Badge
-                                                                                        value={capitalize(
-                                                                                            booking.status
-                                                                                        )}
-                                                                                        severity={
-                                                                                            booking.status ===
-                                                                                            "requested"
-                                                                                                ? "info"
-                                                                                                : booking.status ===
-                                                                                                  "reserved"
-                                                                                                ? "success"
-                                                                                                : booking.status ===
-                                                                                                  "closed"
-                                                                                                ? "secondary"
-                                                                                                : "danger"
-                                                                                        }
-                                                                                    />
-                                                                                </div>
-                                                                            }
-                                                                        >
-                                                                            <div className="flex flex-col gap-2">
-                                                                                <p>
-                                                                                    <strong>
-                                                                                        Facility:
-                                                                                    </strong>{" "}
-                                                                                    {
-                                                                                        booking.facilityName
-                                                                                    }
-                                                                                </p>
-                                                                                <p>
-                                                                                    <strong>
-                                                                                        Start
-                                                                                        Time:
-                                                                                    </strong>{" "}
-                                                                                    {formatDateToLocal(
-                                                                                        booking.startTime
-                                                                                    )}
-                                                                                </p>
-                                                                                <p>
-                                                                                    <strong>
-                                                                                        End
-                                                                                        Time:
-                                                                                    </strong>{" "}
-                                                                                    {formatDateToLocal(
-                                                                                        booking.endTime
-                                                                                    )}
-                                                                                </p>
-                                                                                <p>
-                                                                                    <strong>
-                                                                                        Status:
-                                                                                    </strong>{" "}
-                                                                                    {capitalize(
-                                                                                        booking.status
-                                                                                    )}
-                                                                                </p>
-                                                                                {(booking.status ===
-                                                                                    "requested" ||
-                                                                                    booking.status ===
-                                                                                        "reserved") && (
-                                                                                    <Button
-                                                                                        label="Cancel"
-                                                                                        icon="pi pi-times"
-                                                                                        severity="danger"
-                                                                                        size="small"
-                                                                                        onClick={(
-                                                                                            event
-                                                                                        ) =>
-                                                                                            confirmPopup(
-                                                                                                {
-                                                                                                    target: event.currentTarget,
-                                                                                                    message: `Are you sure you want to cancel your reservation for ${booking.facilityName}?`,
-                                                                                                    icon: "pi pi-exclamation-triangle",
-                                                                                                    accept: () =>
-                                                                                                        handleCancelBooking(
-                                                                                                            booking.id,
-                                                                                                            booking.facilityName
-                                                                                                        ),
-                                                                                                    reject: () => {
-                                                                                                        dispatch(
-                                                                                                            setToastMessage(
-                                                                                                                {
-                                                                                                                    severity:
-                                                                                                                        "warn",
-                                                                                                                    summary:
-                                                                                                                        "Action Cancelled",
-                                                                                                                    detail: "Reservation not cancelled.",
-                                                                                                                }
-                                                                                                            )
-                                                                                                        );
-                                                                                                    },
-                                                                                                }
-                                                                                            )
-                                                                                        }
-                                                                                    />
-                                                                                )}
-                                                                            </div>
-                                                                        </AccordionTab>
-                                                                    )
-                                                                )}
-                                                            </Accordion>
-                                                        </div>
-                                                        {!isBooked && (
-                                                            <div>
-                                                                <p>
-                                                                    Please
-                                                                    select a
-                                                                    facility to
-                                                                    reserve
-                                                                    today.
-                                                                </p>
-                                                            </div>
+                                            <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-32">
+                                                {facilities
+                                                    .filter((f) => !f.parent_id)
+                                                    .map((location) => (
+                                                        <Button
+                                                            key={location.id}
+                                                            label={
+                                                                location.name
+                                                            }
+                                                            onClick={() => {
+                                                                setSelectedLocation(
+                                                                    location.id
+                                                                );
+                                                                setSelectedFacility(
+                                                                    null
+                                                                );
+                                                                fetchFacilityBookings(
+                                                                    location.id
+                                                                );
+                                                            }}
+                                                            className={`${
+                                                                selectedLocation ===
+                                                                location.id
+                                                                    ? "bg-blue-500 text-white"
+                                                                    : "bg-gray-200"
+                                                            }`}
+                                                            size="small"
+                                                            icon={
+                                                                selectedLocation ===
+                                                                location.id
+                                                                    ? "pi pi-check"
+                                                                    : null
+                                                            }
+                                                        />
+                                                    ))}
+                                            </div>
+                                        </div>
+                                        <div className="flex pt-4 justify-between">
+                                            <Button
+                                                label="Back"
+                                                severity="secondary"
+                                                icon="pi pi-arrow-left"
+                                                size="small"
+                                                onClick={() =>
+                                                    stepperRef.current.prevCallback()
+                                                }
+                                            />
+                                            <Button
+                                                label="Next"
+                                                icon="pi pi-arrow-right"
+                                                iconPos="right"
+                                                size="small"
+                                                onClick={() =>
+                                                    stepperRef.current.nextCallback()
+                                                }
+                                                disabled={!selectedLocation}
+                                            />
+                                        </div>
+                                    </StepperPanel>
+                                )}
+                                {activeButton === "facilities" && (
+                                    <StepperPanel header="Facility">
+                                        <div className="flex flex-col h-full">
+                                            <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-32">
+                                                {facilities
+                                                    .filter(
+                                                        (f) =>
+                                                            f.parent_id ===
+                                                            selectedLocation
+                                                    )
+                                                    .map((facility) => (
+                                                        <Button
+                                                            key={facility.id}
+                                                            label={
+                                                                facility.name
+                                                            }
+                                                            onClick={() => {
+                                                                setSelectedFacility(
+                                                                    facility
+                                                                );
+                                                                fetchFacilityBookings(
+                                                                    facility.id
+                                                                );
+                                                            }}
+                                                            className={`${
+                                                                selectedFacility?.id ===
+                                                                facility.id
+                                                                    ? "bg-blue-500 text-white"
+                                                                    : "bg-gray-200"
+                                                            }`}
+                                                            size="small"
+                                                            icon={
+                                                                selectedFacility?.id ===
+                                                                facility.id
+                                                                    ? "pi pi-check"
+                                                                    : null
+                                                            }
+                                                        />
+                                                    ))}
+                                            </div>
+                                        </div>
+                                        <div className="flex pt-4 justify-between">
+                                            <Button
+                                                label="Back"
+                                                severity="secondary"
+                                                icon="pi pi-arrow-left"
+                                                size="small"
+                                                onClick={() =>
+                                                    stepperRef.current.prevCallback()
+                                                }
+                                            />
+                                            <Button
+                                                label="Next"
+                                                icon="pi pi-arrow-right"
+                                                iconPos="right"
+                                                size="small"
+                                                onClick={() =>
+                                                    stepperRef.current.nextCallback()
+                                                }
+                                                disabled={!selectedFacility}
+                                            />
+                                        </div>
+                                    </StepperPanel>
+                                )}
+                                {activeButton === "facilities" && (
+                                    <StepperPanel header="Date">
+                                        <div className="flex flex-col h-full">
+                                            <div className="flex-grow flex justify-center items-center">
+                                                <Calendar
+                                                    value={bookingDate}
+                                                    onChange={(e) => {
+                                                        setBookingDate(e.value);
+                                                        setSelectedTimeSlots(
+                                                            []
+                                                        );
+                                                    }}
+                                                    dateFormat="yy-mm-dd"
+                                                    minDate={new Date()}
+                                                    showButtonBar
+                                                    style={{
+                                                        width: "100%",
+                                                    }}
+                                                    placeholder="Select date"
+                                                />
+                                            </div>
+                                            {facilityBookings.length > 0 && (
+                                                <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 bg-gray-50 mt-4">
+                                                    <p className="font-semibold">
+                                                        Existing Reserved
+                                                        Bookings (Timezone:{" "}
+                                                        {userTimezone}):
+                                                    </p>
+                                                    <ul className="list-disc pl-5">
+                                                        {facilityBookings.map(
+                                                            (booking) => (
+                                                                <li
+                                                                    key={
+                                                                        booking.id
+                                                                    }
+                                                                >
+                                                                    {formatDateToLocal(
+                                                                        booking.start_time
+                                                                    )}{" "}
+                                                                    to{" "}
+                                                                    {formatDateToLocal(
+                                                                        booking.end_time,
+                                                                        "time"
+                                                                    )}
+                                                                </li>
+                                                            )
                                                         )}
-                                                        <div className="flex-grow grid grid-cols-1 gap-2 max-h-32 overflow-y-auto">
-                                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                                                {!isBooked && (
-                                                                    <>
-                                                                        {facilities
-                                                                            .filter(
-                                                                                (
-                                                                                    i
-                                                                                ) =>
-                                                                                    i.parent_id
-                                                                            )
-                                                                            .map(
-                                                                                (
-                                                                                    facility
-                                                                                ) => (
-                                                                                    <Button
-                                                                                        key={
-                                                                                            facility.id
-                                                                                        }
-                                                                                        label={`${facility.parent.name} (${facility.name})`}
-                                                                                        onClick={(
-                                                                                            event
-                                                                                        ) => {
-                                                                                            setSelectedFacility(
-                                                                                                facility
-                                                                                            );
-                                                                                            setFacilityBookingData(
-                                                                                                {
-                                                                                                    start_time:
-                                                                                                        null,
-                                                                                                    end_time:
-                                                                                                        null,
-                                                                                                }
-                                                                                            );
-                                                                                            fetchFacilityBookings(
-                                                                                                facility.id
-                                                                                            );
-                                                                                            facilityOverlayRef.current.toggle(
-                                                                                                event
-                                                                                            );
-                                                                                        }}
-                                                                                        className={`${
-                                                                                            selectedFacility?.id ===
-                                                                                            facility.id
-                                                                                                ? "bg-blue-500 text-white"
-                                                                                                : "bg-gray-200"
-                                                                                        }`}
-                                                                                        size="small"
-                                                                                        icon={
-                                                                                            selectedFacility?.id ===
-                                                                                            facility.id
-                                                                                                ? "pi pi-check"
-                                                                                                : null
-                                                                                        }
-                                                                                    />
-                                                                                )
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex pt-4 justify-between">
+                                            <Button
+                                                label="Back"
+                                                severity="secondary"
+                                                icon="pi pi-arrow-left"
+                                                size="small"
+                                                onClick={() =>
+                                                    stepperRef.current.prevCallback()
+                                                }
+                                            />
+                                            <Button
+                                                label="Next"
+                                                icon="pi pi-arrow-right"
+                                                iconPos="right"
+                                                size="small"
+                                                onClick={() =>
+                                                    stepperRef.current.nextCallback()
+                                                }
+                                                disabled={!bookingDate}
+                                            />
+                                        </div>
+                                    </StepperPanel>
+                                )}
+                                {activeButton === "facilities" && (
+                                    <StepperPanel header="Time">
+                                        <div className="flex flex-col h-full">
+                                            <div className="flex-grow grid grid-cols-1 gap-2">
+                                                <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 p-5 flex-grow flex flex-wrap items-center max-h-48 overflow-y-auto">
+                                                    <div className="justify-start w-full">
+                                                        This is your facility
+                                                        booking log today
+                                                        (Timezone:{" "}
+                                                        {userTimezone}):
+                                                    </div>
+                                                    <Accordion className="w-full">
+                                                        {bookingLog.map(
+                                                            (booking) => (
+                                                                <AccordionTab
+                                                                    key={
+                                                                        booking.id
+                                                                    }
+                                                                    header={
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="truncate max-w-[100px] sm:max-w-[200px] inline-block">
+                                                                                {
+                                                                                    booking.facilityName
+                                                                                }
+                                                                            </span>
+                                                                            <Badge
+                                                                                value={capitalize(
+                                                                                    booking.status
+                                                                                )}
+                                                                                severity={
+                                                                                    booking.status ===
+                                                                                    "requested"
+                                                                                        ? "info"
+                                                                                        : booking.status ===
+                                                                                          "reserved"
+                                                                                        ? "success"
+                                                                                        : booking.status ===
+                                                                                          "closed"
+                                                                                        ? "secondary"
+                                                                                        : "danger"
+                                                                                }
+                                                                            />
+                                                                        </div>
+                                                                    }
+                                                                >
+                                                                    <div className="flex flex-col gap-2">
+                                                                        <p>
+                                                                            <strong>
+                                                                                Facility:
+                                                                            </strong>{" "}
+                                                                            {
+                                                                                booking.facilityName
+                                                                            }
+                                                                        </p>
+                                                                        <p>
+                                                                            <strong>
+                                                                                Start
+                                                                                Time:
+                                                                            </strong>{" "}
+                                                                            {formatDateToLocal(
+                                                                                booking.startTime
                                                                             )}
-                                                                    </>
-                                                                )}
-                                                            </div>
+                                                                        </p>
+                                                                        <p>
+                                                                            <strong>
+                                                                                End
+                                                                                Time:
+                                                                            </strong>{" "}
+                                                                            {formatDateToLocal(
+                                                                                booking.endTime
+                                                                            )}
+                                                                        </p>
+                                                                        <p>
+                                                                            <strong>
+                                                                                Status:
+                                                                            </strong>{" "}
+                                                                            {capitalize(
+                                                                                booking.status
+                                                                            )}
+                                                                        </p>
+                                                                        {(booking.status ===
+                                                                            "requested" ||
+                                                                            booking.status ===
+                                                                                "reserved") && (
+                                                                            <Button
+                                                                                label="Cancel"
+                                                                                icon="pi pi-times"
+                                                                                severity="danger"
+                                                                                size="small"
+                                                                                onClick={(
+                                                                                    event
+                                                                                ) =>
+                                                                                    confirmPopup(
+                                                                                        {
+                                                                                            target: event.currentTarget,
+                                                                                            message: `Are you sure you want to cancel your reservation for ${booking.facilityName}?`,
+                                                                                            icon: "pi pi-exclamation-triangle",
+                                                                                            accept: () =>
+                                                                                                handleCancelBooking(
+                                                                                                    booking.id,
+                                                                                                    booking.facilityName
+                                                                                                ),
+                                                                                            reject: () => {
+                                                                                                dispatch(
+                                                                                                    setToastMessage(
+                                                                                                        {
+                                                                                                            severity:
+                                                                                                                "warn",
+                                                                                                            summary:
+                                                                                                                "Action Cancelled",
+                                                                                                            detail: "Reservation not cancelled.",
+                                                                                                        }
+                                                                                                    )
+                                                                                                );
+                                                                                            },
+                                                                                        }
+                                                                                    )
+                                                                                }
+                                                                            />
+                                                                        )}
+                                                                    </div>
+                                                                </AccordionTab>
+                                                            )
+                                                        )}
+                                                    </Accordion>
+                                                </div>
+                                                {!isBooked && (
+                                                    <div>
+                                                        <p>
+                                                            Select time slots
+                                                            for{" "}
+                                                            {
+                                                                selectedFacility?.name
+                                                            }
+                                                            :
+                                                        </p>
+                                                        <div className="flex flex-col gap-2 mt-2">
+                                                            {updateTimeSlots().map(
+                                                                (
+                                                                    slot,
+                                                                    index
+                                                                ) => (
+                                                                    <div
+                                                                        key={
+                                                                            index
+                                                                        }
+                                                                        className="flex items-center gap-2"
+                                                                    >
+                                                                        <Checkbox
+                                                                            inputId={`slot-${index}`}
+                                                                            checked={selectedTimeSlots.includes(
+                                                                                index
+                                                                            )}
+                                                                            onChange={() =>
+                                                                                handleTimeSlotChange(
+                                                                                    index
+                                                                                )
+                                                                            }
+                                                                        />
+                                                                        <label
+                                                                            htmlFor={`slot-${index}`}
+                                                                        >
+                                                                            {
+                                                                                slot.label
+                                                                            }
+                                                                        </label>
+                                                                    </div>
+                                                                )
+                                                            )}
                                                         </div>
-                                                    </>
-                                                ) : (
-                                                    "Your Facility Booking"
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
@@ -1995,48 +2094,19 @@ function Home() {
                                                 severity="secondary"
                                                 icon="pi pi-arrow-left"
                                                 size="small"
-                                                onClick={(event) =>
-                                                    confirmPopup({
-                                                        target: event.currentTarget,
-                                                        message:
-                                                            "Are you sure you want to go back?",
-                                                        icon: "pi pi-exclamation-triangle",
-                                                        accept: () => {
-                                                            dispatch(
-                                                                setToastMessage(
-                                                                    {
-                                                                        severity:
-                                                                            "info",
-                                                                        summary:
-                                                                            "See you again.",
-                                                                        detail: "Moved back to Character step",
-                                                                    }
-                                                                )
-                                                            );
-                                                            stepperRef.current.prevCallback();
-                                                            setBookingLog([]);
-                                                            setIsBooked(false);
-                                                        },
-                                                        reject: () => {
-                                                            dispatch(
-                                                                setToastMessage(
-                                                                    {
-                                                                        severity:
-                                                                            "info",
-                                                                        summary:
-                                                                            "What facility do you want?",
-                                                                        detail: "Stayed on Facilities Booking step",
-                                                                    }
-                                                                )
-                                                            );
-                                                        },
-                                                    })
+                                                onClick={() =>
+                                                    stepperRef.current.prevCallback()
                                                 }
                                             />
                                             {error && (
-                                                <div className="text-red-500 mt-2">
+                                                <p
+                                                    style={{
+                                                        color: "red",
+                                                        marginLeft: "1rem",
+                                                    }}
+                                                >
                                                     {error}
-                                                </div>
+                                                </p>
                                             )}
                                             <Button
                                                 label={
@@ -2058,23 +2128,26 @@ function Home() {
                                                 size="small"
                                                 onClick={(event) => {
                                                     if (!isBooked) {
-                                                        if (selectedFacility) {
-                                                            facilityOverlayRef.current.toggle(
-                                                                event
-                                                            );
-                                                        } else {
-                                                            dispatch(
-                                                                setToastMessage(
-                                                                    {
-                                                                        severity:
-                                                                            "warn",
-                                                                        summary:
-                                                                            "No Facility Selected",
-                                                                        detail: "Please select a facility to reserve.",
-                                                                    }
-                                                                )
-                                                            );
-                                                        }
+                                                        confirmPopup({
+                                                            target: event.currentTarget,
+                                                            message: `Are you sure you want to reserve ${selectedFacility?.name}?`,
+                                                            icon: "pi pi-exclamation-triangle",
+                                                            accept: () =>
+                                                                handleReserve(),
+                                                            reject: () => {
+                                                                dispatch(
+                                                                    setToastMessage(
+                                                                        {
+                                                                            severity:
+                                                                                "warn",
+                                                                            summary:
+                                                                                "Action Cancelled",
+                                                                            detail: "Reservation not made.",
+                                                                        }
+                                                                    )
+                                                                );
+                                                            },
+                                                        });
                                                     } else {
                                                         confirmPopup({
                                                             target: event.currentTarget,
@@ -2102,373 +2175,12 @@ function Home() {
                                                     }
                                                 }}
                                                 disabled={
-                                                    (!selectedFacility &&
+                                                    (!selectedTimeSlots.length &&
                                                         !isBooked) ||
                                                     loading
                                                 }
                                             />
                                         </div>
-                                        <OverlayPanel
-                                            ref={facilityOverlayRef}
-                                            showCloseIcon
-                                            closeOnEscape
-                                            dismissable={false}
-                                        >
-                                            <div className="flex flex-col gap-4">
-                                                <h3>
-                                                    Reserve{" "}
-                                                    {selectedFacility?.name}
-                                                </h3>
-                                                {facilityBookings.length > 0 ? (
-                                                    <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 bg-gray-50">
-                                                        <p className="font-semibold">
-                                                            Existing Reserved
-                                                            Bookings (Timezone:{" "}
-                                                            {userTimezone}):
-                                                        </p>
-                                                        <ul className="list-disc pl-5">
-                                                            {facilityBookings.map(
-                                                                (booking) => (
-                                                                    <li
-                                                                        key={
-                                                                            booking.id
-                                                                        }
-                                                                    >
-                                                                        {formatDateToLocal(
-                                                                            booking.start_time
-                                                                        )}{" "}
-                                                                        to{" "}
-                                                                        {formatDateToLocal(
-                                                                            booking.end_time,
-                                                                            "time"
-                                                                        )}
-                                                                    </li>
-                                                                )
-                                                            )}
-                                                        </ul>
-                                                    </div>
-                                                ) : (
-                                                    <p>
-                                                        No reserved bookings for
-                                                        this facility today.
-                                                    </p>
-                                                )}
-                                                <Calendar
-                                                    value={
-                                                        facilityBookingData.startDate
-                                                    }
-                                                    onChange={(e) =>
-                                                        setFacilityBookingData(
-                                                            (prev) => ({
-                                                                ...prev,
-                                                                startDate:
-                                                                    e.value,
-                                                            })
-                                                        )
-                                                    }
-                                                    showTime={false}
-                                                    dateFormat="yy-mm-dd"
-                                                    style={{
-                                                        width: "100%",
-                                                    }}
-                                                    required
-                                                    placeholder="Select start date"
-                                                    minDate={new Date()}
-                                                    panelClassName="date-time-panel"
-                                                    inputClassName="date-time-input"
-                                                    monthNavigator
-                                                    yearNavigator
-                                                    yearRange={`${new Date().getFullYear()}:${
-                                                        new Date().getFullYear() +
-                                                        5
-                                                    }`}
-                                                    showOnFocus={true}
-                                                    appendTo={document.body}
-                                                    touchUI={true}
-                                                    showButtonBar={true}
-                                                    readOnlyInput={true}
-                                                    footer={
-                                                        <div className="p-datepicker-buttonbar">
-                                                            <button
-                                                                type="button"
-                                                                className="p-button-text p-button p-component p-button-today"
-                                                                onClick={(
-                                                                    e
-                                                                ) => {
-                                                                    e.preventDefault();
-                                                                    const today =
-                                                                        new Date();
-                                                                    setFacilityBookingData(
-                                                                        (
-                                                                            prev
-                                                                        ) => ({
-                                                                            ...prev,
-                                                                            startDate:
-                                                                                today,
-                                                                        })
-                                                                    );
-                                                                }}
-                                                            >
-                                                                Today
-                                                            </button>
-                                                            <div className="p-buttonset">
-                                                                <button
-                                                                    type="button"
-                                                                    className="p-button-text p-button p-component p-button-clear"
-                                                                    onClick={(
-                                                                        e
-                                                                    ) => {
-                                                                        e.preventDefault();
-                                                                        setFacilityBookingData(
-                                                                            (
-                                                                                prev
-                                                                            ) => ({
-                                                                                ...prev,
-                                                                                startDate:
-                                                                                    null,
-                                                                            })
-                                                                        );
-                                                                    }}
-                                                                >
-                                                                    Clear
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    className="p-button-text p-button p-component p-button-success"
-                                                                    onClick={(
-                                                                        e
-                                                                    ) => {
-                                                                        e.preventDefault();
-                                                                        document.body.click();
-                                                                    }}
-                                                                >
-                                                                    OK
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    }
-                                                />
-                                                <div className="flex justify-between w-full gap-2">
-                                                    <Calendar
-                                                        value={
-                                                            facilityBookingData.startTime
-                                                        }
-                                                        onChange={(e) =>
-                                                            setFacilityBookingData(
-                                                                (prev) => ({
-                                                                    ...prev,
-                                                                    startTime:
-                                                                        e.value,
-                                                                })
-                                                            )
-                                                        }
-                                                        timeOnly={true}
-                                                        hourFormat="12"
-                                                        style={{
-                                                            width: "100%",
-                                                        }}
-                                                        required
-                                                        placeholder="Select start time"
-                                                        panelClassName="date-time-panel"
-                                                        inputClassName="date-time-input"
-                                                        showOnFocus={true}
-                                                        appendTo={document.body}
-                                                        touchUI={true}
-                                                        showButtonBar={true}
-                                                        readOnlyInput={true}
-                                                        stepMinute={30}
-                                                        footer={
-                                                            <div className="p-datepicker-buttonbar">
-                                                                <button
-                                                                    type="button"
-                                                                    className="p-button-text p-button p-component p-button-today"
-                                                                    onClick={(
-                                                                        e
-                                                                    ) => {
-                                                                        e.preventDefault();
-                                                                        const now =
-                                                                            new Date();
-                                                                        setFacilityBookingData(
-                                                                            (
-                                                                                prev
-                                                                            ) => ({
-                                                                                ...prev,
-                                                                                startTime:
-                                                                                    now,
-                                                                            })
-                                                                        );
-                                                                    }}
-                                                                >
-                                                                    Now
-                                                                </button>
-                                                                <div className="p-buttonset">
-                                                                    <button
-                                                                        type="button"
-                                                                        className="p-button-text p-button p-component p-button-clear"
-                                                                        onClick={(
-                                                                            e
-                                                                        ) => {
-                                                                            e.preventDefault();
-                                                                            setFacilityBookingData(
-                                                                                (
-                                                                                    prev
-                                                                                ) => ({
-                                                                                    ...prev,
-                                                                                    startTime:
-                                                                                        null,
-                                                                                })
-                                                                            );
-                                                                        }}
-                                                                    >
-                                                                        Clear
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        className="p-button-text p-button p-component p-button-success"
-                                                                        onClick={(
-                                                                            e
-                                                                        ) => {
-                                                                            e.preventDefault();
-                                                                            document.body.click();
-                                                                        }}
-                                                                    >
-                                                                        OK
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        }
-                                                    />
-                                                    <Calendar
-                                                        value={
-                                                            facilityBookingData.endTime
-                                                        }
-                                                        onChange={(e) =>
-                                                            setFacilityBookingData(
-                                                                (prev) => ({
-                                                                    ...prev,
-                                                                    endTime:
-                                                                        e.value,
-                                                                })
-                                                            )
-                                                        }
-                                                        timeOnly={true}
-                                                        hourFormat="12"
-                                                        style={{
-                                                            width: "100%",
-                                                        }}
-                                                        required
-                                                        placeholder="Select end time"
-                                                        panelClassName="date-time-panel"
-                                                        inputClassName="date-time-input"
-                                                        showOnFocus={true}
-                                                        appendTo={document.body}
-                                                        touchUI={true}
-                                                        showButtonBar={true}
-                                                        readOnlyInput={true}
-                                                        stepMinute={30}
-                                                        footer={
-                                                            <div className="p-datepicker-buttonbar">
-                                                                <button
-                                                                    type="button"
-                                                                    className="p-button-text p-button p-component p-button-today"
-                                                                    onClick={(
-                                                                        e
-                                                                    ) => {
-                                                                        e.preventDefault();
-                                                                        const now =
-                                                                            new Date();
-                                                                        setFacilityBookingData(
-                                                                            (
-                                                                                prev
-                                                                            ) => ({
-                                                                                ...prev,
-                                                                                startTime:
-                                                                                    now,
-                                                                            })
-                                                                        );
-                                                                    }}
-                                                                >
-                                                                    Now
-                                                                </button>
-                                                                <div className="p-buttonset">
-                                                                    <button
-                                                                        type="button"
-                                                                        className="p-button-text p-button p-component p-button-clear"
-                                                                        onClick={(
-                                                                            e
-                                                                        ) => {
-                                                                            e.preventDefault();
-                                                                            setFacilityBookingData(
-                                                                                (
-                                                                                    prev
-                                                                                ) => ({
-                                                                                    ...prev,
-                                                                                    startTime:
-                                                                                        null,
-                                                                                })
-                                                                            );
-                                                                        }}
-                                                                    >
-                                                                        Clear
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        className="p-button-text p-button p-component p-button-success"
-                                                                        onClick={(
-                                                                            e
-                                                                        ) => {
-                                                                            e.preventDefault();
-                                                                            document.body.click();
-                                                                        }}
-                                                                    >
-                                                                        OK
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        }
-                                                    />
-                                                </div>
-                                                <Button
-                                                    label="Confirm Reservation"
-                                                    size="small"
-                                                    onClick={(event) =>
-                                                        confirmPopup({
-                                                            target: event.currentTarget,
-                                                            message: `Are you sure you want to reserve ${selectedFacility?.name}?`,
-                                                            icon: "pi pi-exclamation-triangle",
-                                                            accept: () => {
-                                                                if (
-                                                                    validateBookingTimes()
-                                                                ) {
-                                                                    handleReserve();
-                                                                    facilityOverlayRef.current.hide();
-                                                                }
-                                                            },
-                                                            reject: () => {
-                                                                dispatch(
-                                                                    setToastMessage(
-                                                                        {
-                                                                            severity:
-                                                                                "warn",
-                                                                            summary:
-                                                                                "Action Cancelled",
-                                                                            detail: "Reservation not made.",
-                                                                        }
-                                                                    )
-                                                                );
-                                                                facilityOverlayRef.current.hide();
-                                                            },
-                                                        })
-                                                    }
-                                                    disabled={
-                                                        !facilityBookingData.startDate ||
-                                                        !facilityBookingData.startTime ||
-                                                        !facilityBookingData.endTime ||
-                                                        loading
-                                                    }
-                                                />
-                                            </div>
-                                        </OverlayPanel>
                                     </StepperPanel>
                                 )}
                             </Stepper>

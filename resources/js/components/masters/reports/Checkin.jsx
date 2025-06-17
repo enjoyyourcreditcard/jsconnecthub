@@ -47,7 +47,7 @@ function Checkin() {
         activities: { data: activities = [], endPoints: activityEndPoints },
     } = useSelector((state) => state.global);
 
-    const myFetch = (params = {}) => {
+    const myFetch = (params = { timeFilter }) => {
         let url = checkinEndPoints.collection;
         if (params.timeFilter) {
             url += `?time=${params.timeFilter}`;

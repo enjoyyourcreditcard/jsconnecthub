@@ -47,7 +47,7 @@ function Counsel() {
 
     const groupedCounsels = groupCounselsByDate(counsels);
 
-    const myFetch = (params = {}) => {
+    const myFetch = (params = {timeFilter}) => {
         let url = counselEndPoints.collection;
         if (params.timeFilter) {
             url += `?time=${params.timeFilter}`;
