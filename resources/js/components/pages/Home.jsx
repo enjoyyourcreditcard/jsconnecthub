@@ -823,7 +823,7 @@ function Home() {
                                 className="effected"
                             />
                         </div>
-                        <div className="grid md:grid-cols-2 gap-2 md:gap-6 w-full md:w-1/2 sm:m-auto">
+                        {/* <div className="grid md:grid-cols-2 gap-2 md:gap-6 w-full md:w-1/2 sm:m-auto">
                             <Button label="Another Link" className="effected" />
                             <Button
                                 label="JSEILPR"
@@ -836,11 +836,11 @@ function Home() {
                                 }
                                 className="effected"
                             />
-                        </div>
+                        </div> */}
                     </div>
                 )}
                 {showCard && (
-                    <div className="w-11/12 sm:w-11/12 md:w-10/12 xl:w-1/2 flex flex-col gap-4">
+                    <div className="w-11/12 sm:w-11/12 md:w-10/12 flex flex-col gap-4">
                         <Button
                             icon="pi pi-home"
                             rounded
@@ -858,7 +858,7 @@ function Home() {
                             <Stepper ref={stepperRef} className="w-full" linear>
                                 <StepperPanel header="Level">
                                     <div className="flex flex-col h-full">
-                                        <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-32">
+                                        <div className="flex-grow grid grid-cols-2 sm:grid-cols-3 gap-2 overflow-y-auto max-h-64">
                                             {levels.map((level) => (
                                                 <Button
                                                     key={level.id}
@@ -896,7 +896,7 @@ function Home() {
                                 </StepperPanel>
                                 <StepperPanel header="Class">
                                     <div className="flex flex-col h-full">
-                                        <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-32">
+                                        <div className="flex-grow grid grid-cols-2 sm:grid-cols-3 gap-2 overflow-y-auto max-h-64">
                                             {classes
                                                 .filter(
                                                     (c) =>
@@ -948,7 +948,7 @@ function Home() {
                                 </StepperPanel>
                                 <StepperPanel header="Name">
                                     <div className="flex flex-col h-full">
-                                        <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-32">
+                                        <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-64">
                                             {students
                                                 .filter(
                                                     (s) =>
@@ -1009,7 +1009,7 @@ function Home() {
                                             <div className="flex-grow grid grid-cols-1 items-center gap-2">
                                                 {studentId ? (
                                                     <>
-                                                        <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 p-5 flex-grow flex flex-wrap items-center max-h-48 overflow-y-auto">
+                                                        <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 p-5 flex-grow flex flex-wrap items-center max-h-64 overflow-y-auto">
                                                             <div className="justify-start">
                                                                 This is your
                                                                 activities log
@@ -1124,7 +1124,7 @@ function Home() {
                                                                 </p>
                                                             </div>
                                                         )}
-                                                        <div className="flex-grow grid grid-cols-1 gap-2 max-h-32 overflow-y-auto">
+                                                        <div className="flex-grow grid grid-cols-1 gap-2 max-h-64 overflow-y-auto">
                                                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                                                 {!isCheckedIn && (
                                                                     <>
@@ -1457,7 +1457,7 @@ function Home() {
                                                                         selectedStrategy.name
                                                                     }
                                                                 </h5>
-                                                                <div className="max-h-32 overflow-y-auto">
+                                                                <div className="max-h-64 overflow-y-auto">
                                                                     {questions
                                                                         .filter(
                                                                             (
@@ -1718,7 +1718,7 @@ function Home() {
                                 {activeButton === "facilities" && (
                                     <StepperPanel header="Location">
                                         <div className="flex flex-col h-full">
-                                            <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 p-5 flex-grow flex flex-wrap items-center max-h-48 overflow-y-auto">
+                                            <div className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 p-5 flex-grow flex flex-wrap items-center max-h-64 overflow-y-auto">
                                                 <div className="justify-start w-full">
                                                     This is your facility
                                                     booking log today (Timezone:{" "}
@@ -1837,7 +1837,7 @@ function Home() {
                                                     )}
                                                 </Accordion>
                                             </div>
-                                            <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-32 mt-2">
+                                            <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-64 mt-2">
                                                 {facilities
                                                     .filter((f) => !f.parent_id)
                                                     .map((location) => (
@@ -1900,7 +1900,7 @@ function Home() {
                                 {activeButton === "facilities" && (
                                     <StepperPanel header="Facility">
                                         <div className="flex flex-col h-full">
-                                            <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-32">
+                                            <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-64">
                                                 {facilities
                                                     .filter(
                                                         (f) =>
@@ -1987,7 +1987,6 @@ function Home() {
                                                     }
                                                     style={{
                                                         width: "100%",
-                                                        maxHeight: "300px",
                                                     }}
                                                     placeholder="Select date"
                                                     inline

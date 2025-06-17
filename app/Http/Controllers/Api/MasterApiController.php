@@ -232,6 +232,11 @@ class MasterApiController extends Controller
             $data = Excel::toArray([], $file)[0];
             $headers = array_shift($data);
             $rows = $data;
+            $rows = array_filter($rows, function ($row) {
+                return collect($row)->filter(function ($cell) {
+                    return trim($cell) !== '';
+                })->isNotEmpty();
+            });
 
             if (empty($rows)) {
                 return response()->json(['status' => false, 'message' => 'File is empty'], Response::HTTP_UNPROCESSABLE_ENTITY);

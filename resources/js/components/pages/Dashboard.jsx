@@ -238,7 +238,8 @@ function Dashboard() {
                     )}
                     {(permissions.includes("dashboard view") ||
                         permissions.includes("dashboard-bookings view")) && (
-                        <Card title="Reservation Overview">
+                        // <Card title="Reservation Overview">
+                        <Card title="Reservation for Admin">
                             <div className="flex flex-col md:flex-row gap-4">
                                 <div className="md:w-1/2">
                                     <div className="mb-4">
