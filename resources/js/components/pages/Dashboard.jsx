@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useAuthUser } from "react-auth-kit";
-import { getRecords, setStateData, createRecord } from "../store/global-slice";
+import {
+    getRecords,
+    setStateData,
+    createRecord,
+    deleteRecord,
+} from "../store/global-slice";
 import Header from "../shared/layout/Header";
 import { Tree } from "primereact/tree";
 import { Badge } from "primereact/badge";
@@ -298,6 +303,53 @@ function Dashboard() {
         return date.day;
     };
 
+    const isDateBlocked =
+        formatDateForMySQL(date) &&
+        blockedDate.length > 0 &&
+        blockedDate.find((bd) => bd.date === formatDateForMySQL(date));
+
+    const handleUnblockDate = () => {
+        const blockedEntry = blockedDate.find(
+            (bd) => bd.date === formatDateForMySQL(date)
+        );
+        if (!blockedEntry) return;
+
+        setLoading(true);
+        dispatch(
+            deleteRecord({
+                type: "blocked_dates",
+                endPoint: `${blockedDateEndPoints.delete}${blockedEntry.id}`,
+            })
+        )
+            .then(() => {
+                toast.current.show({
+                    severity: "success",
+                    summary: "Success",
+                    detail: `Date ${formatDateForMySQL(
+                        date
+                    )} has been unblocked.`,
+                });
+                dispatch(
+                    getRecords({
+                        type: "blocked_dates",
+                        endPoint: blockedDateEndPoints.collection,
+                        key: "data",
+                    })
+                );
+            })
+            .catch((err) => {
+                console.error("Error unblocking date:", err);
+                toast.current.show({
+                    severity: "error",
+                    summary: "Error",
+                    detail: err.message || "Failed to unblock date.",
+                });
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    };
+
     return (
         <div>
             <Header />
@@ -322,7 +374,7 @@ function Dashboard() {
                         <Card title="Reservation for Admin">
                             <div className="flex flex-col md:flex-row gap-4">
                                 <div className="md:w-1/2">
-                                    <div className="mb-4">
+                                    <div className="flex flex-row gap-2 mb-4">
                                         <Dropdown
                                             value={selectedFacility}
                                             options={facilityOptions}
@@ -332,6 +384,30 @@ function Dashboard() {
                                             placeholder="Select Facility"
                                             style={{ width: "100%" }}
                                             showClear
+                                        />
+                                        <Button
+                                            label={
+                                                isDateBlocked
+                                                    ? "Unblock Date"
+                                                    : "Block Date"
+                                            }
+                                            icon={
+                                                isDateBlocked
+                                                    ? "pi pi-unlock"
+                                                    : "pi pi-ban"
+                                            }
+                                            severity={
+                                                isDateBlocked
+                                                    ? "success"
+                                                    : "warning"
+                                            }
+                                            onClick={() =>
+                                                isDateBlocked
+                                                    ? handleUnblockDate()
+                                                    : setShowBlockDialog(true)
+                                            }
+                                            disabled={loading}
+                                            className="min-w-fit"
                                         />
                                     </div>
                                     <Calendar
@@ -343,14 +419,6 @@ function Dashboard() {
                                         dateTemplate={dateTemplate}
                                         inline
                                         style={{ width: "100%" }}
-                                    />
-                                    <Button
-                                        label="Block Date"
-                                        icon="pi pi-ban"
-                                        severity="warning"
-                                        onClick={() => setShowBlockDialog(true)}
-                                        disabled={!date}
-                                        style={{ marginTop: "10px" }}
                                     />
                                 </div>
                                 <div className="md:w-1/2">
@@ -364,6 +432,21 @@ function Dashboard() {
                                             }}
                                         >
                                             <span>Loading...</span>
+                                        </div>
+                                    ) : isDateBlocked ? (
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                justifyContent: "center",
+                                                alignItems: "center",
+                                                height: "480px",
+                                                color: "#666",
+                                            }}
+                                        >
+                                            <span>
+                                                This date is blocked because:{" "}
+                                                {isDateBlocked.reason}
+                                            </span>
                                         </div>
                                     ) : bookingsList.length === 0 ? (
                                         <div
