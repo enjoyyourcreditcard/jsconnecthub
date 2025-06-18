@@ -68,8 +68,8 @@ class MasterApiController extends Controller
         if ($type === config('constants.MASTER_TYPE_ARRAY.COUNSEL_MASTER_TYPE')) {
             $rules = config('constants.MASTER_VALIDATION_ARRAY.COUNSEL_VALIDATION');
         }
-        if ($type === config('constants.MASTER_TYPE_ARRAY.COUNSEL_MASTER_TYPE')) {
-            $rules = config('constants.MASTER_VALIDATION_ARRAY.COUNSEL_VALIDATION');
+        if ($type === config('constants.MASTER_TYPE_ARRAY.BLOCKED_DATE_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.BLOCKED_DATE_VALIDATION');
         }
         return $rules;
     }

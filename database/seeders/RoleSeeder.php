@@ -78,11 +78,11 @@ class RoleSeeder extends Seeder
             'bookings edit',
             'bookings delete',
             'bookings confirm',
-            'dashboard-bookings view',
             'blocked_dates view',
             'blocked_dates create',
             'blocked_dates edit',
             'blocked_dates delete',
+            'dashboard-bookings view',
         ]);
 
         Role::findByName('Admin3')->givePermissionTo([

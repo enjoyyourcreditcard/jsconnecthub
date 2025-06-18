@@ -16,7 +16,7 @@ return [
         'SUPPORT_STRATEGY_MASTER_TYPE'  => 'support_strategies',
         'QUESTION_MASTER_TYPE'          => 'questions',
         'RADIO_OPTION_MASTER_TYPE'      => 'radio_options',
-        'BLOCKED_DATE_MASTER_TYPE'      => 'blocked_dates',
+        'BLOCKED_DATE_MASTER_TYPE'      => 'blocked_dates'
     ],
 
     'MASTER_VALIDATION_ARRAY' => [

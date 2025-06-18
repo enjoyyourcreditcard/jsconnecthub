@@ -13,4 +13,5 @@ export const stateKey = {
     counsels: "counsels",
     support_strategies: "support_strategies",
     questions: "questions",
+    blocked_dates: "blocked_dates",
 };
