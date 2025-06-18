@@ -47,6 +47,10 @@ function Home() {
         },
         questions: { data: questions = [], endPoints: questionEndPoints },
         counsels: { data: counsels = [], endPoints: counselEndPoints },
+        blocked_dates: {
+            data: blockedDate = [],
+            endPoints: blockedDateEndPoints,
+        },
     } = useSelector((state) => state.global);
     const [activeButton, setActiveButton] = useState(null);
     const [showCard, setShowCard] = useState(false);
@@ -143,6 +147,13 @@ function Home() {
                 getRecords({
                     type: "questions",
                     endPoint: questionEndPoints.collection,
+                    key: "data",
+                })
+            );
+            dispatch(
+                getRecords({
+                    type: "blocked_dates",
+                    endPoint: blockedDateEndPoints.collection,
                     key: "data",
                 })
             );
@@ -1965,32 +1976,42 @@ function Home() {
                                     <StepperPanel header="Date">
                                         <div className="flex flex-col h-full">
                                             <div className="flex-grow flex justify-center items-center">
-                                                <Calendar
-                                                    value={bookingDate}
-                                                    onChange={(e) => {
-                                                        setBookingDate(e.value);
-                                                        setSelectedTimeSlots(
-                                                            []
-                                                        );
-                                                    }}
-                                                    dateFormat="yy-mm-dd"
-                                                    minDate={
-                                                        new Date().getHours() >=
-                                                        17
-                                                            ? new Date(
-                                                                  new Date().setDate(
-                                                                      new Date().getDate() +
-                                                                          1
+                                                <div className="relative w-full">
+                                                    <Calendar
+                                                        value={bookingDate}
+                                                        onChange={(e) => {
+                                                            setBookingDate(
+                                                                e.value
+                                                            );
+                                                            setSelectedTimeSlots(
+                                                                []
+                                                            );
+                                                        }}
+                                                        dateFormat="yy-mm-dd"
+                                                        minDate={
+                                                            new Date().getHours() >=
+                                                            17
+                                                                ? new Date(
+                                                                      new Date().setDate(
+                                                                          new Date().getDate() +
+                                                                              1
+                                                                      )
                                                                   )
-                                                              )
-                                                            : new Date()
-                                                    }
-                                                    style={{
-                                                        width: "100%",
-                                                    }}
-                                                    placeholder="Select date"
-                                                    inline
-                                                />
+                                                                : new Date()
+                                                        }
+                                                        disabledDates={blockedDate.map(
+                                                            (bd) =>
+                                                                new Date(
+                                                                    bd.date
+                                                                )
+                                                        )}
+                                                        style={{
+                                                            width: "100%",
+                                                        }}
+                                                        placeholder="Select date"
+                                                        inline
+                                                    />
+                                                </div>
                                             </div>
                                             {facilityBookings.length > 0 && (
                                                 <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 bg-gray-50 mt-4">

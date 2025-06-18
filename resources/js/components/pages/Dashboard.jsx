@@ -4,6 +4,7 @@ import { useAuthUser } from "react-auth-kit";
 import { getRecords, setStateData, createRecord } from "../store/global-slice";
 import Header from "../shared/layout/Header";
 import { Tree } from "primereact/tree";
+import { Badge } from "primereact/badge";
 import { Card } from "primereact/card";
 import { Calendar } from "primereact/calendar";
 import { Dropdown } from "primereact/dropdown";
@@ -272,6 +273,31 @@ function Dashboard() {
 
     const bookingsList = populateBookings();
 
+    const dateTemplate = (date) => {
+        const dateStr = `${date.year}-${String(date.month + 1).padStart(
+            2,
+            "0"
+        )}-${String(date.day).padStart(2, "0")}`;
+
+        if (blockedDate.length > 0) {
+            const blocked = blockedDate?.find((bd) => bd.date === dateStr);
+            if (blocked) {
+                return (
+                    <div className="relative flex flex-col items-center">
+                        <Badge
+                            value="!"
+                            severity="danger"
+                            className="absolute text-xs p-1"
+                        />
+                        <span className="text-gray-400">{date.day}</span>
+                    </div>
+                );
+            }
+        }
+
+        return date.day;
+    };
+
     return (
         <div>
             <Header />
@@ -311,6 +337,10 @@ function Dashboard() {
                                     <Calendar
                                         value={date}
                                         onChange={(e) => setDate(e.value)}
+                                        // disabledDates={blockedDate.map(
+                                        //     (bd) => new Date(bd.date)
+                                        // )}
+                                        dateTemplate={dateTemplate}
                                         inline
                                         style={{ width: "100%" }}
                                     />
