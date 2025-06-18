@@ -16,6 +16,7 @@ return [
         'SUPPORT_STRATEGY_MASTER_TYPE'  => 'support_strategies',
         'QUESTION_MASTER_TYPE'          => 'questions',
         'RADIO_OPTION_MASTER_TYPE'      => 'radio_options',
+        'BLOCKED_DATE_MASTER_TYPE'      => 'blocked_dates',
     ],
 
     'MASTER_VALIDATION_ARRAY' => [
@@ -75,6 +76,10 @@ return [
             'question_id.*' => ['required', 'exists:questions,id'],
             'answer' => ['required', 'array', 'min:1'],
             'answer.*' => ['required'],
-        ]
+        ],
+        'BLOCKED_DATE_VALIDATION' => [
+            'reason' => ['required', 'string', 'max:100'],
+            'date' => ['required', 'date', 'unique:blocked_dates,date']
+        ],
     ],
 ];

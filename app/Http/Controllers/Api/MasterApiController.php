@@ -9,6 +9,7 @@ use Illuminate\Http\Response;
 use App\Services\MasterService;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Models\BlockedDate;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Validator;
 
@@ -16,11 +17,12 @@ class MasterApiController extends Controller
 {
     protected $masterService;
 
-    public function __construct(MasterService $masterService, RadioOption $radioOption, Question $question)
+    public function __construct(MasterService $masterService, RadioOption $radioOption, Question $question, BlockedDate $blockedDate)
     {
         $this->masterService = $masterService;
         $this->radioOption = $radioOption;
         $this->question = $question;
+        $this->blockedDate = $blockedDate;
 
         $urlMasterType = request()->segment(2);
 
@@ -62,6 +64,9 @@ class MasterApiController extends Controller
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.QUESTION_MASTER_TYPE')) {
             $rules = config('constants.MASTER_VALIDATION_ARRAY.QUESTION_VALIDATION');
+        }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.COUNSEL_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.COUNSEL_VALIDATION');
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.COUNSEL_MASTER_TYPE')) {
             $rules = config('constants.MASTER_VALIDATION_ARRAY.COUNSEL_VALIDATION');
@@ -135,8 +140,7 @@ class MasterApiController extends Controller
                     'message' => 'Failed to create question: ' . $e->getMessage()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
-        }
-        if ($type === 'counsels') {
+        } else if ($type === 'counsels') {
             try {
                 $counsel = $this->masterService->create('counsels', [
                     'student_id' => $validation['student_id'],
@@ -170,6 +174,16 @@ class MasterApiController extends Controller
                     'message' => 'Failed to create counsel: ' . $e->getMessage()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
+        } else if ($type === 'blocked_dates') {
+            $data = $request->all();
+            $exists = $this->blockedDate->where('date', $request->date)->exists();
+            if (!$exists) {
+                $result = $this->masterService->create($type, $data);
+            } else {
+                return response()->json(['status' => true, 'message' => "Date already blocked."], Response::HTTP_CONFLICT);
+            }
+
+            return response()->json(['status' => true, 'message' => "$type created", 'result' => $result], Response::HTTP_CREATED);
         } else {
             $data = $request->all();
             $result = $this->masterService->create($type, $data);

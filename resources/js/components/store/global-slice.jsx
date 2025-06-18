@@ -15,6 +15,7 @@ import {
     COUNSEL_STATE,
     SUPPORT_STRATEGY_STATE,
     QUESTION_STATE,
+    BLOCKED_DATE_STATE,
 } from "./state";
 import { stateKey } from "../utils/constants";
 
@@ -33,6 +34,7 @@ const INITIAL_STATE = {
     [stateKey.counsels]: COUNSEL_STATE,
     [stateKey.support_strategies]: SUPPORT_STRATEGY_STATE,
     [stateKey.questions]: QUESTION_STATE,
+    [stateKey.blocked_dates]: BLOCKED_DATE_STATE,
 };
 
 const globalSlice = createSlice({

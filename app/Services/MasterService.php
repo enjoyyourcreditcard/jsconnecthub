@@ -25,6 +25,7 @@ class MasterService
         'questions'             => \App\Models\Question::class,
         'radio_options'         => \App\Models\RadioOption::class,
         'answers'               => \App\Models\Answer::class,
+        'blocked_dates'         => \App\Models\BlockedDate::class,
     ];
 
     protected function getModel($type)
