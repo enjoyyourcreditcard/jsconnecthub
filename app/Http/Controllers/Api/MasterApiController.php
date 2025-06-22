@@ -140,7 +140,8 @@ class MasterApiController extends Controller
                     'message' => 'Failed to create question: ' . $e->getMessage()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
-        } else if ($type === 'counsels') {
+        }
+        if ($type === 'counsels') {
             try {
                 $counsel = $this->masterService->create('counsels', [
                     'student_id' => $validation['student_id'],
@@ -174,7 +175,8 @@ class MasterApiController extends Controller
                     'message' => 'Failed to create counsel: ' . $e->getMessage()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
-        } else if ($type === 'blocked_dates') {
+        }
+        if ($type === 'blocked_dates') {
             $data = $request->all();
             $exists = $this->blockedDate->where('date', $request->date)->exists();
             if (!$exists) {
@@ -184,11 +186,11 @@ class MasterApiController extends Controller
             }
 
             return response()->json(['status' => true, 'message' => "$type created", 'result' => $result], Response::HTTP_CREATED);
-        } else {
-            $data = $request->all();
-            $result = $this->masterService->create($type, $data);
-            return response()->json(['status' => true, 'message' => "$type created", 'result' => $result], Response::HTTP_CREATED);
         }
+
+        $data = $request->all();
+        $result = $this->masterService->create($type, $data);
+        return response()->json(['status' => true, 'message' => "$type created", 'result' => $result], Response::HTTP_CREATED);
     }
 
     public function update(Request $request, $type, $id)
