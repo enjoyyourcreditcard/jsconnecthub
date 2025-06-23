@@ -654,7 +654,56 @@ const CustomDataTable = ({
         );
     };
 
+    const [filterType, setFilterType] = useState(null);
     const prevRangeRef = useRef(null);
+
+    const filterItems = [
+        {
+            label: "Time Period",
+            command: () => setFilterType("time"),
+        },
+        {
+            label: "Single Date",
+            command: () => setFilterType("date"),
+        },
+        {
+            label: "Date Range",
+            command: () => setFilterType("range"),
+        },
+    ];
+
+    const handleFilter = () => {
+        if (filterType === "time" && timeFilter) {
+            onFetch({
+                timeFilter,
+                dateFilter: null,
+                rangeFilter: null,
+            });
+        } else if (filterType === "date" && dateFilter) {
+            onFetch({
+                timeFilter: null,
+                dateFilter,
+                rangeFilter: null,
+            });
+        } else if (
+            filterType === "range" &&
+            rangeFilter &&
+            rangeFilter[0] &&
+            rangeFilter[1]
+        ) {
+            onFetch({
+                timeFilter: null,
+                dateFilter: null,
+                rangeFilter,
+            });
+        } else {
+            onFetch({
+                timeFilter: null,
+                dateFilter: null,
+                rangeFilter: null,
+            });
+        }
+    };
 
     const rightToolbarTemplate = () => {
         const timeOptions = [
@@ -691,105 +740,77 @@ const CustomDataTable = ({
                     type === "bookings" ||
                     type === "counsels") && (
                     <>
-                        <Button
-                            label="Select Date"
+                        <SplitButton
+                            label={
+                                filterType
+                                    ? `Filter by ${
+                                          filterType === "time"
+                                              ? "Time Period"
+                                              : filterType === "date"
+                                              ? "Single Date"
+                                              : "Date Range"
+                                      }`
+                                    : "Select Filter"
+                            }
                             icon="pi pi-calendar"
                             severity="secondary"
-                            onClick={(e) => timeFilterRef.current.toggle(e)}
+                            onClick={handleFilter}
+                            model={filterItems}
                         />
-                        <OverlayPanel ref={timeFilterRef}>
-                            <div className="flex flex-column gap-2">
-                                <Dropdown
-                                    value={timeFilter}
-                                    options={timeOptions}
-                                    onChange={(e) => {
-                                        setTimeFilter(e.value);
-                                        setDateFilter(null);
-                                        setRangeFilter(null);
-                                        if (e.value) {
-                                            onFetch({
-                                                timeFilter: e.value,
-                                                dateFilter: null,
-                                                rangeFilter: null,
-                                            });
-                                        } else {
-                                            onFetch({
-                                                timeFilter: null,
-                                                dateFilter: null,
-                                                rangeFilter: null,
-                                            });
-                                        }
-                                    }}
-                                    placeholder="Select Date Period"
-                                    style={{ width: "200px" }}
-                                    showClear
-                                />
-                                <Calendar
-                                    value={dateFilter}
-                                    onChange={(e) => {
-                                        setDateFilter(e.value);
-                                        setRangeFilter(null);
-                                        setTimeFilter(null);
-                                        if (e.value) {
-                                            onFetch({
-                                                timeFilter: null,
-                                                dateFilter: e.value,
-                                                rangeFilter: null,
-                                            });
-                                        } else {
-                                            onFetch({
-                                                timeFilter: null,
-                                                dateFilter: null,
-                                                rangeFilter: null,
-                                            });
-                                        }
-                                    }}
-                                    dateFormat="yy-mm-dd"
-                                    placeholder="Select Date"
-                                    style={{ width: "200px" }}
-                                    showButtonBar
-                                />
-                                <Calendar
-                                    value={rangeFilter}
-                                    onChange={(e) => {
-                                        const value = e.value;
+                        {filterType === "time" && (
+                            <Dropdown
+                                value={timeFilter}
+                                options={timeOptions}
+                                onChange={(e) => {
+                                    setTimeFilter(e.value);
+                                    setDateFilter(null);
+                                    setRangeFilter(null);
+                                }}
+                                placeholder="Select Date Period"
+                                style={{ width: "200px" }}
+                                showClear
+                            />
+                        )}
+                        {filterType === "date" && (
+                            <Calendar
+                                value={dateFilter}
+                                onChange={(e) => {
+                                    setDateFilter(e.value);
+                                    setRangeFilter(null);
+                                    setTimeFilter(null);
+                                }}
+                                dateFormat="yy-mm-dd"
+                                placeholder="Select Date"
+                                showButtonBar
+                            />
+                        )}
+                        {filterType === "range" && (
+                            <Calendar
+                                value={rangeFilter}
+                                onChange={(e) => {
+                                    const value = e.value;
+                                    setRangeFilter(value);
+                                    setDateFilter(null);
+                                    setTimeFilter(null);
 
-                                        setRangeFilter(value);
+                                    const wasCleared =
+                                        prevRangeRef.current && value === null;
+                                    prevRangeRef.current = value;
+
+                                    if (wasCleared) {
+                                        setRangeFilter(null);
                                         setDateFilter(null);
                                         setTimeFilter(null);
-
-                                        const wasCleared =
-                                            prevRangeRef.current &&
-                                            value === null;
-
-                                        prevRangeRef.current = value;
-
-                                        if (wasCleared) {
-                                            onFetch({
-                                                timeFilter: null,
-                                                dateFilter: null,
-                                                rangeFilter: null,
-                                            });
-                                            return;
-                                        }
-
-                                        if (value && value[0] && value[1]) {
-                                            onFetch({
-                                                timeFilter: null,
-                                                dateFilter: null,
-                                                rangeFilter: value,
-                                            });
-                                        }
-                                    }}
-                                    selectionMode="range"
-                                    dateFormat="yy-mm-dd"
-                                    placeholder="Select Date Range"
-                                    style={{ width: "200px" }}
-                                    showButtonBar
-                                    hideOnRangeSelection
-                                />
-                            </div>
-                        </OverlayPanel>
+                                        return;
+                                    }
+                                }}
+                                selectionMode="range"
+                                dateFormat="yy-mm-dd"
+                                placeholder="Select Date Range"
+                                showButtonBar
+                                hideOnRangeSelection
+                            />
+                        )}
                     </>
                 )}
             </div>
