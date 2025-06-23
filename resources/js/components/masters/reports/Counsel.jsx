@@ -11,7 +11,7 @@ function Counsel() {
     const dispatch = useDispatch();
     const isAuthenticated = useIsAuthenticated();
     const [userTimezone, setUserTimezone] = useState(null);
-    const [timeFilter, setTimeFilter] = useState("week");
+    const [timeFilter, setTimeFilter] = useState("month");
     const [dateFilter, setDateFilter] = useState(null);
     const [rangeFilter, setRangeFilter] = useState(null);
     const {
@@ -47,7 +47,7 @@ function Counsel() {
 
     const groupedCounsels = groupCounselsByDate(counsels);
 
-    const myFetch = (params = {timeFilter}) => {
+    const myFetch = (params = { timeFilter }) => {
         let url = counselEndPoints.collection;
         if (params.timeFilter) {
             url += `?time=${params.timeFilter}`;
@@ -119,7 +119,7 @@ function Counsel() {
             <Header />
             <main style={{ padding: "20px" }}>
                 <Card>
-                    {isAuthenticated() ? (
+                    {supportStrategies.length > 0 ? (
                         <DataTable
                             type="counsels"
                             identifier="date"
@@ -137,7 +137,7 @@ function Counsel() {
                             isGrouped={true}
                         />
                     ) : (
-                        <p>Please log in to view and manage counsels.</p>
+                        <p>Please wait.</p>
                     )}
                 </Card>
             </main>

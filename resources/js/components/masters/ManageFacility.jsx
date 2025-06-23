@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useIsAuthenticated } from "react-auth-kit";
 import {
     getRecords,
     createRecord,
@@ -18,7 +17,6 @@ import { Button } from "primereact/button";
 
 function ManageFacility() {
     const dispatch = useDispatch();
-    const isAuthenticated = useIsAuthenticated();
     const [visible, setVisible] = useState(false);
     const [mode, setMode] = useState("create");
     const [editId, setEditId] = useState(null);
@@ -163,13 +161,12 @@ function ManageFacility() {
                       value: f.id,
                   }))
             : [];
-
     return (
         <div>
             <Header />
             <main style={{ padding: "20px" }}>
                 <Card>
-                    {isAuthenticated() ? (
+                    {subFacilities.length > 0 ? (
                         <>
                             <DataTable
                                 type="facilities"
@@ -281,7 +278,7 @@ function ManageFacility() {
                             </Dialog>
                         </>
                     ) : (
-                        <p>Please log in to view and manage facilities.</p>
+                        <p>Please wait.</p>
                     )}
                 </Card>
             </main>

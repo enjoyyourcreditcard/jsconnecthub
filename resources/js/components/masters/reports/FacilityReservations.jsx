@@ -23,7 +23,7 @@ function FacilityReservations() {
     const [visible, setVisible] = useState(false);
     const [mode, setMode] = useState("create");
     const [editId, setEditId] = useState(null);
-    const [timeFilter, setTimeFilter] = useState("week");
+    const [timeFilter, setTimeFilter] = useState("month");
     const [dateFilter, setDateFilter] = useState(null);
     const [rangeFilter, setRangeFilter] = useState(null);
     const [formData, setFormData] = useState({

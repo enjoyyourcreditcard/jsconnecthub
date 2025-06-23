@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useIsAuthenticated } from "react-auth-kit";
 import {
     getRecords,
     createRecord,
@@ -19,7 +18,6 @@ import { Dropdown } from "primereact/dropdown";
 
 function ManageLevelClassStudent() {
     const dispatch = useDispatch();
-    const isAuthenticated = useIsAuthenticated();
     const [levelDialog, setLevelDialog] = useState(false);
     const [classDialog, setClassDialog] = useState(false);
     const [studentDialog, setStudentDialog] = useState(false);
@@ -317,7 +315,7 @@ function ManageLevelClassStudent() {
             <Header />
             <main style={{ padding: "20px" }}>
                 <Card>
-                    {isAuthenticated() ? (
+                    {classes.length > 0 && students.length > 0 ? (
                         <>
                             <DataTable
                                 type="levels"
@@ -644,10 +642,7 @@ function ManageLevelClassStudent() {
                             </Dialog>
                         </>
                     ) : (
-                        <p>
-                            Please log in to view and manage levels, classes,
-                            and students.
-                        </p>
+                        <p>Please wait.</p>
                     )}
                 </Card>
             </main>

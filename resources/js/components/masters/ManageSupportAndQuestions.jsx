@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useIsAuthenticated } from "react-auth-kit";
 import {
     getRecords,
     createRecord,
@@ -20,7 +19,6 @@ import { Button } from "primereact/button";
 
 function ManageSupportAndQuestions() {
     const dispatch = useDispatch();
-    const isAuthenticated = useIsAuthenticated();
     const [strategyDialog, setStrategyDialog] = useState(false);
     const [questionDialog, setQuestionDialog] = useState(false);
     const [mode, setMode] = useState("create");
@@ -289,7 +287,7 @@ function ManageSupportAndQuestions() {
             <Header />
             <main style={{ padding: "20px" }}>
                 <Card>
-                    {isAuthenticated() ? (
+                    {questions.length > 0 ? (
                         <>
                             <DataTable
                                 type="support_strategies"
@@ -572,7 +570,7 @@ function ManageSupportAndQuestions() {
                             </Dialog>
                         </>
                     ) : (
-                        <p>Please log in to view and manage data.</p>
+                        <p>Please wait.</p>
                     )}
                 </Card>
             </main>

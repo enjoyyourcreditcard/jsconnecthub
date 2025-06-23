@@ -25,7 +25,7 @@ import { Dropdown } from "primereact/dropdown";
 import { RadioButton } from "primereact/radiobutton";
 import { DateTime } from "luxon";
 import Header from "../shared/layout/Header";
-import _ from "lodash"; // Import Lodash
+import _ from "lodash";
 import "../../../css/home.css";
 
 function Home() {
@@ -515,6 +515,23 @@ function Home() {
         return `${year}-${month}-${day} ${hours}:${minutes}:00`;
     };
 
+    const groupContiguousSlots = (indices) => {
+        if (!indices.length) return [];
+        const sortedIndices = [...indices].sort((a, b) => a - b);
+        const groups = [];
+        let currentGroup = [sortedIndices[0]];
+        for (let i = 1; i < sortedIndices.length; i++) {
+            if (sortedIndices[i] === sortedIndices[i - 1] + 1) {
+                currentGroup.push(sortedIndices[i]);
+            } else {
+                groups.push(currentGroup);
+                currentGroup = [sortedIndices[i]];
+            }
+        }
+        groups.push(currentGroup);
+        return groups;
+    };
+
     const handleReserve = () => {
         setLoading(true);
         setError("");
@@ -532,49 +549,91 @@ function Home() {
         }
 
         const updatedTimeSlots = updateTimeSlots();
-        const startTime = updatedTimeSlots[selectedTimeSlots[0]].start;
-        const endTime =
-            updatedTimeSlots[selectedTimeSlots[selectedTimeSlots.length - 1]]
-                .end;
+        const slotGroups = groupContiguousSlots(selectedTimeSlots);
 
-        const bookingData = {
-            student_id: studentId,
-            facility_id: selectedFacility?.id,
-            start_time: formatDateTimeForMySQL(startTime),
-            end_time: formatDateTimeForMySQL(endTime),
-        };
+        const hasConflict = slotGroups.some((group) => {
+            const startTime = updatedTimeSlots[group[0]].start;
+            const endTime = updatedTimeSlots[group[group.length - 1]].end;
+            return facilityBookings.some((booking) => {
+                const bookingStart = new Date(booking.start_time);
+                const bookingEnd = new Date(booking.end_time);
+                return (
+                    (startTime >= bookingStart && startTime < bookingEnd) ||
+                    (endTime > bookingStart && endTime <= bookingEnd) ||
+                    (startTime <= bookingStart && endTime >= bookingEnd)
+                );
+            });
+        });
 
-        if (!bookingData.start_time || !bookingData.end_time) {
-            setError("Invalid date/time format");
+        if (hasConflict) {
+            dispatch(
+                setToastMessage({
+                    severity: "error",
+                    summary: "Booking Conflict",
+                    detail: "Selected time slots conflict with existing reservations.",
+                })
+            );
             setLoading(false);
             return;
         }
 
-        dispatch(
-            createRecord({
-                type: "bookings",
-                endPoint: bookingEndPoints.booking,
-                data: bookingData,
-                returnData: true,
-            })
-        )
-            .then((response) => {
-                const result = response;
-                const newBooking = {
-                    id: result.id || Date.now(),
+        // Create bookings for each group
+        const bookingPromises = slotGroups.map((group) => {
+            const startTime = updatedTimeSlots[group[0]].start;
+            const endTime = updatedTimeSlots[group[group.length - 1]].end;
+            const bookingData = {
+                student_id: studentId,
+                facility_id: selectedFacility?.id,
+                start_time: formatDateTimeForMySQL(startTime),
+                end_time: formatDateTimeForMySQL(endTime),
+            };
+
+            if (!bookingData.start_time || !bookingData.end_time) {
+                throw new Error("Invalid date/time format");
+            }
+
+            return dispatch(
+                createRecord({
+                    type: "bookings",
+                    endPoint: bookingEndPoints.booking,
+                    data: bookingData,
+                    returnData: true,
+                })
+            );
+        });
+
+        Promise.all(bookingPromises)
+            .then((responses) => {
+                const newBookings = responses.map((response) => ({
+                    id: response.id || Date.now(),
                     facilityName: selectedFacility?.name,
                     status: "Requested",
-                    startTime: result.start_time,
-                    endTime: result.end_time,
-                };
-                setBookingLog((prev) => [...prev, newBooking]);
+                    startTime: response.start_time,
+                    endTime: response.end_time,
+                }));
+                setBookingLog((prev) => [...prev, ...newBookings]);
                 setIsBooked(true);
-                setBookingId(result.id);
+                setBookingId(newBookings[0].id);
                 dispatch(
                     setToastMessage({
                         severity: "success",
                         summary: "Facility Reserved",
-                        detail: `You have reserved ${selectedFacility?.name}! Returning to Launch Pad.`,
+                        detail: `You have reserved ${
+                            selectedFacility?.name
+                        } for ${slotGroups
+                            .map(
+                                (group) =>
+                                    `${
+                                        updatedTimeSlots[group[0]].label.split(
+                                            " - "
+                                        )[0]
+                                    } to ${
+                                        updatedTimeSlots[
+                                            group[group.length - 1]
+                                        ].label.split(" - ")[1]
+                                    }`
+                            )
+                            .join(" and ")}! Returning to Launch Pad.`,
                     })
                 );
                 resetState();
@@ -774,22 +833,11 @@ function Home() {
     };
 
     const handleTimeSlotChange = (index) => {
-        let newSelectedSlots = [...selectedTimeSlots];
-        if (newSelectedSlots.includes(index)) {
-            newSelectedSlots = newSelectedSlots.filter((i) => i !== index);
-        } else {
-            newSelectedSlots.push(index);
-            newSelectedSlots.sort((a, b) => a - b);
-            if (newSelectedSlots.length > 1) {
-                const minIndex = Math.min(...newSelectedSlots);
-                const maxIndex = Math.max(...newSelectedSlots);
-                newSelectedSlots = Array.from(
-                    { length: maxIndex - minIndex + 1 },
-                    (_, i) => minIndex + i
-                );
-            }
-        }
-        setSelectedTimeSlots(newSelectedSlots);
+        setSelectedTimeSlots((prev) =>
+            prev.includes(index)
+                ? prev.filter((i) => i !== index)
+                : [...prev, index]
+        );
     };
 
     return (
@@ -1816,8 +1864,6 @@ function Home() {
                                         </div>
                                     </StepperPanel>
                                 )}
-
-                                {/* facilities reservation */}
                                 {activeButton === "facilities" && (
                                     <StepperPanel header="Location">
                                         <div className="flex flex-col h-full">
@@ -2298,7 +2344,33 @@ function Home() {
                                                     if (!isBooked) {
                                                         confirmPopup({
                                                             target: event.currentTarget,
-                                                            message: `Are you sure you want to reserve ${selectedFacility?.name}?`,
+                                                            message: `Are you sure you want to reserve ${
+                                                                selectedFacility?.name
+                                                            } for ${groupContiguousSlots(
+                                                                selectedTimeSlots
+                                                            )
+                                                                .map(
+                                                                    (group) =>
+                                                                        `${
+                                                                            updateTimeSlots()[
+                                                                                group[0]
+                                                                            ].label.split(
+                                                                                " - "
+                                                                            )[0]
+                                                                        } to ${
+                                                                            updateTimeSlots()[
+                                                                                group[
+                                                                                    group.length -
+                                                                                        1
+                                                                                ]
+                                                                            ].label.split(
+                                                                                " - "
+                                                                            )[1]
+                                                                        }`
+                                                                )
+                                                                .join(
+                                                                    " and "
+                                                                )}?`,
                                                             icon: "pi pi-exclamation-triangle",
                                                             accept: () =>
                                                                 handleReserve(),
