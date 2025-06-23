@@ -117,10 +117,6 @@ const CustomDataTable = ({
     }, []);
 
     useEffect(() => {
-        setFilteredDataState(formattedData);
-    }, [collection, studentFilter, strategyFilter]);
-
-    useEffect(() => {
         if (
             Array.isArray(collection) &&
             collection.length > 0 &&
@@ -167,7 +163,11 @@ const CustomDataTable = ({
             );
             setVisibleColumns(initialVisible);
         }
-    }, [collection, isGrouped, type]);
+    }, [collection, studentFilter, strategyFilter, isGrouped, type]);
+
+    useEffect(() => {
+        setFilteredDataState(formattedData);
+    }, [collection]);
 
     const formatDateToLocal = (utcDate, format = null) => {
         if (!utcDate || !userTimezone) return "";
@@ -183,6 +183,45 @@ const CustomDataTable = ({
                 .toFormat("dd MMMM yyyy, HH:mm:ss z");
         }
     };
+
+    const formattedData = isGrouped
+        ? collection.map((group) => ({
+              ...group,
+              counsels: group.counsels.filter((counsel) => {
+                  const matchesStudent =
+                      !studentFilter ||
+                      (counsel.student &&
+                          counsel.student
+                              .toLowerCase()
+                              .includes(studentFilter.toLowerCase()));
+                  const matchesStrategy =
+                      !strategyFilter ||
+                      counsel.support_strategies.includes(strategyFilter);
+                  return matchesStudent && matchesStrategy;
+              }),
+          }))
+        : Array.isArray(collection)
+        ? collection.map((item) => ({
+              ...item,
+              // status: item.status, // Raw status will be handled by column body template
+              checkin_time: item.checkin_time
+                  ? formatDateToLocal(item.checkin_time)
+                  : "",
+              checkout_time: item.checkout_time
+                  ? formatDateToLocal(item.checkout_time)
+                  : "",
+              start_time: item.start_time
+                  ? formatDateToLocal(item.start_time)
+                  : "",
+              end_time: item.end_time ? formatDateToLocal(item.end_time) : "",
+              created_at: item.created_at
+                  ? formatDateToLocal(item.created_at)
+                  : "",
+              updated_at: item.updated_at
+                  ? formatDateToLocal(item.updated_at)
+                  : "",
+          }))
+        : [];
 
     const capitalize = (str) => {
         if (!str) return str;
@@ -615,6 +654,8 @@ const CustomDataTable = ({
         );
     };
 
+    const prevRangeRef = useRef(null);
+
     const rightToolbarTemplate = () => {
         const timeOptions = [
             { label: "Today", value: "today" },
@@ -665,7 +706,19 @@ const CustomDataTable = ({
                                         setTimeFilter(e.value);
                                         setDateFilter(null);
                                         setRangeFilter(null);
-                                        onFetch({ timeFilter: e.value });
+                                        if (e.value) {
+                                            onFetch({
+                                                timeFilter: e.value,
+                                                dateFilter: null,
+                                                rangeFilter: null,
+                                            });
+                                        } else {
+                                            onFetch({
+                                                timeFilter: null,
+                                                dateFilter: null,
+                                                rangeFilter: null,
+                                            });
+                                        }
                                     }}
                                     placeholder="Select Date Period"
                                     style={{ width: "200px" }}
@@ -678,35 +731,62 @@ const CustomDataTable = ({
                                         setRangeFilter(null);
                                         setTimeFilter(null);
                                         if (e.value) {
-                                            onFetch({ dateFilter: e.value });
+                                            onFetch({
+                                                timeFilter: null,
+                                                dateFilter: e.value,
+                                                rangeFilter: null,
+                                            });
+                                        } else {
+                                            onFetch({
+                                                timeFilter: null,
+                                                dateFilter: null,
+                                                rangeFilter: null,
+                                            });
                                         }
                                     }}
                                     dateFormat="yy-mm-dd"
                                     placeholder="Select Date"
                                     style={{ width: "200px" }}
-                                    touchUI
                                     showButtonBar
                                 />
                                 <Calendar
                                     value={rangeFilter}
                                     onChange={(e) => {
-                                        setRangeFilter(e.value);
+                                        const value = e.value;
+
+                                        setRangeFilter(value);
                                         setDateFilter(null);
                                         setTimeFilter(null);
-                                        if (
-                                            e.value &&
-                                            e.value[0] &&
-                                            e.value[1]
-                                        ) {
-                                            onFetch({ rangeFilter: e.value });
+
+                                        const wasCleared =
+                                            prevRangeRef.current &&
+                                            value === null;
+
+                                        prevRangeRef.current = value;
+
+                                        if (wasCleared) {
+                                            onFetch({
+                                                timeFilter: null,
+                                                dateFilter: null,
+                                                rangeFilter: null,
+                                            });
+                                            return;
+                                        }
+
+                                        if (value && value[0] && value[1]) {
+                                            onFetch({
+                                                timeFilter: null,
+                                                dateFilter: null,
+                                                rangeFilter: value,
+                                            });
                                         }
                                     }}
                                     selectionMode="range"
                                     dateFormat="yy-mm-dd"
                                     placeholder="Select Date Range"
                                     style={{ width: "200px" }}
-                                    touchUI
                                     showButtonBar
+                                    hideOnRangeSelection
                                 />
                             </div>
                         </OverlayPanel>
@@ -969,45 +1049,6 @@ const CustomDataTable = ({
             />
         );
     };
-
-    const formattedData = isGrouped
-        ? collection.map((group) => ({
-              ...group,
-              counsels: group.counsels.filter((counsel) => {
-                  const matchesStudent =
-                      !studentFilter ||
-                      (counsel.student &&
-                          counsel.student
-                              .toLowerCase()
-                              .includes(studentFilter.toLowerCase()));
-                  const matchesStrategy =
-                      !strategyFilter ||
-                      counsel.support_strategies.includes(strategyFilter);
-                  return matchesStudent && matchesStrategy;
-              }),
-          }))
-        : Array.isArray(collection)
-        ? collection.map((item) => ({
-              ...item,
-              // status: item.status, // Raw status will be handled by column body template
-              checkin_time: item.checkin_time
-                  ? formatDateToLocal(item.checkin_time)
-                  : "",
-              checkout_time: item.checkout_time
-                  ? formatDateToLocal(item.checkout_time)
-                  : "",
-              start_time: item.start_time
-                  ? formatDateToLocal(item.start_time)
-                  : "",
-              end_time: item.end_time ? formatDateToLocal(item.end_time) : "",
-              created_at: item.created_at
-                  ? formatDateToLocal(item.created_at)
-                  : "",
-              updated_at: item.updated_at
-                  ? formatDateToLocal(item.updated_at)
-                  : "",
-          }))
-        : [];
 
     const questionRowExpansionTemplate = (question) => {
         if (question.type !== "radio") return null;

@@ -46,18 +46,14 @@ function FacilityReservations() {
         facilities: { data: facilities = [], endPoints: facilityEndPoints },
     } = useSelector((state) => state.global);
 
-    const myFetch = (fetchParams = {}) => {
+    const myFetch = (params = {}) => {
         let currentDateFilter =
-            fetchParams?.dateFilter !== undefined
-                ? fetchParams.dateFilter
-                : dateFilter;
+            params?.dateFilter !== undefined ? params.dateFilter : dateFilter;
         let currentFilter =
-            fetchParams?.timeFilter !== undefined
-                ? fetchParams.timeFilter
-                : timeFilter;
+            params?.timeFilter !== undefined ? params.timeFilter : timeFilter;
         let currentRange =
-            fetchParams?.rangeFilter !== undefined
-                ? fetchParams.rangeFilter
+            params?.rangeFilter !== undefined
+                ? params.rangeFilter
                 : rangeFilter;
 
         let url = bookingEndPoints.collection;
