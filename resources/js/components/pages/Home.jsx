@@ -25,6 +25,7 @@ import { Dropdown } from "primereact/dropdown";
 import { RadioButton } from "primereact/radiobutton";
 import { DateTime } from "luxon";
 import Header from "../shared/layout/Header";
+import _ from "lodash"; // Import Lodash
 import "../../../css/home.css";
 
 function Home() {
@@ -869,26 +870,47 @@ function Home() {
                             <Stepper ref={stepperRef} className="w-full" linear>
                                 <StepperPanel header="Level">
                                     <div className="flex flex-col h-full">
-                                        <div className="flex-grow grid grid-cols-2 sm:grid-cols-3 gap-2 overflow-y-auto max-h-64">
-                                            {levels.map((level) => (
-                                                <Button
-                                                    key={level.id}
-                                                    label={level.name}
-                                                    onClick={() =>
-                                                        setLevelId(level.id)
-                                                    }
-                                                    className={`${
-                                                        levelId === level.id
-                                                            ? "bg-blue-500 text-white"
-                                                            : "bg-gray-200"
-                                                    }`}
-                                                    size="small"
-                                                    icon={
-                                                        levelId === level.id
-                                                            ? "pi pi-check"
-                                                            : null
-                                                    }
-                                                />
+                                        <div className="flex flex-col gap-2 overflow-y-auto max-h-64">
+                                            {_.chunk(
+                                                levels,
+                                                window.innerWidth >= 640 ? 3 : 2
+                                            ).map((row, rowIndex) => (
+                                                <div
+                                                    key={rowIndex}
+                                                    className="centered-row"
+                                                    style={{
+                                                        "--num-columns":
+                                                            window.innerWidth >=
+                                                            640
+                                                                ? 3
+                                                                : 2,
+                                                    }}
+                                                >
+                                                    {row.map((level) => (
+                                                        <Button
+                                                            key={level.id}
+                                                            label={level.name}
+                                                            onClick={() =>
+                                                                setLevelId(
+                                                                    level.id
+                                                                )
+                                                            }
+                                                            className={`stretch-button ${
+                                                                levelId ===
+                                                                level.id
+                                                                    ? "bg-blue-500 text-white"
+                                                                    : "bg-gray-200"
+                                                            }`}
+                                                            size="small"
+                                                            icon={
+                                                                levelId ===
+                                                                level.id
+                                                                    ? "pi pi-check"
+                                                                    : null
+                                                            }
+                                                        />
+                                                    ))}
+                                                </div>
                                             ))}
                                         </div>
                                     </div>
@@ -907,32 +929,51 @@ function Home() {
                                 </StepperPanel>
                                 <StepperPanel header="Class">
                                     <div className="flex flex-col h-full">
-                                        <div className="flex-grow grid grid-cols-2 sm:grid-cols-3 gap-2 overflow-y-auto max-h-64">
-                                            {classes
-                                                .filter(
+                                        <div className="flex flex-col gap-2 overflow-y-auto max-h-64">
+                                            {_.chunk(
+                                                classes.filter(
                                                     (c) =>
                                                         c.level_id === levelId
-                                                )
-                                                .map((cls) => (
-                                                    <Button
-                                                        key={cls.id}
-                                                        label={cls.name}
-                                                        onClick={() =>
-                                                            setClassId(cls.id)
-                                                        }
-                                                        className={`${
-                                                            classId === cls.id
-                                                                ? "bg-blue-500 text-white"
-                                                                : "bg-gray-200"
-                                                        }`}
-                                                        size="small"
-                                                        icon={
-                                                            classId === cls.id
-                                                                ? "pi pi-check"
-                                                                : null
-                                                        }
-                                                    />
-                                                ))}
+                                                ),
+                                                window.innerWidth >= 640 ? 3 : 2
+                                            ).map((row, rowIndex) => (
+                                                <div
+                                                    key={rowIndex}
+                                                    className="centered-row"
+                                                    style={{
+                                                        "--num-columns":
+                                                            window.innerWidth >=
+                                                            640
+                                                                ? 3
+                                                                : 2,
+                                                    }}
+                                                >
+                                                    {row.map((cls) => (
+                                                        <Button
+                                                            key={cls.id}
+                                                            label={cls.name}
+                                                            onClick={() =>
+                                                                setClassId(
+                                                                    cls.id
+                                                                )
+                                                            }
+                                                            className={`stretch-button ${
+                                                                classId ===
+                                                                cls.id
+                                                                    ? "bg-blue-500 text-white"
+                                                                    : "bg-gray-200"
+                                                            }`}
+                                                            size="small"
+                                                            icon={
+                                                                classId ===
+                                                                cls.id
+                                                                    ? "pi pi-check"
+                                                                    : null
+                                                            }
+                                                        />
+                                                    ))}
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                     <div className="flex pt-4 justify-between">
@@ -959,36 +1000,51 @@ function Home() {
                                 </StepperPanel>
                                 <StepperPanel header="Name">
                                     <div className="flex flex-col h-full">
-                                        <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-64">
-                                            {students
-                                                .filter(
+                                        <div className="flex flex-col gap-2 overflow-y-auto max-h-64">
+                                            {_.chunk(
+                                                students.filter(
                                                     (s) =>
                                                         s.class_id === classId
-                                                )
-                                                .map((student) => (
-                                                    <Button
-                                                        key={student.id}
-                                                        label={student.name}
-                                                        onClick={() =>
-                                                            setStudentId(
+                                                ),
+                                                window.innerWidth >= 640 ? 4 : 2
+                                            ).map((row, rowIndex) => (
+                                                <div
+                                                    key={rowIndex}
+                                                    className="centered-row"
+                                                    style={{
+                                                        "--num-columns":
+                                                            window.innerWidth >=
+                                                            640
+                                                                ? 4
+                                                                : 2,
+                                                    }}
+                                                >
+                                                    {row.map((student) => (
+                                                        <Button
+                                                            key={student.id}
+                                                            label={student.name}
+                                                            onClick={() =>
+                                                                setStudentId(
+                                                                    student.id
+                                                                )
+                                                            }
+                                                            className={`stretch-button ${
+                                                                studentId ===
                                                                 student.id
-                                                            )
-                                                        }
-                                                        className={`${
-                                                            studentId ===
-                                                            student.id
-                                                                ? "bg-blue-500 text-white"
-                                                                : "bg-gray-200"
-                                                        }`}
-                                                        size="small"
-                                                        icon={
-                                                            studentId ===
-                                                            student.id
-                                                                ? "pi pi-check"
-                                                                : null
-                                                        }
-                                                    />
-                                                ))}
+                                                                    ? "bg-blue-500 text-white"
+                                                                    : "bg-gray-200"
+                                                            }`}
+                                                            size="small"
+                                                            icon={
+                                                                studentId ===
+                                                                student.id
+                                                                    ? "pi pi-check"
+                                                                    : null
+                                                            }
+                                                        />
+                                                    ))}
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                     <div className="flex pt-4 justify-between">
@@ -1025,8 +1081,7 @@ function Home() {
                                                                 This is your
                                                                 activities log
                                                                 today (Timezone:{" "}
-                                                                {userTimezone}
-                                                                ):
+                                                                {userTimezone}):
                                                             </div>
                                                             <Accordion className="w-full">
                                                                 {questLog.map(
@@ -1135,82 +1190,119 @@ function Home() {
                                                                 </p>
                                                             </div>
                                                         )}
-                                                        <div className="flex-grow grid grid-cols-1 gap-2 max-h-64 overflow-y-auto">
-                                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                                                {!isCheckedIn && (
-                                                                    <>
-                                                                        {activities.map(
-                                                                            (
-                                                                                activity
-                                                                            ) => (
-                                                                                <Button
-                                                                                    key={
-                                                                                        activity.id
-                                                                                    }
-                                                                                    label={
-                                                                                        activity.name
-                                                                                    }
-                                                                                    onClick={() => {
-                                                                                        setActivityId(
-                                                                                            activity.id
-                                                                                        );
-                                                                                        setSelectedActivity(
-                                                                                            activity
-                                                                                        );
-                                                                                        setEditableActivity(
-                                                                                            ""
-                                                                                        );
-                                                                                        setShowCustomActivityInput(
-                                                                                            false
-                                                                                        );
-                                                                                    }}
-                                                                                    className={`${
-                                                                                        activityId ===
-                                                                                        activity.id
-                                                                                            ? "bg-blue-500 text-white"
-                                                                                            : "bg-gray-200"
-                                                                                    }`}
-                                                                                    size="small"
-                                                                                    icon={
-                                                                                        activityId ===
-                                                                                        activity.id
-                                                                                            ? "pi pi-check"
-                                                                                            : null
-                                                                                    }
-                                                                                />
-                                                                            )
-                                                                        )}
-                                                                        <Button
-                                                                            label={
-                                                                                showCustomActivityInput
+                                                        <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
+                                                            {!isCheckedIn && (
+                                                                <>
+                                                                    {_.chunk(
+                                                                        [
+                                                                            ...activities,
+                                                                            {
+                                                                                id: "other",
+                                                                                name: showCustomActivityInput
                                                                                     ? "Cancel Custom Activity"
-                                                                                    : "Other Activity"
-                                                                            }
-                                                                            onClick={() => {
-                                                                                setShowCustomActivityInput(
-                                                                                    !showCustomActivityInput
-                                                                                );
-                                                                                setActivityId(
-                                                                                    null
-                                                                                );
-                                                                                setSelectedActivity(
-                                                                                    null
-                                                                                );
-                                                                                setEditableActivity(
-                                                                                    ""
-                                                                                );
-                                                                            }}
-                                                                            className="bg-gray-200"
-                                                                            size="small"
-                                                                            icon={
-                                                                                showCustomActivityInput
-                                                                                    ? "pi pi-times"
-                                                                                    : "pi pi-plus"
-                                                                            }
-                                                                        />
-                                                                    </>
-                                                                )}
-                                                            </div>
+                                                                                    : "Other Activity",
+                                                                            },
+                                                                        ],
+                                                                        window.innerWidth >=
+                                                                            640
+                                                                            ? 4
+                                                                            : 2
+                                                                    ).map(
+                                                                        (
+                                                                            row,
+                                                                            rowIndex
+                                                                        ) => (
+                                                                            <div
+                                                                                key={
+                                                                                    rowIndex
+                                                                                }
+                                                                                className="centered-row"
+                                                                                style={{
+                                                                                    "--num-columns":
+                                                                                        window.innerWidth >=
+                                                                                        640
+                                                                                            ? 4
+                                                                                            : 2,
+                                                                                }}
+                                                                            >
+                                                                                {row.map(
+                                                                                    (
+                                                                                        activity
+                                                                                    ) =>
+                                                                                        activity.id ===
+                                                                                        "other" ? (
+                                                                                            <Button
+                                                                                                key={
+                                                                                                    activity.id
+                                                                                                }
+                                                                                                label={
+                                                                                                    activity.name
+                                                                                                }
+                                                                                                onClick={() => {
+                                                                                                    setShowCustomActivityInput(
+                                                                                                        !showCustomActivityInput
+                                                                                                    );
+                                                                                                    setActivityId(
+                                                                                                        null
+                                                                                                    );
+                                                                                                    setSelectedActivity(
+                                                                                                        null
+                                                                                                    );
+                                                                                                    setEditableActivity(
+                                                                                                        ""
+                                                                                                    );
+                                                                                                }}
+                                                                                                className="stretch-button bg-gray-200"
+                                                                                                size="small"
+                                                                                                icon={
+                                                                                                    showCustomActivityInput
+                                                                                                        ? "pi pi-times"
+                                                                                                        : "pi pi-plus"
+                                                                                                }
+                                                                                            />
+                                                                                        ) : (
+                                                                                            <Button
+                                                                                                key={
+                                                                                                    activity.id
+                                                                                                }
+                                                                                                label={
+                                                                                                    activity.name
+                                                                                                }
+                                                                                                onClick={() => {
+                                                                                                    setActivityId(
+                                                                                                        activity.id
+                                                                                                    );
+                                                                                                    setSelectedActivity(
+                                                                                                        activity
+                                                                                                    );
+                                                                                                    setEditableActivity(
+                                                                                                        ""
+                                                                                                    );
+                                                                                                    setShowCustomActivityInput(
+                                                                                                        false
+                                                                                                    );
+                                                                                                }}
+                                                                                                className={`stretch-button ${
+                                                                                                    activityId ===
+                                                                                                    activity.id
+                                                                                                        ? "bg-blue-500 text-white"
+                                                                                                        : "bg-gray-200"
+                                                                                                }`}
+                                                                                                size="small"
+                                                                                                icon={
+                                                                                                    activityId ===
+                                                                                                    activity.id
+                                                                                                        ? "pi pi-check"
+                                                                                                        : null
+                                                                                                }
+                                                                                            />
+                                                                                        )
+                                                                                )}
+                                                                            </div>
+                                                                        )
+                                                                    )}
+                                                                </>
+                                                            )}
                                                             {showCustomActivityInput &&
                                                                 !isCheckedIn && (
                                                                     <div className="mt-1">
@@ -1848,41 +1940,62 @@ function Home() {
                                                     )}
                                                 </Accordion>
                                             </div>
-                                            <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-64 mt-2">
-                                                {facilities
-                                                    .filter((f) => !f.parent_id)
-                                                    .map((location) => (
-                                                        <Button
-                                                            key={location.id}
-                                                            label={
-                                                                location.name
-                                                            }
-                                                            onClick={() => {
-                                                                setSelectedLocation(
+                                            <div className="flex flex-col gap-2 overflow-y-auto max-h-64 mt-2">
+                                                {_.chunk(
+                                                    facilities.filter(
+                                                        (f) => !f.parent_id
+                                                    ),
+                                                    window.innerWidth >= 640
+                                                        ? 4
+                                                        : 2
+                                                ).map((row, rowIndex) => (
+                                                    <div
+                                                        key={rowIndex}
+                                                        className="centered-row"
+                                                        style={{
+                                                            "--num-columns":
+                                                                window.innerWidth >=
+                                                                640
+                                                                    ? 4
+                                                                    : 2,
+                                                        }}
+                                                    >
+                                                        {row.map((location) => (
+                                                            <Button
+                                                                key={
                                                                     location.id
-                                                                );
-                                                                setSelectedFacility(
-                                                                    null
-                                                                );
-                                                                fetchFacilityBookings(
+                                                                }
+                                                                label={
+                                                                    location.name
+                                                                }
+                                                                onClick={() => {
+                                                                    setSelectedLocation(
+                                                                        location.id
+                                                                    );
+                                                                    setSelectedFacility(
+                                                                        null
+                                                                    );
+                                                                    fetchFacilityBookings(
+                                                                        location.id
+                                                                    );
+                                                                }}
+                                                                className={`stretch-button ${
+                                                                    selectedLocation ===
                                                                     location.id
-                                                                );
-                                                            }}
-                                                            className={`${
-                                                                selectedLocation ===
-                                                                location.id
-                                                                    ? "bg-blue-500 text-white"
-                                                                    : "bg-gray-200"
-                                                            }`}
-                                                            size="small"
-                                                            icon={
-                                                                selectedLocation ===
-                                                                location.id
-                                                                    ? "pi pi-check"
-                                                                    : null
-                                                            }
-                                                        />
-                                                    ))}
+                                                                        ? "bg-blue-500 text-white"
+                                                                        : "bg-gray-200"
+                                                                }`}
+                                                                size="small"
+                                                                icon={
+                                                                    selectedLocation ===
+                                                                    location.id
+                                                                        ? "pi pi-check"
+                                                                        : null
+                                                                }
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
                                         <div className="flex pt-4 justify-between">
@@ -1911,42 +2024,61 @@ function Home() {
                                 {activeButton === "facilities" && (
                                     <StepperPanel header="Facility">
                                         <div className="flex flex-col h-full">
-                                            <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-2 overflow-y-auto max-h-64">
-                                                {facilities
-                                                    .filter(
+                                            <div className="flex flex-col gap-2 overflow-y-auto max-h-64">
+                                                {_.chunk(
+                                                    facilities.filter(
                                                         (f) =>
                                                             f.parent_id ===
                                                             selectedLocation
-                                                    )
-                                                    .map((facility) => (
-                                                        <Button
-                                                            key={facility.id}
-                                                            label={
-                                                                facility.name
-                                                            }
-                                                            onClick={() => {
-                                                                setSelectedFacility(
-                                                                    facility
-                                                                );
-                                                                fetchFacilityBookings(
+                                                    ),
+                                                    window.innerWidth >= 640
+                                                        ? 4
+                                                        : 2
+                                                ).map((row, rowIndex) => (
+                                                    <div
+                                                        key={rowIndex}
+                                                        className="centered-row"
+                                                        style={{
+                                                            "--num-columns":
+                                                                window.innerWidth >=
+                                                                640
+                                                                    ? 4
+                                                                    : 2,
+                                                        }}
+                                                    >
+                                                        {row.map((facility) => (
+                                                            <Button
+                                                                key={
                                                                     facility.id
-                                                                );
-                                                            }}
-                                                            className={`${
-                                                                selectedFacility?.id ===
-                                                                facility.id
-                                                                    ? "bg-blue-500 text-white"
-                                                                    : "bg-gray-200"
-                                                            }`}
-                                                            size="small"
-                                                            icon={
-                                                                selectedFacility?.id ===
-                                                                facility.id
-                                                                    ? "pi pi-check"
-                                                                    : null
-                                                            }
-                                                        />
-                                                    ))}
+                                                                }
+                                                                label={
+                                                                    facility.name
+                                                                }
+                                                                onClick={() => {
+                                                                    setSelectedFacility(
+                                                                        facility
+                                                                    );
+                                                                    fetchFacilityBookings(
+                                                                        facility.id
+                                                                    );
+                                                                }}
+                                                                className={`stretch-button ${
+                                                                    selectedFacility?.id ===
+                                                                    facility.id
+                                                                        ? "bg-blue-500 text-white"
+                                                                        : "bg-gray-200"
+                                                                }`}
+                                                                size="small"
+                                                                icon={
+                                                                    selectedFacility?.id ===
+                                                                    facility.id
+                                                                        ? "pi pi-check"
+                                                                        : null
+                                                                }
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
                                         <div className="flex pt-4 justify-between">
