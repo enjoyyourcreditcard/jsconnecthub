@@ -710,15 +710,28 @@ const CustomDataTable = ({
                                 options={timeOptions}
                                 onChange={(e) => {
                                     const value = e.value;
-                                    setTimeFilter(value);
-                                    setDateFilter(null);
-                                    setRangeFilter(null);
 
-                                    onFetch({
-                                        timeFilter: value,
-                                        dateFilter: null,
-                                        rangeFilter: null,
-                                    });
+                                    if (value === undefined || value === null) {
+                                        setTimeFilter(null);
+                                        setDateFilter(null);
+                                        setRangeFilter(null);
+
+                                        onFetch({
+                                            timeFilter: null,
+                                            dateFilter: null,
+                                            rangeFilter: null,
+                                        });
+                                    } else {
+                                        setTimeFilter(value);
+                                        setDateFilter(null);
+                                        setRangeFilter(null);
+
+                                        onFetch({
+                                            timeFilter: value,
+                                            dateFilter: null,
+                                            rangeFilter: null,
+                                        });
+                                    }
                                 }}
                                 placeholder="Select Date Period"
                                 style={{ width: "180px" }}
