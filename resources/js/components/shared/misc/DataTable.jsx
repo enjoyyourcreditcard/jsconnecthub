@@ -1273,9 +1273,11 @@ const CustomDataTable = ({
                     >
                         <Column
                             expander={(rowData) => {
-                                const classStudents = students.filter(
-                                    (q) => q.class_id === rowData?.id
-                                );
+                                const classStudents = Array.isArray(students)
+                                    ? students.filter(
+                                          (q) => q.class_id === rowData?.id
+                                      )
+                                    : [];
                                 return classStudents.length > 0;
                             }}
                             style={{ width: "3rem" }}
