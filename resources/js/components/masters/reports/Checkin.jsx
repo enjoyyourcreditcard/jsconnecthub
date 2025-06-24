@@ -22,6 +22,7 @@ function Checkin() {
     const [visible, setVisible] = useState(false);
     const [mode, setMode] = useState("create");
     const [editId, setEditId] = useState(null);
+    const [rawCheckin, setRawCheckin] = useState([]);
     const [formData, setFormData] = useState({
         level: null,
         class: null,
@@ -34,6 +35,10 @@ function Checkin() {
     });
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(true);
+    const [loadingLevels, setLoadingLevels] = useState(true);
+    const [loadingClass, setLoadingClass] = useState(true);
+    const [loadingStudent, setLoadingStudent] = useState(true);
+    const [loadingActivities, setLoadingActivities] = useState(true);
     const [error, setError] = useState("");
     const [timeFilter, setTimeFilter] = useState("today");
     const [dateFilter, setDateFilter] = useState(null);
@@ -46,29 +51,38 @@ function Checkin() {
         activities: { data: activities = [], endPoints: activityEndPoints },
     } = useSelector((state) => state.global);
 
-    const myFetch = (params = { timeFilter }) => {
+    const myFetch = (params = {}) => {
+        let currentDateFilter =
+            params?.dateFilter !== undefined ? params.dateFilter : dateFilter;
+        let currentFilter =
+            params?.timeFilter !== undefined ? params.timeFilter : timeFilter;
+        let currentRange =
+            params?.rangeFilter !== undefined
+                ? params.rangeFilter
+                : rangeFilter;
+
         let url = checkinEndPoints.collection;
-        if (params.timeFilter) {
-            url += `?time=${params.timeFilter}`;
+        if (currentFilter) {
+            url += `?time=${currentFilter}`;
         }
-        if (params.rangeFilter) {
-            if (params.rangeFilter[0] && params.rangeFilter[1]) {
-                const start = params.rangeFilter[0].toISOString();
-                const endDate = new Date(params.rangeFilter[1]);
+        if (currentRange) {
+            if (currentRange[0] && currentRange[1]) {
+                const start = currentRange[0].toISOString();
+                const endDate = new Date(currentRange[1]);
                 endDate.setUTCDate(endDate.getUTCDate() + 1);
                 const end = endDate.toISOString();
                 url += `?range_time[start]=${start}&range_time[end]=${end}`;
             } else if (rangeFilter[0]) {
-                const start = params.rangeFilter[0].toISOString();
-                const endDate = new Date(params.rangeFilter[0]);
+                const start = currentRange[0].toISOString();
+                const endDate = new Date(currentRange[0]);
                 endDate.setUTCDate(endDate.getUTCDate() + 1);
                 const end = endDate.toISOString();
                 url += `?range_time[start]=${start}&range_time[end]=${end}`;
             }
         }
-        if (params.dateFilter) {
-            const start = params.dateFilter.toISOString();
-            const endDate = new Date(params.dateFilter);
+        if (currentDateFilter) {
+            const start = currentDateFilter.toISOString();
+            const endDate = new Date(currentDateFilter);
             endDate.setUTCDate(endDate.getUTCDate() + 1);
             const end = endDate.toISOString();
             url += `?range_time[start]=${start}&range_time[end]=${end}`;
@@ -76,6 +90,7 @@ function Checkin() {
 
         dispatch(getRecords({ type: "checkin", endPoint: url }))
             .then((d) => {
+                setRawCheckin(d);
                 if (d) {
                     const formattedCheckin = d.map((i) => ({
                         id: i.id,
@@ -108,40 +123,45 @@ function Checkin() {
                 endPoint: levelEndPoints.collection,
                 key: "data",
             })
-        );
+        ).finally(() => setLoadingLevels(false));
         dispatch(
             getRecords({
                 type: "class",
                 endPoint: classEndPoints.collection,
                 key: "data",
             })
-        );
+        ).finally(() => setLoadingClass(false));
         dispatch(
             getRecords({
                 type: "students",
                 endPoint: studentEndPoints.collection,
                 key: "data",
             })
-        );
+        ).finally(() => setLoadingStudent(false));
         dispatch(
             getRecords({
                 type: "activities",
                 endPoint: activityEndPoints.collection,
                 key: "data",
             })
-        );
+        ).finally(() => setLoadingActivities(false));
     }, [dispatch]);
 
     const handleEdit = (id) => {
-        const iCheckin = checkin.find((u) => u.id === id);
+        const iCheckin = rawCheckin.find((u) => u.id === id);
+        console.log(iCheckin);
         if (iCheckin) {
             const studentData = students.find(
-                (s) => s.name === iCheckin.student
+                (s) => s.id === iCheckin.student.id
             );
-            const classData = classes.find((c) => c.name === iCheckin.class);
-            const levelData = levels.find((l) => l.name === iCheckin.level);
+            const classData = classes.find(
+                (c) => c.id === iCheckin.student.class.id
+            );
+            const levelData = levels.find(
+                (l) => l.id === iCheckin.student.class.level.id
+            );
             const activityData = activities.find(
-                (a) => a.name === iCheckin.activity
+                (a) => a.id === iCheckin.activity_id
             );
 
             setFormData({
@@ -285,7 +305,12 @@ function Checkin() {
         label: i.name,
     }));
 
-    const isDataReady = !loadingData;
+    const isDataReady =
+        !loadingData &&
+        !loadingLevels &&
+        !loadingClass &&
+        !loadingStudent &&
+        !loadingActivities;
 
     return (
         <div>

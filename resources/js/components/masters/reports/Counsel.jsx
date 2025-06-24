@@ -49,28 +49,37 @@ function Counsel() {
     const groupedCounsels = groupCounselsByDate(counsels);
 
     const myFetch = (params = { timeFilter }) => {
+        let currentDateFilter =
+            params?.dateFilter !== undefined ? params.dateFilter : dateFilter;
+        let currentFilter =
+            params?.timeFilter !== undefined ? params.timeFilter : timeFilter;
+        let currentRange =
+            params?.rangeFilter !== undefined
+                ? params.rangeFilter
+                : rangeFilter;
+
         let url = counselEndPoints.collection;
-        if (params.timeFilter) {
-            url += `?time=${params.timeFilter}`;
+        if (currentFilter) {
+            url += `?time=${currentFilter}`;
         }
-        if (params.rangeFilter) {
-            if (params.rangeFilter[0] && params.rangeFilter[1]) {
-                const start = params.rangeFilter[0].toISOString();
-                const endDate = new Date(params.rangeFilter[1]);
+        if (currentRange) {
+            if (currentRange[0] && currentRange[1]) {
+                const start = currentRange[0].toISOString();
+                const endDate = new Date(currentRange[1]);
                 endDate.setUTCDate(endDate.getUTCDate() + 1);
                 const end = endDate.toISOString();
                 url += `?range_time[start]=${start}&range_time[end]=${end}`;
-            } else if (params.rangeFilter[0]) {
-                const start = params.rangeFilter[0].toISOString();
-                const endDate = new Date(params.rangeFilter[0]);
+            } else if (currentRange[0]) {
+                const start = currentRange[0].toISOString();
+                const endDate = new Date(currentRange[0]);
                 endDate.setUTCDate(endDate.getUTCDate() + 1);
                 const end = endDate.toISOString();
                 url += `?range_time[start]=${start}&range_time[end]=${end}`;
             }
         }
-        if (params.dateFilter) {
-            const start = params.dateFilter.toISOString();
-            const endDate = new Date(params.dateFilter);
+        if (currentDateFilter) {
+            const start = currentDateFilter.toISOString();
+            const endDate = new Date(currentDateFilter);
             endDate.setUTCDate(endDate.getUTCDate() + 1);
             const end = endDate.toISOString();
             url += `?range_time[start]=${start}&range_time[end]=${end}`;

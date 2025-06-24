@@ -24,6 +24,7 @@ function FacilityReservations() {
     const [timeFilter, setTimeFilter] = useState("month");
     const [dateFilter, setDateFilter] = useState(null);
     const [rangeFilter, setRangeFilter] = useState(null);
+    const [rawBooking, setRawBooking] = useState([]);
     const [formData, setFormData] = useState({
         level: null,
         class: null,
@@ -36,6 +37,10 @@ function FacilityReservations() {
     });
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(true);
+    const [loadingLevels, setLoadingLevels] = useState(true);
+    const [loadingClass, setLoadingClass] = useState(true);
+    const [loadingStudent, setLoadingStudent] = useState(true);
+    const [loadingFacilities, setLoadingFacilities] = useState(true);
     const [error, setError] = useState("");
     const {
         bookings: { data: bookings = [], endPoints: bookingEndPoints },
@@ -85,6 +90,7 @@ function FacilityReservations() {
 
         dispatch(getRecords({ type: "bookings", endPoint: url }))
             .then((d) => {
+                setRawBooking(d);
                 if (d) {
                     const formattedBooking = d.map((i) => ({
                         id: i.id,
@@ -94,6 +100,7 @@ function FacilityReservations() {
                         facility: i.facility?.name
                             ? `${i.facility?.parent.name} (${i.facility?.name})`
                             : "N/A",
+                        facility_id: i.facility_id,
                         status: i.status,
                         start_time: i.start_time,
                         end_time: i.end_time,
@@ -119,28 +126,28 @@ function FacilityReservations() {
                 endPoint: levelEndPoints.collection,
                 key: "data",
             })
-        );
+        ).finally(() => setLoadingLevels(false));
         dispatch(
             getRecords({
                 type: "class",
                 endPoint: classEndPoints.collection,
                 key: "data",
             })
-        );
+        ).finally(() => setLoadingClass(false));
         dispatch(
             getRecords({
                 type: "students",
                 endPoint: studentEndPoints.collection,
                 key: "data",
             })
-        );
+        ).finally(() => setLoadingStudent(false));
         dispatch(
             getRecords({
                 type: "facilities",
                 endPoint: facilityEndPoints.collection,
                 key: "data",
             })
-        );
+        ).finally(() => setLoadingFacilities(false));
     }, [dispatch]);
 
     const handleAdd = () => {
@@ -160,15 +167,19 @@ function FacilityReservations() {
     };
 
     const handleEdit = (id) => {
-        const booking = bookings.find((b) => b.id === id);
+        const booking = rawBooking.find((b) => b.id === id);
         if (booking) {
-            const studentData = students.find(
-                (s) => s.name === booking.student
+            const levelData = levels.find(
+                (l) => l.id === booking.student.class.level.id
             );
-            const classData = classes.find((c) => c.name === booking.class);
-            const levelData = levels.find((l) => l.name === booking.level);
-            const facilityData = facilities.find(
-                (f) => f.name === booking.facility
+            const classData = classes.find(
+                (c) => c.id === booking.student.class.id
+            );
+            const studentData = students.find(
+                (s) => s.id === booking.student.id
+            );
+            const facilityData = facilityOptions.find(
+                (sf) => sf.id === booking.facility_id
             );
 
             setFormData({
@@ -181,9 +192,7 @@ function FacilityReservations() {
                 student: studentData
                     ? { id: studentData.id, label: studentData.name }
                     : null,
-                facility: facilityData
-                    ? { id: facilityData.id, label: facilityData.name }
-                    : null,
+                facility: facilityData ?? null,
                 start_date: booking.start_time
                     ? new Date(booking.start_time)
                     : null,
@@ -325,8 +334,8 @@ function FacilityReservations() {
                         dispatch(
                             setToastMessage({
                                 severity: "info",
-                                summary: "Waktu Akhir Direset",
-                                detail: "Waktu akhir telah direset karena waktu mulai diubah.",
+                                summary: "End Time Reset",
+                                detail: "The end time has been reset because the start time was changed.",
                             })
                         );
                     }
@@ -343,8 +352,8 @@ function FacilityReservations() {
                 dispatch(
                     setToastMessage({
                         severity: "warn",
-                        summary: "Tanggal Akhir Tidak Valid",
-                        detail: "Tanggal akhir tidak boleh sebelum tanggal mulai.",
+                        summary: "Invalid End Date",
+                        detail: "The end date cannot be before the start date.",
                     })
                 );
             }
@@ -370,8 +379,8 @@ function FacilityReservations() {
                     dispatch(
                         setToastMessage({
                             severity: "warn",
-                            summary: "Waktu Akhir Tidak Valid",
-                            detail: "Waktu akhir harus setelah waktu mulai.",
+                            summary: "Invalid End Time",
+                            detail: "End time must be after start time.",
                         })
                     );
                 }
@@ -530,7 +539,12 @@ function FacilityReservations() {
             label: `${i.parent.name} (${i.name})`,
         }));
 
-    const isDataReady = !loadingData;
+    const isDataReady =
+        !loadingData &&
+        !loadingLevels &&
+        !loadingClass &&
+        !loadingStudent &&
+        !loadingFacilities;
 
     return (
         <div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useAuthUser } from "react-auth-kit";
 import { Button } from "primereact/button";
@@ -114,13 +114,7 @@ const CustomDataTable = ({
     useEffect(() => {
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         setUserTimezone(timezone);
-    }, []);
 
-    useEffect(() => {
-        setFilteredDataState(formattedData);
-    }, [collection, studentFilter, strategyFilter]);
-
-    useEffect(() => {
         if (
             Array.isArray(collection) &&
             collection.length > 0 &&
@@ -767,12 +761,20 @@ const CustomDataTable = ({
                                     prevRangeTimeRef.current = value;
 
                                     if (wasCleared) {
+                                        setRangeFilter(null);
+                                        setDateFilter(null);
+                                        setTimeFilter(null);
+
                                         onFetch({
                                             timeFilter: null,
                                             dateFilter: null,
                                             rangeFilter: null,
                                         });
                                     } else {
+                                        setRangeFilter(value);
+                                        setDateFilter(null);
+                                        setTimeFilter(null);
+
                                         onFetch({
                                             timeFilter: null,
                                             dateFilter: null,
@@ -1044,44 +1046,52 @@ const CustomDataTable = ({
         );
     };
 
-    const formattedData = isGrouped
-        ? collection.map((group) => ({
-              ...group,
-              counsels: group.counsels.filter((counsel) => {
-                  const matchesStudent =
-                      !studentFilter ||
-                      (counsel.student &&
-                          counsel.student
-                              .toLowerCase()
-                              .includes(studentFilter.toLowerCase()));
-                  const matchesStrategy =
-                      !strategyFilter ||
-                      counsel.support_strategies.includes(strategyFilter);
-                  return matchesStudent && matchesStrategy;
-              }),
-          }))
-        : Array.isArray(collection)
-        ? collection.map((item) => ({
-              ...item,
-              // status: item.status, // Raw status will be handled by column body template
-              checkin_time: item.checkin_time
-                  ? formatDateToLocal(item.checkin_time)
-                  : "",
-              checkout_time: item.checkout_time
-                  ? formatDateToLocal(item.checkout_time)
-                  : "",
-              start_time: item.start_time
-                  ? formatDateToLocal(item.start_time)
-                  : "",
-              end_time: item.end_time ? formatDateToLocal(item.end_time) : "",
-              created_at: item.created_at
-                  ? formatDateToLocal(item.created_at)
-                  : "",
-              updated_at: item.updated_at
-                  ? formatDateToLocal(item.updated_at)
-                  : "",
-          }))
-        : [];
+    const formattedData = useMemo(() => {
+        if (!Array.isArray(collection)) return [];
+
+        return isGrouped
+            ? collection.map((group) => ({
+                  ...group,
+                  counsels: group.counsels.filter((counsel) => {
+                      const matchesStudent =
+                          !studentFilter ||
+                          (counsel.student &&
+                              counsel.student
+                                  .toLowerCase()
+                                  .includes(studentFilter.toLowerCase()));
+                      const matchesStrategy =
+                          !strategyFilter ||
+                          counsel.support_strategies.includes(strategyFilter);
+                      return matchesStudent && matchesStrategy;
+                  }),
+              }))
+            : collection.map((item) => ({
+                  ...item,
+                  checkin_time: item.checkin_time
+                      ? formatDateToLocal(item.checkin_time)
+                      : "",
+                  checkout_time: item.checkout_time
+                      ? formatDateToLocal(item.checkout_time)
+                      : "",
+                  start_time: item.start_time
+                      ? formatDateToLocal(item.start_time)
+                      : "",
+                  end_time: item.end_time
+                      ? formatDateToLocal(item.end_time)
+                      : "",
+                  created_at: item.created_at
+                      ? formatDateToLocal(item.created_at)
+                      : "",
+                  updated_at: item.updated_at
+                      ? formatDateToLocal(item.updated_at)
+                      : "",
+              }));
+    }, [collection, studentFilter, strategyFilter, userTimezone]);
+
+    // f, worst decision using this
+    useEffect(() => {
+        setFilteredDataState(formattedData);
+    }, [formattedData, studentFilter, strategyFilter]);
 
     const questionRowExpansionTemplate = (question) => {
         if (question.type !== "radio") return null;

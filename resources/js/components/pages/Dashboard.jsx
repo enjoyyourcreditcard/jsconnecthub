@@ -196,8 +196,6 @@ function Dashboard() {
             reason: blockReason,
         };
 
-        console.log(blockData);
-
         setLoading(true);
         dispatch(
             createRecord({
