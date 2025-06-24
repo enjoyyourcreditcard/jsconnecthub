@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useIsAuthenticated } from "react-auth-kit";
 import {
     getRecords,
     createRecord,
@@ -20,7 +19,6 @@ import { Checkbox } from "primereact/checkbox";
 
 function Checkin() {
     const dispatch = useDispatch();
-    const isAuthenticated = useIsAuthenticated();
     const [visible, setVisible] = useState(false);
     const [mode, setMode] = useState("create");
     const [editId, setEditId] = useState(null);
@@ -35,6 +33,7 @@ function Checkin() {
         reason: "",
     });
     const [loading, setLoading] = useState(false);
+    const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState("");
     const [timeFilter, setTimeFilter] = useState("today");
     const [dateFilter, setDateFilter] = useState(null);
@@ -75,28 +74,30 @@ function Checkin() {
             url += `?range_time[start]=${start}&range_time[end]=${end}`;
         }
 
-        dispatch(getRecords({ type: "checkin", endPoint: url })).then((d) => {
-            if (d) {
-                const formattedCheckin = d.map((i) => ({
-                    id: i.id,
-                    student: i.student?.name || "N/A",
-                    level: i.student?.class?.level?.name || "N/A",
-                    class: i.student?.class?.name || "N/A",
-                    activity: i.activity?.name || i.other_activity || "N/A",
-                    checkin_time: i.checkin_time,
-                    checkout_time: i.checkout_time,
-                    reason: i.reason,
-                }));
-                dispatch(
-                    setStateData({
-                        type: "checkin",
-                        data: formattedCheckin,
-                        key: "data",
-                        isMerge: false,
-                    })
-                );
-            }
-        });
+        dispatch(getRecords({ type: "checkin", endPoint: url }))
+            .then((d) => {
+                if (d) {
+                    const formattedCheckin = d.map((i) => ({
+                        id: i.id,
+                        student: i.student?.name || "N/A",
+                        level: i.student?.class?.level?.name || "N/A",
+                        class: i.student?.class?.name || "N/A",
+                        activity: i.activity?.name || i.other_activity || "N/A",
+                        checkin_time: i.checkin_time,
+                        checkout_time: i.checkout_time,
+                        reason: i.reason,
+                    }));
+                    dispatch(
+                        setStateData({
+                            type: "checkin",
+                            data: formattedCheckin,
+                            key: "data",
+                            isMerge: false,
+                        })
+                    );
+                }
+            })
+            .finally(() => setLoadingData(false));
     };
 
     useEffect(() => {
@@ -284,12 +285,14 @@ function Checkin() {
         label: i.name,
     }));
 
+    const isDataReady = !loadingData;
+
     return (
         <div>
             <Header />
             <main style={{ padding: "20px" }}>
                 <Card>
-                    {isAuthenticated() ? (
+                    {isDataReady ? (
                         <>
                             <DataTable
                                 type="checkin"
@@ -510,7 +513,7 @@ function Checkin() {
                             </Dialog>
                         </>
                     ) : (
-                        <p>Please log in to view and manage checkin.</p>
+                        <p>Please wait.</p>
                     )}
                 </Card>
             </main>

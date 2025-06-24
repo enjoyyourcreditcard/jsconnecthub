@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useIsAuthenticated } from "react-auth-kit";
 import {
     getRecords,
     createRecord,
@@ -19,7 +18,6 @@ import { Calendar } from "primereact/calendar";
 
 function FacilityReservations() {
     const dispatch = useDispatch();
-    const isAuthenticated = useIsAuthenticated();
     const [visible, setVisible] = useState(false);
     const [mode, setMode] = useState("create");
     const [editId, setEditId] = useState(null);
@@ -37,6 +35,7 @@ function FacilityReservations() {
         end_time: null,
     });
     const [loading, setLoading] = useState(false);
+    const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState("");
     const {
         bookings: { data: bookings = [], endPoints: bookingEndPoints },
@@ -84,30 +83,32 @@ function FacilityReservations() {
             url += `?range_time[start]=${start}&range_time[end]=${end}`;
         }
 
-        dispatch(getRecords({ type: "bookings", endPoint: url })).then((d) => {
-            if (d) {
-                const formattedBooking = d.map((i) => ({
-                    id: i.id,
-                    student: i.student?.name || "N/A",
-                    level: i.student?.class?.level?.name || "N/A",
-                    class: i.student?.class?.name || "N/A",
-                    facility: i.facility?.name
-                        ? `${i.facility?.parent.name} (${i.facility?.name})`
-                        : "N/A",
-                    status: i.status,
-                    start_time: i.start_time,
-                    end_time: i.end_time,
-                }));
-                dispatch(
-                    setStateData({
-                        type: "bookings",
-                        data: formattedBooking,
-                        key: "data",
-                        isMerge: false,
-                    })
-                );
-            }
-        });
+        dispatch(getRecords({ type: "bookings", endPoint: url }))
+            .then((d) => {
+                if (d) {
+                    const formattedBooking = d.map((i) => ({
+                        id: i.id,
+                        student: i.student?.name || "N/A",
+                        level: i.student?.class?.level?.name || "N/A",
+                        class: i.student?.class?.name || "N/A",
+                        facility: i.facility?.name
+                            ? `${i.facility?.parent.name} (${i.facility?.name})`
+                            : "N/A",
+                        status: i.status,
+                        start_time: i.start_time,
+                        end_time: i.end_time,
+                    }));
+                    dispatch(
+                        setStateData({
+                            type: "bookings",
+                            data: formattedBooking,
+                            key: "data",
+                            isMerge: false,
+                        })
+                    );
+                }
+            })
+            .finally(() => setLoadingData(false));
     };
 
     useEffect(() => {
@@ -529,12 +530,14 @@ function FacilityReservations() {
             label: `${i.parent.name} (${i.name})`,
         }));
 
+    const isDataReady = !loadingData;
+
     return (
         <div>
             <Header />
             <main style={{ padding: "20px" }}>
                 <Card>
-                    {isAuthenticated() ? (
+                    {isDataReady ? (
                         <>
                             <DataTable
                                 type="bookings"
@@ -805,10 +808,7 @@ function FacilityReservations() {
                             </Dialog>
                         </>
                     ) : (
-                        <p>
-                            Please log in to view and manage facility
-                            reservations.
-                        </p>
+                        <p>Please wait.</p>
                     )}
                 </Card>
             </main>

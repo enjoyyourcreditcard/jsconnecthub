@@ -33,6 +33,9 @@ function ManageSupportAndQuestions() {
     });
     const [radioOptionInput, setRadioOptionInput] = useState("");
     const [loading, setLoading] = useState(false);
+    const [loadingSupportStrategies, setLoadingSupportStrategies] =
+        useState(true);
+    const [loadingQuestions, setLoadingQuestions] = useState(true);
     const [error, setError] = useState("");
     const {
         support_strategies: {
@@ -58,24 +61,26 @@ function ManageSupportAndQuestions() {
                 type: "support_strategies",
                 endPoint: strategyEndPoints.collection,
             })
-        ).then((d) => {
-            if (d) {
-                const formattedData = d.map((i) => ({
-                    id: i.id,
-                    name: i.name,
-                    created_at: i.created_at,
-                    updated_at: i.updated_at,
-                }));
-                dispatch(
-                    setStateData({
-                        type: "support_strategies",
-                        data: formattedData,
-                        key: "data",
-                        isMerge: false,
-                    })
-                );
-            }
-        });
+        )
+            .then((d) => {
+                if (d) {
+                    const formattedData = d.map((i) => ({
+                        id: i.id,
+                        name: i.name,
+                        created_at: i.created_at,
+                        updated_at: i.updated_at,
+                    }));
+                    dispatch(
+                        setStateData({
+                            type: "support_strategies",
+                            data: formattedData,
+                            key: "data",
+                            isMerge: false,
+                        })
+                    );
+                }
+            })
+            .finally(() => setLoadingSupportStrategies(false));
     };
 
     const fetchQuestions = () => {
@@ -84,30 +89,32 @@ function ManageSupportAndQuestions() {
                 type: "questions",
                 endPoint: questionEndPoints.collection,
             })
-        ).then((d) => {
-            if (d) {
-                const formattedData = d.map((i) => ({
-                    id: i.id,
-                    support_strategy_id: i.support_strategy_id,
-                    order: i.order,
-                    text: i.text,
-                    type: i.type,
-                    radio_options: Array.isArray(i.radio_options)
-                        ? i.radio_options.map((opt) => opt.text)
-                        : [],
-                    created_at: i.created_at,
-                    updated_at: i.updated_at,
-                }));
-                dispatch(
-                    setStateData({
-                        type: "questions",
-                        data: formattedData,
-                        key: "data",
-                        isMerge: false,
-                    })
-                );
-            }
-        });
+        )
+            .then((d) => {
+                if (d) {
+                    const formattedData = d.map((i) => ({
+                        id: i.id,
+                        support_strategy_id: i.support_strategy_id,
+                        order: i.order,
+                        text: i.text,
+                        type: i.type,
+                        radio_options: Array.isArray(i.radio_options)
+                            ? i.radio_options.map((opt) => opt.text)
+                            : [],
+                        created_at: i.created_at,
+                        updated_at: i.updated_at,
+                    }));
+                    dispatch(
+                        setStateData({
+                            type: "questions",
+                            data: formattedData,
+                            key: "data",
+                            isMerge: false,
+                        })
+                    );
+                }
+            })
+            .finally(() => setLoadingQuestions(false));
     };
 
     const handleAddStrategy = () => {
@@ -282,12 +289,14 @@ function ManageSupportAndQuestions() {
         }
     };
 
+    const isDataReady = !loadingSupportStrategies && !loadingQuestions;
+
     return (
         <div>
             <Header />
             <main style={{ padding: "20px" }}>
                 <Card>
-                    {questions.length > 0 ? (
+                    {isDataReady ? (
                         <>
                             <DataTable
                                 type="support_strategies"

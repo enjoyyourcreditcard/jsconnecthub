@@ -33,6 +33,9 @@ function ManageLevelClassStudent() {
         class_id: null,
     });
     const [loading, setLoading] = useState(false);
+    const [loadingClasses, setLoadingClasses] = useState(true);
+    const [loadingStudents, setLoadingStudents] = useState(true);
+    const [loadingLevels, setLoadingLevels] = useState(true);
     const [error, setError] = useState("");
     const {
         levels: { data: levels = [], endPoints: levelEndPoints } = {},
@@ -46,67 +49,73 @@ function ManageLevelClassStudent() {
                 type: "levels",
                 endPoint: levelEndPoints.collection,
             })
-        ).then((d) => {
-            if (d) {
-                const formattedLevels = d.map((i) => ({
-                    id: i.id,
-                    name: i.name,
-                }));
-                dispatch(
-                    setStateData({
-                        type: "levels",
-                        data: formattedLevels,
-                        key: "data",
-                        isMerge: false,
-                    })
-                );
-            }
-        });
+        )
+            .then((d) => {
+                if (d) {
+                    const formattedLevels = d.map((i) => ({
+                        id: i.id,
+                        name: i.name,
+                    }));
+                    dispatch(
+                        setStateData({
+                            type: "levels",
+                            data: formattedLevels,
+                            key: "data",
+                            isMerge: false,
+                        })
+                    );
+                }
+            })
+            .finally(() => setLoadingLevels(false));
         dispatch(
             getRecords({
                 type: "class",
                 endPoint: classEndPoints.collection,
             })
-        ).then((d) => {
-            if (d) {
-                const formattedClasses = d.map((i) => ({
-                    id: i.id,
-                    level_id: i.level_id,
-                    name: i.name,
-                    student_count: i.students.length,
-                }));
-                dispatch(
-                    setStateData({
-                        type: "class",
-                        data: formattedClasses,
-                        key: "data",
-                        isMerge: false,
-                    })
-                );
-            }
-        });
+        )
+            .then((d) => {
+                if (d) {
+                    const formattedClasses = d.map((i) => ({
+                        id: i.id,
+                        level_id: i.level_id,
+                        name: i.name,
+                        student_count: i.students.length,
+                    }));
+                    dispatch(
+                        setStateData({
+                            type: "class",
+                            data: formattedClasses,
+                            key: "data",
+                            isMerge: false,
+                        })
+                    );
+                }
+            })
+            .finally(() => setLoadingClasses(false));
         dispatch(
             getRecords({
                 type: "students",
                 endPoint: studentEndPoints.collection,
             })
-        ).then((d) => {
-            if (d) {
-                const formattedStudents = d.map((i) => ({
-                    id: i.id,
-                    name: i.name,
-                    class_id: i.class_id,
-                }));
-                dispatch(
-                    setStateData({
-                        type: "students",
-                        data: formattedStudents,
-                        key: "data",
-                        isMerge: false,
-                    })
-                );
-            }
-        });
+        )
+            .then((d) => {
+                if (d) {
+                    const formattedStudents = d.map((i) => ({
+                        id: i.id,
+                        name: i.name,
+                        class_id: i.class_id,
+                    }));
+                    dispatch(
+                        setStateData({
+                            type: "students",
+                            data: formattedStudents,
+                            key: "data",
+                            isMerge: false,
+                        })
+                    );
+                }
+            })
+            .finally(() => setLoadingStudents(false));
     };
 
     useEffect(() => {
@@ -310,12 +319,14 @@ function ManageLevelClassStudent() {
         }
     };
 
+    const isDataReady = !loadingLevels && !loadingClasses && !loadingStudents;
+
     return (
         <div>
             <Header />
             <main style={{ padding: "20px" }}>
                 <Card>
-                    {classes.length > 0 && students.length > 0 ? (
+                    {isDataReady ? (
                         <>
                             <DataTable
                                 type="levels"
@@ -332,10 +343,8 @@ function ManageLevelClassStudent() {
                                 onEditStudent={handleEditStudent}
                                 onDeleteStudent={handleDeleteStudent}
                                 title="Student"
-                                classes={Array.isArray(classes) ? classes : []}
-                                students={
-                                    Array.isArray(students) ? students : []
-                                }
+                                classes={classes}
+                                students={students}
                             />
                             <Dialog
                                 header={

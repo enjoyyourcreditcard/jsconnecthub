@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useIsAuthenticated } from "react-auth-kit";
 import { getRecords, setStateData } from "../../store/global-slice";
 import Header from "../../shared/layout/Header";
 import DataTable from "../../shared/misc/DataTable";
@@ -9,11 +8,13 @@ import { DateTime } from "luxon";
 
 function Counsel() {
     const dispatch = useDispatch();
-    const isAuthenticated = useIsAuthenticated();
     const [userTimezone, setUserTimezone] = useState(null);
     const [timeFilter, setTimeFilter] = useState("month");
     const [dateFilter, setDateFilter] = useState(null);
     const [rangeFilter, setRangeFilter] = useState(null);
+    const [loadingData, setLoadingData] = useState(true);
+    const [loadingSupportStrategies, setLoadingSupportStrategies] =
+        useState(true);
     const {
         counsels: { data: counsels = [], endPoints: counselEndPoints },
         support_strategies: {
@@ -74,32 +75,34 @@ function Counsel() {
             const end = endDate.toISOString();
             url += `?range_time[start]=${start}&range_time[end]=${end}`;
         }
-        dispatch(getRecords({ type: "counsels", endPoint: url })).then((d) => {
-            if (d) {
-                const formattedCounsels = d.map((i) => ({
-                    id: i.id,
-                    student: i.student?.name || "N/A",
-                    support_strategies: [
-                        ...new Set(
-                            i.answers.map(
-                                (a) => a.question.support_strategy.name
-                            )
-                        ),
-                    ].join(", "),
-                    answers: i.answers,
-                    created_at: i.created_at,
-                    updated_at: i.updated_at,
-                }));
-                dispatch(
-                    setStateData({
-                        type: "counsels",
-                        data: formattedCounsels,
-                        key: "data",
-                        isMerge: false,
-                    })
-                );
-            }
-        });
+        dispatch(getRecords({ type: "counsels", endPoint: url }))
+            .then((d) => {
+                if (d) {
+                    const formattedCounsels = d.map((i) => ({
+                        id: i.id,
+                        student: i.student?.name || "N/A",
+                        support_strategies: [
+                            ...new Set(
+                                i.answers.map(
+                                    (a) => a.question.support_strategy.name
+                                )
+                            ),
+                        ].join(", "),
+                        answers: i.answers,
+                        created_at: i.created_at,
+                        updated_at: i.updated_at,
+                    }));
+                    dispatch(
+                        setStateData({
+                            type: "counsels",
+                            data: formattedCounsels,
+                            key: "data",
+                            isMerge: false,
+                        })
+                    );
+                }
+            })
+            .finally(() => setLoadingData(false));
     };
 
     useEffect(() => {
@@ -114,16 +117,18 @@ function Counsel() {
                 endPoint: strategyEndPoints.collection,
                 key: "data",
             })
-        );
+        ).finally(() => setLoadingSupportStrategies(false));
         myFetch();
     }, [dispatch]);
+
+    const isDataReady = !loadingData && !loadingSupportStrategies;
 
     return (
         <div>
             <Header />
             <main style={{ padding: "20px" }}>
                 <Card>
-                    {supportStrategies.length > 0 ? (
+                    {isDataReady ? (
                         <DataTable
                             type="counsels"
                             identifier="date"

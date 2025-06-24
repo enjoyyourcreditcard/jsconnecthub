@@ -600,7 +600,7 @@ const CustomDataTable = ({
                             onChange={(e) => setStrategyFilter(e.value)}
                             placeholder="Select Support"
                             showClear
-                            tooltip="Select Support"
+                            tooltip="Select support"
                             tooltipOptions={{ position: "top" }}
                         />
                     </>
@@ -699,7 +699,7 @@ const CustomDataTable = ({
                     type === "bookings" ||
                     type === "counsels") && (
                     <>
-                        {/* <Dropdown
+                        <Dropdown
                             value={filterItems.find(
                                 (item) => item.type === filterType
                             )}
@@ -707,7 +707,9 @@ const CustomDataTable = ({
                             onChange={(e) => setFilterType(e.value.type)}
                             optionLabel="label"
                             placeholder="Select filter type"
-                        /> */}
+                            tooltip="Select filter type"
+                            tooltipOptions={{ position: "top" }}
+                        />
                         {filterType === "time" && (
                             <Dropdown
                                 value={timeFilter}
@@ -724,8 +726,10 @@ const CustomDataTable = ({
                                     });
                                 }}
                                 placeholder="Select Date Period"
-                                style={{ width: "200px" }}
+                                style={{ width: "180px" }}
                                 showClear
+                                tooltip="Select date period"
+                                tooltipOptions={{ position: "top" }}
                             />
                         )}
                         {filterType === "range" && (
@@ -734,6 +738,7 @@ const CustomDataTable = ({
                                 selectionMode="range"
                                 dateFormat="yy-mm-dd"
                                 placeholder="Select Date"
+                                className="w-fit"
                                 showButtonBar
                                 onChange={(e) => {
                                     const value = e.value;
@@ -774,6 +779,8 @@ const CustomDataTable = ({
                                         });
                                     }
                                 }}
+                                tooltip="Select date"
+                                tooltipOptions={{ position: "top" }}
                             />
                         )}
                     </>

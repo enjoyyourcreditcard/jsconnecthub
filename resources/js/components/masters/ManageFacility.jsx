@@ -25,6 +25,7 @@ function ManageFacility() {
         parent_id: null,
     });
     const [loading, setLoading] = useState(false);
+    const [loadingFacilities, setLoadingFacilities] = useState(true);
     const [error, setError] = useState("");
     const {
         facilities: { data: facilities = [], endPoints: facilityEndPoints },
@@ -38,39 +39,41 @@ function ManageFacility() {
                 endPoint: facilityEndPoints.collection,
                 key: "data",
             })
-        ).then((d) => {
-            if (d) {
-                const formattedFacilities = d
-                    .filter((i) => !i.parent_id)
-                    .map((i) => ({
-                        id: i.id,
-                        name: i.name,
-                    }));
-                dispatch(
-                    setStateData({
-                        type: "facilities",
-                        data: formattedFacilities,
-                        key: "data",
-                        isMerge: false,
-                    })
-                );
-                const formattedSubFacilities = d
-                    .filter((i) => i.parent_id)
-                    .map((i) => ({
-                        id: i.id,
-                        name: i.name,
-                        parent_id: i.parent_id,
-                    }));
-                dispatch(
-                    setStateData({
-                        type: "sub_facilities",
-                        data: formattedSubFacilities,
-                        key: "data",
-                        isMerge: false,
-                    })
-                );
-            }
-        });
+        )
+            .then((d) => {
+                if (d) {
+                    const formattedFacilities = d
+                        .filter((i) => !i.parent_id)
+                        .map((i) => ({
+                            id: i.id,
+                            name: i.name,
+                        }));
+                    dispatch(
+                        setStateData({
+                            type: "facilities",
+                            data: formattedFacilities,
+                            key: "data",
+                            isMerge: false,
+                        })
+                    );
+                    const formattedSubFacilities = d
+                        .filter((i) => i.parent_id)
+                        .map((i) => ({
+                            id: i.id,
+                            name: i.name,
+                            parent_id: i.parent_id,
+                        }));
+                    dispatch(
+                        setStateData({
+                            type: "sub_facilities",
+                            data: formattedSubFacilities,
+                            key: "data",
+                            isMerge: false,
+                        })
+                    );
+                }
+            })
+            .finally(() => setLoadingFacilities(false));
     };
 
     useEffect(() => {
@@ -161,34 +164,32 @@ function ManageFacility() {
                       value: f.id,
                   }))
             : [];
+
+    const isDataReady = !loadingFacilities;
+
     return (
         <div>
             <Header />
             <main style={{ padding: "20px" }}>
                 <Card>
-                    {subFacilities.length > 0 ? (
+                    {isDataReady ? (
                         <>
                             <DataTable
                                 type="facilities"
                                 identifier="id"
-                                // hasImport={true}
                                 hasExpand={true}
                                 onFetch={myFetch}
                                 onAdd={handleAdd}
                                 onEdit={handleEdit}
                                 onEditSubFacility={handleEditSubFacility}
                                 title="Facility"
-                                subFacilities={
-                                    Array.isArray(subFacilities)
-                                        ? subFacilities
-                                        : []
-                                }
+                                subFacilities={subFacilities}
                             />
                             <Dialog
                                 header={
                                     mode === "create"
-                                        ? `Add Facility`
-                                        : `Edit Facility`
+                                        ? "Add Facility"
+                                        : "Edit Facility"
                                 }
                                 visible={visible}
                                 style={{ width: "400px" }}

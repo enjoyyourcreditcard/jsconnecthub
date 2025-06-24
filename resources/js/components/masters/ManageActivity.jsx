@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useIsAuthenticated } from "react-auth-kit";
 import {
     getRecords,
     createRecord,
@@ -17,7 +16,6 @@ import { Button } from "primereact/button";
 
 function ManageActivity() {
     const dispatch = useDispatch();
-    const isAuthenticated = useIsAuthenticated();
     const [visible, setVisible] = useState(false);
     const [mode, setMode] = useState("create");
     const [editId, setEditId] = useState(null);
@@ -26,6 +24,7 @@ function ManageActivity() {
         description: "",
     });
     const [loading, setLoading] = useState(false);
+    const [loadingActivities, setLoadingActivities] = useState(true);
     const [error, setError] = useState("");
     const {
         activities: { data: activities = [], endPoints: activityEndPoints },
@@ -38,7 +37,7 @@ function ManageActivity() {
                 endPoint: activityEndPoints.collection,
                 key: "data",
             })
-        );
+        ).finally(() => setLoadingActivities(false));
     };
 
     useEffect(() => {
@@ -108,12 +107,14 @@ function ManageActivity() {
         }
     };
 
+    const isDataReady = !loadingActivities;
+
     return (
         <div>
             <Header />
             <main style={{ padding: "20px" }}>
                 <Card>
-                    {isAuthenticated() ? (
+                    {isDataReady ? (
                         <>
                             <DataTable
                                 type="activities"
@@ -216,7 +217,7 @@ function ManageActivity() {
                             </Dialog>
                         </>
                     ) : (
-                        <p>Please log in to view and manage activities.</p>
+                        <p>Please wait.</p>
                     )}
                 </Card>
             </main>
