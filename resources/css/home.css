@@ -22,7 +22,7 @@
     background-position: center;
     background-repeat: no-repeat;
     position: relative;
-    padding-bottom: 15vh;
+    padding-bottom: 5vh;
 }
 
 .home-container.with-background {
@@ -81,5 +81,30 @@
     .p-button.effected {
         font-size: 1rem;
         height: 40px;
+    }
+}
+
+/* home-container responsive */
+@media (max-height: 640px) {
+    .home-container {
+        padding-bottom: 20vh;
+    }
+}
+
+@media (max-height: 768px) {
+    .home-container {
+        padding-bottom: 10vh;
+    }
+}
+
+@media (max-height: 960px) {
+    .home-container {
+        padding-bottom: 10vh;
+    }
+
+    @media (max-width: 640px) {
+        .home-container {
+            padding-bottom: 5vh;
+        }
     }
 }
