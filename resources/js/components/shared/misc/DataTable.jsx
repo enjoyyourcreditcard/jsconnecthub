@@ -105,7 +105,7 @@ const CustomDataTable = ({
     const [size, setSize] = useState("small");
     const [studentFilter, setStudentFilter] = useState("");
     const [strategyFilter, setStrategyFilter] = useState(null);
-    const [filterType, setFilterType] = useState("time");
+    const [filterType, setFilterType] = useState("range");
     const sizeOptions = [
         { label: "Small", value: "small" },
         { label: "Normal", value: "normal" },
@@ -702,7 +702,7 @@ const CustomDataTable = ({
                     type === "bookings" ||
                     type === "counsels") && (
                     <>
-                        <SplitButton
+                        {/* <SplitButton
                             label={
                                 filterType
                                     ? `Filter by ${
@@ -718,8 +718,8 @@ const CustomDataTable = ({
                             severity="secondary"
                             onClick={handleFilter}
                             model={filterItems}
-                        />
-                        {filterType === "time" && (
+                        /> */}
+                        {/* {filterType === "time" && (
                             <Dropdown
                                 value={timeFilter}
                                 options={timeOptions}
@@ -745,10 +745,52 @@ const CustomDataTable = ({
                                 placeholder="Select Date"
                                 showButtonBar
                             />
-                        )}
+                        )} */}
                         {filterType === "range" && (
+                            // <Calendar
+                            //     value={rangeFilter}
+                            //     onChange={(e) => {
+                            //         const value = e.value;
+                            //         setRangeFilter(value);
+                            //         setDateFilter(null);
+                            //         setTimeFilter(null);
+
+                            //         const wasCleared =
+                            //             prevRangeTimeRef.current &&
+                            //             value === null;
+                            //         prevRangeTimeRef.current = value;
+
+                            //         if (wasCleared) {
+                            //             setRangeFilter(null);
+                            //             setDateFilter(null);
+                            //             setTimeFilter(null);
+
+                            //             onFetch({
+                            //                 timeFilter: null,
+                            //                 dateFilter: null,
+                            //                 rangeFilter: null,
+                            //             });
+                            //             return;
+                            //         } else {
+                            //             onFetch({
+                            //                 timeFilter: null,
+                            //                 dateFilter: null,
+                            //                 rangeFilter: value,
+                            //             });
+                            //         }
+                            //     }}
+                            //     selectionMode="range"
+                            //     dateFormat="yy-mm-dd"
+                            //     placeholder="Select Date Range"
+                            //     showButtonBar
+                            //     hideOnRangeSelection
+                            // />
                             <Calendar
                                 value={rangeFilter}
+                                selectionMode="range"
+                                dateFormat="yy-mm-dd"
+                                placeholder="Select Date"
+                                showButtonBar
                                 onChange={(e) => {
                                     const value = e.value;
                                     setRangeFilter(value);
@@ -764,14 +806,30 @@ const CustomDataTable = ({
                                         setRangeFilter(null);
                                         setDateFilter(null);
                                         setTimeFilter(null);
-                                        return;
                                     }
                                 }}
-                                selectionMode="range"
-                                dateFormat="yy-mm-dd"
-                                placeholder="Select Date Range"
-                                showButtonBar
-                                hideOnRangeSelection
+                                onHide={() => {
+                                    const value = rangeFilter;
+
+                                    const wasCleared =
+                                        prevRangeTimeRef.current &&
+                                        value === null;
+                                    prevRangeTimeRef.current = value;
+
+                                    if (wasCleared) {
+                                        onFetch({
+                                            timeFilter: null,
+                                            dateFilter: null,
+                                            rangeFilter: null,
+                                        });
+                                    } else {
+                                        onFetch({
+                                            timeFilter: null,
+                                            dateFilter: null,
+                                            rangeFilter: value,
+                                        });
+                                    }
+                                }}
                             />
                         )}
                     </>

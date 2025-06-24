@@ -67,6 +67,12 @@ function FacilityReservations() {
             endDate.setUTCDate(endDate.getUTCDate() + 1);
             const end = endDate.toISOString();
             url += `?range_time[start]=${start}&range_time[end]=${end}`;
+        } else if (currentRange && currentRange[0]) {
+            const start = currentRange[0].toISOString();
+            const endDate = new Date(currentRange[0]);
+            endDate.setUTCDate(endDate.getUTCDate() + 1);
+            const end = endDate.toISOString();
+            url += `?range_time[start]=${start}&range_time[end]=${end}`;
         }
         if (currentDateFilter) {
             const start = currentDateFilter.toISOString();

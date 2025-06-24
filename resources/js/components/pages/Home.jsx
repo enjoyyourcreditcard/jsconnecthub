@@ -239,7 +239,7 @@ function Home() {
                         summary:
                             "Hi " +
                             students.find((s) => s.id === studentId)?.name,
-                        detail: "Ready for your first quest today?",
+                        detail: "Ready for select first activity today?",
                     })
                 );
             }
@@ -487,7 +487,7 @@ function Home() {
                         summary: "Checked Out",
                         detail: isEarlyCheckout
                             ? `Early checkout recorded. Reason: ${earlyReason}. Returning to Launch Pad.`
-                            : "You have completed your quest! Returning to Launch Pad.",
+                            : "You have checkout! Returning to Launch Pad.",
                     })
                 );
                 setEarlyReason("");
