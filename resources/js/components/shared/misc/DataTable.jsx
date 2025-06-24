@@ -17,7 +17,6 @@ import { OverlayPanel } from "primereact/overlaypanel";
 import { FileUpload } from "primereact/fileupload";
 import { Dropdown } from "primereact/dropdown";
 import { Calendar } from "primereact/calendar";
-// import { Checkbox } from "primereact/checkbox";
 import {
     deleteRecord,
     importRecord,
@@ -623,14 +622,12 @@ const CustomDataTable = ({
         {
             label: "Time Period",
             command: () => setFilterType("time"),
-        },
-        {
-            label: "Single Date",
-            command: () => setFilterType("date"),
+            type: "time",
         },
         {
             label: "Date Range",
             command: () => setFilterType("range"),
+            type: "range",
         },
     ];
 
@@ -702,24 +699,16 @@ const CustomDataTable = ({
                     type === "bookings" ||
                     type === "counsels") && (
                     <>
-                        {/* <SplitButton
-                            label={
-                                filterType
-                                    ? `Filter by ${
-                                          filterType === "time"
-                                              ? "Time Period"
-                                              : filterType === "date"
-                                              ? "Single Date"
-                                              : "Date Range"
-                                      }`
-                                    : "Select Filter"
-                            }
-                            icon="pi pi-calendar"
-                            severity="secondary"
-                            onClick={handleFilter}
-                            model={filterItems}
+                        {/* <Dropdown
+                            value={filterItems.find(
+                                (item) => item.type === filterType
+                            )}
+                            options={filterItems}
+                            onChange={(e) => setFilterType(e.value.type)}
+                            optionLabel="label"
+                            placeholder="Select filter type"
                         /> */}
-                        {/* {filterType === "time" && (
+                        {filterType === "time" && (
                             <Dropdown
                                 value={timeFilter}
                                 options={timeOptions}
@@ -727,64 +716,19 @@ const CustomDataTable = ({
                                     setTimeFilter(e.value);
                                     setDateFilter(null);
                                     setRangeFilter(null);
+
+                                    onFetch({
+                                        timeFilter: value,
+                                        dateFilter: null,
+                                        rangeFilter: null,
+                                    });
                                 }}
                                 placeholder="Select Date Period"
                                 style={{ width: "200px" }}
                                 showClear
                             />
                         )}
-                        {filterType === "date" && (
-                            <Calendar
-                                value={dateFilter}
-                                onChange={(e) => {
-                                    setDateFilter(e.value);
-                                    setRangeFilter(null);
-                                    setTimeFilter(null);
-                                }}
-                                dateFormat="yy-mm-dd"
-                                placeholder="Select Date"
-                                showButtonBar
-                            />
-                        )} */}
                         {filterType === "range" && (
-                            // <Calendar
-                            //     value={rangeFilter}
-                            //     onChange={(e) => {
-                            //         const value = e.value;
-                            //         setRangeFilter(value);
-                            //         setDateFilter(null);
-                            //         setTimeFilter(null);
-
-                            //         const wasCleared =
-                            //             prevRangeTimeRef.current &&
-                            //             value === null;
-                            //         prevRangeTimeRef.current = value;
-
-                            //         if (wasCleared) {
-                            //             setRangeFilter(null);
-                            //             setDateFilter(null);
-                            //             setTimeFilter(null);
-
-                            //             onFetch({
-                            //                 timeFilter: null,
-                            //                 dateFilter: null,
-                            //                 rangeFilter: null,
-                            //             });
-                            //             return;
-                            //         } else {
-                            //             onFetch({
-                            //                 timeFilter: null,
-                            //                 dateFilter: null,
-                            //                 rangeFilter: value,
-                            //             });
-                            //         }
-                            //     }}
-                            //     selectionMode="range"
-                            //     dateFormat="yy-mm-dd"
-                            //     placeholder="Select Date Range"
-                            //     showButtonBar
-                            //     hideOnRangeSelection
-                            // />
                             <Calendar
                                 value={rangeFilter}
                                 selectionMode="range"

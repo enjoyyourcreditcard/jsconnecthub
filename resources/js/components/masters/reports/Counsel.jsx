@@ -52,16 +52,20 @@ function Counsel() {
         if (params.timeFilter) {
             url += `?time=${params.timeFilter}`;
         }
-        if (
-            params.rangeFilter &&
-            params.rangeFilter[0] &&
-            params.rangeFilter[1]
-        ) {
-            const start = params.rangeFilter[0].toISOString();
-            const endDate = new Date(params.rangeFilter[1]);
-            endDate.setUTCDate(endDate.getUTCDate() + 1);
-            const end = endDate.toISOString();
-            url += `?range_time[start]=${start}&range_time[end]=${end}`;
+        if (params.rangeFilter) {
+            if (params.rangeFilter[0] && params.rangeFilter[1]) {
+                const start = params.rangeFilter[0].toISOString();
+                const endDate = new Date(params.rangeFilter[1]);
+                endDate.setUTCDate(endDate.getUTCDate() + 1);
+                const end = endDate.toISOString();
+                url += `?range_time[start]=${start}&range_time[end]=${end}`;
+            } else if (params.rangeFilter[0]) {
+                const start = params.rangeFilter[0].toISOString();
+                const endDate = new Date(params.rangeFilter[0]);
+                endDate.setUTCDate(endDate.getUTCDate() + 1);
+                const end = endDate.toISOString();
+                url += `?range_time[start]=${start}&range_time[end]=${end}`;
+            }
         }
         if (params.dateFilter) {
             const start = params.dateFilter.toISOString();
