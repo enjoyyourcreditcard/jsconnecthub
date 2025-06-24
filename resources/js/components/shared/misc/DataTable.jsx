@@ -715,7 +715,8 @@ const CustomDataTable = ({
                                 value={timeFilter}
                                 options={timeOptions}
                                 onChange={(e) => {
-                                    setTimeFilter(e.value);
+                                    const value = e.value;
+                                    setTimeFilter(value);
                                     setDateFilter(null);
                                     setRangeFilter(null);
 
