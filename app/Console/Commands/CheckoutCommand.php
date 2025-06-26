@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Checkin;
+use App\Jobs\CheckoutUpdateJob;
 use Illuminate\Console\Command;
 
 class CheckoutCommand extends Command
@@ -26,10 +26,8 @@ class CheckoutCommand extends Command
      */
     public function handle()
     {
-        Checkin::whereNull('checkout_time')->update([
-            'checkout_time' => now()
-        ]);
+        CheckoutUpdateJob::dispatch();
 
-        $this->info('Data updated successfully.');
+        $this->info('CheckoutUpdateJob dispatched.');
     }
 }
