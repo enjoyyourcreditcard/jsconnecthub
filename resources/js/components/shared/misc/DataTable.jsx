@@ -693,7 +693,7 @@ const CustomDataTable = ({
                     type === "bookings" ||
                     type === "counsels") && (
                     <>
-                        <Dropdown
+                        {/* <Dropdown
                             value={filterItems.find(
                                 (item) => item.type === filterType
                             )}
@@ -703,8 +703,8 @@ const CustomDataTable = ({
                             placeholder="Select filter type"
                             tooltip="Select filter type"
                             tooltipOptions={{ position: "top" }}
-                        />
-                        {filterType === "time" && (
+                        /> */}
+                        {/* {filterType === "time" && (
                             <Dropdown
                                 value={timeFilter}
                                 options={timeOptions}
@@ -739,7 +739,7 @@ const CustomDataTable = ({
                                 tooltip="Select date period"
                                 tooltipOptions={{ position: "top" }}
                             />
-                        )}
+                        )} */}
                         {filterType === "range" && (
                             <Calendar
                                 value={rangeFilter}
