@@ -6,7 +6,6 @@ use App\Models\Checkin;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
-use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
 
 class CheckinController extends Controller
@@ -28,10 +27,9 @@ class CheckinController extends Controller
         }
 
         $checkin = new Checkin;
-
         $checkin->student_id = $request->student_id;
-
         $checkin->checkin_time = now();
+        $checkin->timezone = $request->timezone ?? 'UTC';
 
         if ($request->activity_id) {
             $checkin->activity_id = $request->activity_id;

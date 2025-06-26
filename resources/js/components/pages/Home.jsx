@@ -384,6 +384,7 @@ function Home() {
             student_id: studentId,
             activity_id: activityId ? selectedActivity?.id : null,
             other_activity: activityId ? null : editableActivity,
+            timezone: userTimezone,
         };
         dispatch(
             createRecord({
@@ -1412,6 +1413,9 @@ function Home() {
                                                             );
                                                             stepperRef.current.prevCallback();
                                                             setQuestLog([]);
+                                                            setIsCheckedIn(
+                                                                false
+                                                            );
                                                         },
                                                         reject: () => {
                                                             dispatch(

@@ -22,7 +22,9 @@ class Checkin extends Model
         'checkin_time',
         'checkout_time',
         'other_activity',
-        'reason'
+        'reason',
+        'job_id',
+        'timezone'
     ];
 
     /**

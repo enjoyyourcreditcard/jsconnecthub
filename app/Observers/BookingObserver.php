@@ -52,10 +52,6 @@ class BookingObserver
         try {
             $this->cancelCloseBookingJob($booking);
             $booking->delete();
-            Log::info('BookingObserver: Booking deleted and job cancelled', [
-                'booking_id' => $booking->id,
-                'job_id' => $booking->job_id
-            ]);
         } catch (Exception $e) {
             Log::error('BookingObserver: Failed to handle deleted event', [
                 'booking_id' => $booking->id,
@@ -108,22 +104,13 @@ class BookingObserver
 
         $booking->job_id = $jobId;
         $booking->saveQuietly();
-
-        Log::info('BookingObserver: CloseBookingJob dispatched', [
-            'booking_id' => $booking->id,
-            'job_id' => $jobId,
-            'available_at' => $endTime->toDateTimeString()
-        ]);
     }
 
     protected function cancelCloseBookingJob(Booking $booking)
     {
         if ($booking->job_id && config('queue.default') === 'database') {
             try {
-                $deleted = DB::table('jobs')
-                    ->where('id', $booking->job_id)
-                    ->delete();
-
+                $deleted = DB::table('jobs')->where('id', $booking->job_id)->delete();
                 if ($deleted) {
                     Log::info('BookingObserver: Job removed from queue', [
                         'booking_id' => $booking->id,

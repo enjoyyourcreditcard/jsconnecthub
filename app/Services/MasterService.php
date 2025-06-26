@@ -5,6 +5,7 @@ namespace App\Services;
 use Carbon\Carbon;
 use App\Models\Level;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\App;
 
 class MasterService
@@ -295,9 +296,23 @@ class MasterService
         }
         if ($type === 'students') {
             $counsels = $this->getModel('counsels')->where('student_id', $id)->get();
+            $checkins = $this->getModel('checkin')->where('student_id', $id)->get();
+            $bookings = $this->getModel('bookings')->where('student_id', $id)->get();
+
+            if ($checkins) {
+                foreach ($checkins as $checkin) {
+                    DB::table('jobs')->where('id', $checkin->job_id)->delete();
+                }
+            }
+            if ($bookings) {
+                foreach ($bookings as $booking) {
+                    DB::table('jobs')->where('id', $booking->job_id)->delete();
+                }
+            }
 
             $this->getModel('checkin')->where('student_id', $id)->delete();
             $this->getModel('bookings')->where('student_id', $id)->delete();
+
             foreach ($counsels as $counsel) {
                 $this->getModel('answers')->where('result_id', $counsel->id)->delete();
             }

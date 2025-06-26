@@ -19,6 +19,8 @@ return new class extends Migration
             $table->timestamp('checkout_time')->nullable('true');
             $table->string('other_activity')->nullable('true');
             $table->text('reason')->nullable('true');
+            $table->string('job_id')->nullable();
+            $table->string('timezone')->default('UTC');
         });
     }
 

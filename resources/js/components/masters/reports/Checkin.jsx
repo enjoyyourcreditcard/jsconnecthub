@@ -149,7 +149,6 @@ function Checkin() {
 
     const handleEdit = (id) => {
         const iCheckin = rawCheckin.find((u) => u.id === id);
-        console.log(iCheckin);
         if (iCheckin) {
             const studentData = students.find(
                 (s) => s.id === iCheckin.student.id

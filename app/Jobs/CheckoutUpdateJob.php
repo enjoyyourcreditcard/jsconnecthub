@@ -6,28 +6,34 @@ use App\Models\Checkin;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
 class CheckoutUpdateJob implements ShouldQueue
 {
-    use Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * Create a new job instance.
-     */
-    public function __construct()
+    protected $checkinId;
+
+    public function __construct($checkinId)
     {
-        //
+        $this->checkinId = $checkinId;
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
-        Checkin::whereNull('checkout_time')->update([
-            'checkout_time' => now()
-        ]);
+        $checkin = Checkin::find($this->checkinId);
 
-        Log::info('CheckoutUpdateJob: Checkout');
+        if (!$checkin || $checkin->checkout_time) {
+            return;
+        }
+
+        $checkin->checkout_time = now();
+        $checkin->save();
+
+        Log::info('CheckoutUpdateJob: Checkout done', [
+            'checkin_id' => $this->checkinId,
+        ]);
     }
 }
