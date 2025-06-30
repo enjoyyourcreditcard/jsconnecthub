@@ -351,7 +351,10 @@ function Dashboard() {
     return (
         <div>
             <Header />
-            <main style={{ padding: "20px" }}>
+            <main
+                className="admin-container with-color"
+                style={{ padding: "20px" }}
+            >
                 <Toast ref={toast} />
                 <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                     {permissions.includes("dashboard view") && (
