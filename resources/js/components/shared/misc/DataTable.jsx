@@ -1600,24 +1600,6 @@ const CustomDataTable = ({
         if (isGrouped) {
             return rowData?.counsels?.length > 0;
         }
-        if (hasExpand && (type === "support_strategies" || type === "levels")) {
-            if (type === "support_strategies") {
-                const allowDataStrategyQuestions = Array.isArray(questions)
-                    ? questions.filter(
-                          (q) => q.support_strategy_id === rowData?.id
-                      )
-                    : [];
-
-                return allowDataStrategyQuestions.length > 0;
-            }
-            if (type === "levels") {
-                const allowDataLevelClasses = Array.isArray(classes)
-                    ? classes.filter((q) => q.level_id === rowData?.id)
-                    : [];
-
-                return allowDataLevelClasses.length > 0;
-            }
-        }
         return true;
     };
 

@@ -255,31 +255,33 @@ function Checkin() {
 
         try {
             if (mode === "create") {
-                const result = dispatch(
+                dispatch(
                     createRecord({
                         type: "checkin",
                         endPoint: checkinEndPoints.store,
                         data: dataToSubmit,
                         returnData: true,
                     })
-                );
-                if (result) {
-                    setVisible(false);
-                    myFetch();
-                }
+                ).then((success) => {
+                    if (success) {
+                        setVisible(false);
+                        myFetch();
+                    }
+                });
             } else {
-                const result = dispatch(
+                dispatch(
                     updateRecord({
                         type: "checkin",
                         endPoint: `${checkinEndPoints.update}${editId}`,
                         data: dataToSubmit,
                         returnData: true,
                     })
-                );
-                if (result) {
-                    setVisible(false);
-                    myFetch();
-                }
+                ).then((success) => {
+                    if (success) {
+                        setVisible(false);
+                        myFetch();
+                    }
+                });
             }
         } catch (err) {
             setError(err.message || "Operation failed");
