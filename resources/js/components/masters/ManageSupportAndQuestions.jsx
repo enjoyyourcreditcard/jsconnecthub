@@ -220,7 +220,12 @@ function ManageSupportAndQuestions() {
                         endPoint: strategyEndPoints.store,
                         data: strategyFormData,
                     })
-                );
+                ).then((success) => {
+                    if (success) {
+                        setStrategyDialog(false);
+                        fetchSupportStrategies();
+                    }
+                });
             } else {
                 dispatch(
                     updateRecord({
@@ -228,11 +233,14 @@ function ManageSupportAndQuestions() {
                         endPoint: `${strategyEndPoints.update}${editId}`,
                         data: strategyFormData,
                     })
-                );
+                ).then((success) => {
+                    if (success) {
+                        setStrategyDialog(false);
+                        fetchSupportStrategies();
+                    }
+                });
             }
             setStrategyFormData({ name: "" });
-            setStrategyDialog(false);
-            fetchSupportStrategies();
         } catch (err) {
             setError(err.message || "Operation failed");
         } finally {
@@ -262,7 +270,13 @@ function ManageSupportAndQuestions() {
                         endPoint: questionEndPoints.store,
                         data,
                     })
-                );
+                ).then((success) => {
+                    if (success) {
+                        setQuestionDialog(false);
+                        fetchSupportStrategies();
+                        fetchQuestions();
+                    }
+                });
             } else {
                 dispatch(
                     updateRecord({
@@ -270,7 +284,13 @@ function ManageSupportAndQuestions() {
                         endPoint: `${questionEndPoints.update}${editId}`,
                         data,
                     })
-                );
+                ).then((success) => {
+                    if (success) {
+                        setQuestionDialog(false);
+                        fetchSupportStrategies();
+                        fetchQuestions();
+                    }
+                });
             }
             setQuestionFormData({
                 support_strategy_id: null,
@@ -280,8 +300,6 @@ function ManageSupportAndQuestions() {
                 radio_options: [],
             });
             setRadioOptionInput("");
-            setQuestionDialog(false);
-            fetchQuestions();
         } catch (err) {
             setError(err.message || "Operation failed");
         } finally {

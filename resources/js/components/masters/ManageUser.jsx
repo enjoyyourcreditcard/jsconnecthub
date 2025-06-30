@@ -77,31 +77,33 @@ function ManageUser() {
         setError("");
         try {
             if (mode === "create") {
-                const success = dispatch(
+                dispatch(
                     createRecord({
                         type: "users",
                         endPoint: userEndPoints.store,
                         data: formData,
                     })
-                );
-                if (success) {
-                    setFormData({ name: "", email: "", password: "" });
-                    setVisible(false);
-                    myFetch();
-                }
+                ).then((success) => {
+                    if (success) {
+                        setFormData({ name: "", email: "", password: "" });
+                        myFetch();
+                        setVisible(false);
+                    }
+                });
             } else {
-                const success = dispatch(
+                dispatch(
                     updateRecord({
                         type: "users",
                         endPoint: `${userEndPoints.update}${editId}`,
                         data: formData,
                     })
-                );
-                if (success) {
-                    setFormData({ name: "", email: "", password: "" });
-                    setVisible(false);
-                    myFetch();
-                }
+                ).then((success) => {
+                    if (success) {
+                        setFormData({ name: "", email: "", password: "" });
+                        myFetch();
+                        setVisible(false);
+                    }
+                });
             }
         } catch (err) {
             setError(err.message || "Operation failed");

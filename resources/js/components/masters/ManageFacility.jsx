@@ -73,6 +73,9 @@ function ManageFacility() {
                     );
                 }
             })
+            .catch((error) => {
+                console.error("Fetch error:", error.message);
+            })
             .finally(() => setLoadingFacilities(false));
     };
 
@@ -81,10 +84,13 @@ function ManageFacility() {
     }, [dispatch]);
 
     const handleEdit = (id) => {
-        const facility = facilities.find((u) => u.id === id);
+        const facility = [...facilities, ...subFacilities].find(
+            (u) => u.id === id
+        );
         if (facility) {
             setFormData({
                 name: facility.name,
+                parent_id: facility.parent_id || null,
             });
             setEditId(id);
             setMode("edit");
@@ -99,16 +105,7 @@ function ManageFacility() {
     };
 
     const handleEditSubFacility = (id) => {
-        const facility = subFacilities.find((u) => u.id === id);
-        if (facility) {
-            setFormData({
-                name: facility.name,
-                parent_id: facility.parent_id,
-            });
-            setEditId(id);
-            setMode("edit");
-            setVisible(true);
-        }
+        handleEdit(id);
     };
 
     const handleChange = (e) => {
@@ -122,34 +119,39 @@ function ManageFacility() {
         setError("");
         try {
             if (mode === "create") {
-                const success = dispatch(
+                dispatch(
                     createRecord({
                         type: "facilities",
                         endPoint: facilityEndPoints.store,
                         data: formData,
                     })
-                );
-                if (success) {
-                    setFormData({ name: "" });
-                    setVisible(false);
-                    myFetch();
-                }
+                ).then((success) => {
+                    if (success) {
+                        setFormData({ name: "", parent_id: null });
+                        myFetch();
+                        setVisible(false);
+                        setLoading(false);
+                    }
+                });
             } else {
-                const success = dispatch(
+                dispatch(
                     updateRecord({
                         type: "facilities",
                         endPoint: `${facilityEndPoints.update}${editId}`,
                         data: formData,
                     })
-                );
-                if (success) {
-                    setFormData({ name: "" });
-                    setVisible(false);
-                    myFetch();
-                }
+                ).then((success) => {
+                    if (success) {
+                        setFormData({ name: "", parent_id: null });
+                        myFetch();
+                        setVisible(false);
+                        setLoading(false);
+                    }
+                });
             }
         } catch (err) {
             setError(err.message || "Operation failed");
+            return false;
         } finally {
             setLoading(false);
         }

@@ -1333,7 +1333,7 @@ const CustomDataTable = ({
                             style={{ width: "3rem" }}
                             exportable={false}
                         />
-                        <Column field="name" header="Sub Facilitiy" sortable />
+                        <Column field="name" header="Sub Facility" sortable />
                         <Column
                             header="Actions"
                             body={subFacilityActionsTemplate}

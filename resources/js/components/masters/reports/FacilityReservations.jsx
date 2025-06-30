@@ -494,7 +494,7 @@ function FacilityReservations() {
         };
 
         try {
-            const result = dispatch(
+            dispatch(
                 mode === "create"
                     ? createRecord({
                           type: "bookings",
@@ -508,12 +508,12 @@ function FacilityReservations() {
                           data: dataToSubmit,
                           returnData: true,
                       })
-            );
-
-            if (result) {
-                setVisible(false);
-                myFetch();
-            }
+            ).then((success) => {
+                if (success) {
+                    setVisible(false);
+                    myFetch();
+                }
+            });
         } catch (err) {
             setError(err.message || "Operation failed");
         } finally {

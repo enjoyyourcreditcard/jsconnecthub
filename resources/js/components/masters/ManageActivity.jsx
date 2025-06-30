@@ -74,31 +74,33 @@ function ManageActivity() {
         setError("");
         try {
             if (mode === "create") {
-                const success = dispatch(
+                dispatch(
                     createRecord({
                         type: "activities",
                         endPoint: activityEndPoints.store,
                         data: formData,
                     })
-                );
-                if (success) {
-                    setFormData({ name: "", description: "" });
-                    setVisible(false);
-                    myFetch();
-                }
+                ).then((success) => {
+                    if (success) {
+                        setFormData({ name: "", description: "" });
+                        myFetch();
+                        setVisible(false);
+                    }
+                });
             } else {
-                const success = dispatch(
+                dispatch(
                     updateRecord({
                         type: "activities",
                         endPoint: `${activityEndPoints.update}${editId}`,
                         data: formData,
                     })
-                );
-                if (success) {
-                    setFormData({ name: "", description: "" });
-                    setVisible(false);
-                    myFetch();
-                }
+                ).then((success) => {
+                    if (success) {
+                        setFormData({ name: "", description: "" });
+                        myFetch();
+                        setVisible(false);
+                    }
+                });
             }
         } catch (err) {
             setError(err.message || "Operation failed");

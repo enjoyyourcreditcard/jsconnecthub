@@ -229,87 +229,93 @@ function ManageLevelClassStudent() {
         try {
             if (formType === "levels") {
                 if (mode === "create") {
-                    const success = dispatch(
+                    dispatch(
                         createRecord({
                             type: "levels",
                             endPoint: levelEndPoints.store,
                             data: formData,
                         })
-                    );
-                    if (success) {
-                        setFormData({ name: "" });
-                        setLevelDialog(false);
-                        myFetch();
-                    }
+                    ).then((success) => {
+                        if (success) {
+                            setFormData({ name: "" });
+                            setLevelDialog(false);
+                            myFetch();
+                        }
+                    });
                 } else {
-                    const success = dispatch(
+                    dispatch(
                         updateRecord({
                             type: "levels",
                             endPoint: `${levelEndPoints.update}${editId}`,
                             data: formData,
                         })
-                    );
-                    if (success) {
-                        setFormData({ name: "" });
-                        setLevelDialog(false);
-                        myFetch();
-                    }
+                    ).then((success) => {
+                        if (success) {
+                            setFormData({ name: "" });
+                            setLevelDialog(false);
+                            myFetch();
+                        }
+                    });
                 }
             } else if (formType === "class") {
                 if (mode === "create") {
-                    const success = dispatch(
+                    dispatch(
                         createRecord({
                             type: "class",
                             endPoint: classEndPoints.store,
                             data: classFormData,
                         })
-                    );
-                    if (success) {
-                        setClassFormData({ name: "", level_id: "" });
-                        setClassDialog(false);
-                        myFetch();
-                    }
+                    ).then((success) => {
+                        if (success) {
+                            setClassFormData({ name: "", level_id: "" });
+                            setClassDialog(false);
+                            myFetch();
+                        }
+                    });
                 } else {
-                    const success = dispatch(
+                    dispatch(
                         updateRecord({
                             type: "class",
                             endPoint: `${classEndPoints.update}${editId}`,
                             data: classFormData,
                         })
-                    );
-                    if (success) {
-                        setClassFormData({ name: "", level_id: "" });
-                        setClassDialog(false);
-                        myFetch();
-                    }
+                    ).then((success) => {
+                        if (success) {
+                            setClassFormData({ name: "", level_id: "" });
+                            setClassDialog(false);
+                            myFetch();
+                        }
+                    });
                 }
             } else if (formType === "students") {
                 if (mode === "create") {
-                    const success = dispatch(
+                    dispatch(
                         createRecord({
                             type: "students",
                             endPoint: studentEndPoints.store,
                             data: studentFormData,
                         })
-                    );
-                    if (success) {
-                        setStudentFormData({ name: "", class_id: "" });
-                        setStudentDialog(false);
-                        myFetch();
-                    }
+                    ).then((success) => {
+                        if (success) {
+                            setStudentFormData({ name: "", class_id: "" });
+                            setStudentDialog(false);
+                            myFetch();
+                        }
+                    });
                 } else {
-                    const success = dispatch(
+                    dispatch(
                         updateRecord({
                             type: "students",
                             endPoint: `${studentEndPoints.update}${editId}`,
                             data: studentFormData,
                         })
-                    );
-                    if (success) {
-                        setStudentFormData({ name: "", class_id: "" });
-                        setStudentDialog(false);
-                        myFetch();
-                    }
+                    ).then((success) => {
+                        if (success) {
+                            setStudentFormData({ name: "", class_id: "" });
+                            setStudentDialog(false);
+                            myFetch();
+                        }
+                    });
                 }
             }
         } catch (err) {
