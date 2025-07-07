@@ -55,7 +55,7 @@ class LoginController extends Controller
             'password'  => ['required', 'string']
         ]);
 
-        $user = User::where('email', $validatedData['email'])->first();
+        $user = User::where([['email', $validatedData['email']], ['deleted_at', null]])->first();
 
         if (!$user || !Hash::check($validatedData['password'], $user->password)) {
             throw new HttpResponseException(response([

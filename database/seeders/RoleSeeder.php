@@ -16,9 +16,9 @@ class RoleSeeder extends Seeder
     {
         $roles = [
             ['name' => 'Superadmin', 'guard_name' => 'web'],
-            ['name' => 'Admin1', 'guard_name' => 'web'],
-            ['name' => 'Admin2', 'guard_name' => 'web'],
-            ['name' => 'Admin3', 'guard_name' => 'web'],
+            ['name' => 'Checkin', 'guard_name' => 'web'],
+            ['name' => 'Booking', 'guard_name' => 'web'],
+            ['name' => 'Counsel', 'guard_name' => 'web'],
         ];
 
         Role::insert($roles);
@@ -56,7 +56,7 @@ class RoleSeeder extends Seeder
             'dashboard view'
         ]);
 
-        Role::findByName('Admin1')->givePermissionTo([
+        Role::findByName('Checkin')->givePermissionTo([
             'activities view',
             'activities create',
             'activities edit',
@@ -68,7 +68,7 @@ class RoleSeeder extends Seeder
             'dashboard-checkin view',
         ]);
 
-        Role::findByName('Admin2')->givePermissionTo([
+        Role::findByName('Booking')->givePermissionTo([
             'facilities view',
             'facilities create',
             'facilities edit',
@@ -85,7 +85,7 @@ class RoleSeeder extends Seeder
             'dashboard-bookings view',
         ]);
 
-        Role::findByName('Admin3')->givePermissionTo([
+        Role::findByName('Counsel')->givePermissionTo([
             'support_strategies view',
             'support_strategies create',
             'support_strategies edit',

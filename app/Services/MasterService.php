@@ -41,6 +41,9 @@ class MasterService
     public function getAll($type, $request = null)
     {
         $q = $this->getModel($type);
+        if ($type === config('constants.MASTER_TYPE_ARRAY.USER_MASTER_TYPE')) {
+            return $q->with('roles')->get();
+        }
         if ($type === config('constants.MASTER_TYPE_ARRAY.LEVEL_MASTER_TYPE')) {
             return $q->with('classes')->get();
         }

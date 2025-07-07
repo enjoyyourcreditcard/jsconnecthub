@@ -14,6 +14,7 @@ import { Dialog } from "primereact/dialog";
 import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
+import { Checkbox } from "primereact/checkbox";
 
 function ManageUser() {
     const dispatch = useDispatch();
@@ -25,6 +26,7 @@ function ManageUser() {
         name: "",
         email: "",
         password: "",
+        access: "",
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -39,7 +41,24 @@ function ManageUser() {
                 endPoint: userEndPoints.collection,
                 key: "data",
             })
-        );
+        ).then((d) => {
+            const formattedUser = d.map((i) => ({
+                id: i.id,
+                name: i.name || "N/A",
+                email: i.email || "N/A",
+                role: i.roles[0]?.name,
+                created_at: i.created_at,
+                updated_at: i.updated_at,
+            }));
+            dispatch(
+                setStateData({
+                    type: "users",
+                    data: formattedUser,
+                    key: "data",
+                    isMerge: false,
+                })
+            );
+        });
     };
 
     useEffect(() => {
@@ -53,6 +72,7 @@ function ManageUser() {
                 name: user.name,
                 email: user.email,
                 password: "",
+                access: user.role,
             });
             setEditId(id);
             setMode("edit");
@@ -62,7 +82,7 @@ function ManageUser() {
 
     const handleAdd = () => {
         setMode("create");
-        setFormData({ name: "", email: "", password: "" });
+        setFormData({ name: "", email: "", password: "", access: "" });
         setVisible(true);
     };
 
@@ -73,6 +93,10 @@ function ManageUser() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!formData.access) {
+            setError("Access type is required.");
+            return;
+        }
         setLoading(true);
         setError("");
         try {
@@ -85,7 +109,12 @@ function ManageUser() {
                     })
                 ).then((success) => {
                     if (success) {
-                        setFormData({ name: "", email: "", password: "" });
+                        setFormData({
+                            name: "",
+                            email: "",
+                            password: "",
+                            access: "",
+                        });
                         myFetch();
                         setVisible(false);
                     }
@@ -99,7 +128,12 @@ function ManageUser() {
                     })
                 ).then((success) => {
                     if (success) {
-                        setFormData({ name: "", email: "", password: "" });
+                        setFormData({
+                            name: "",
+                            email: "",
+                            password: "",
+                            access: "",
+                        });
                         myFetch();
                         setVisible(false);
                     }
@@ -197,7 +231,7 @@ function ManageUser() {
                                                 onChange={handleChange}
                                                 type="password"
                                                 style={{ width: "100%" }}
-                                                required={mode === "create"}
+                                                required
                                                 disabled={loading}
                                                 tooltip="Enter user password"
                                                 tooltipOptions={{
@@ -210,6 +244,64 @@ function ManageUser() {
                                                 Password
                                             </label>
                                         </FloatLabel>
+                                    </div>
+                                    <div style={{ marginBottom: "2rem" }}>
+                                        <label
+                                            style={{
+                                                fontWeight: "bold",
+                                                display: "block",
+                                                marginBottom: "0.5rem",
+                                            }}
+                                        >
+                                            Access Type
+                                        </label>
+                                        {!formData.access && error && (
+                                            <small style={{ color: "red" }}>
+                                                Pick one of this access below.
+                                            </small>
+                                        )}
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                gap: "0.5rem",
+                                            }}
+                                        >
+                                            {[
+                                                "Superadmin",
+                                                "Checkin",
+                                                "Booking",
+                                                "Counsel",
+                                            ].map((type) => (
+                                                <div
+                                                    key={type}
+                                                    className="flex align-items-center"
+                                                >
+                                                    <Checkbox
+                                                        inputId={type}
+                                                        name="access"
+                                                        value={type}
+                                                        onChange={(e) => {
+                                                            setFormData({
+                                                                ...formData,
+                                                                access: e.value,
+                                                            });
+                                                        }}
+                                                        checked={
+                                                            formData.access ==
+                                                            type
+                                                        }
+                                                        disabled={loading}
+                                                    />
+                                                    <label
+                                                        htmlFor={type}
+                                                        className="ml-2"
+                                                    >
+                                                        {type}
+                                                    </label>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                     <div
                                         style={{

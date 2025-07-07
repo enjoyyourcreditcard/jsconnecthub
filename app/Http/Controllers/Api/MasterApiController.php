@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Question;
+use App\Models\BlockedDate;
 use App\Models\RadioOption;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Validation\Rule;
 use App\Services\MasterService;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use App\Models\BlockedDate;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Validator;
 
@@ -35,9 +36,19 @@ class MasterApiController extends Controller
         $this->middleware('permission:' . $urlMasterType . ' delete', ['only' => ['destroy']]);
     }
 
-    private function getRuleValidationByType($type)
+    private function getRuleValidationByType($type, $id = null)
     {
         $rules = [];
+        if ($type === config('constants.MASTER_TYPE_ARRAY.USER_MASTER_TYPE')) {
+            $rules = [
+                'name' =>  ['required', 'string'],
+                'email' => [
+                    'required',
+                    'string',
+                    Rule::unique('users', 'email')->ignore($id)->whereNull('deleted_at')
+                ]
+            ];
+        }
         if ($type === config('constants.MASTER_TYPE_ARRAY.LEVEL_MASTER_TYPE')) {
             $rules = config('constants.MASTER_VALIDATION_ARRAY.LEVEL_MASTER_VALIDATION');
         }
@@ -74,9 +85,13 @@ class MasterApiController extends Controller
         return $rules;
     }
 
-    private function doRequestValidation(Request $request, $type)
+    private function doRequestValidation(Request $request, $type, $id = null)
     {
-        $rules = $this->getRuleValidationByType($type);
+        if ($id === null) {
+            $rules = $this->getRuleValidationByType($type);
+        } else {
+            $rules = $this->getRuleValidationByType($type, $id);
+        }
 
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
@@ -187,6 +202,12 @@ class MasterApiController extends Controller
 
             return response()->json(['status' => true, 'message' => "$type created", 'result' => $result], Response::HTTP_CREATED);
         }
+        if ($type === 'users') {
+            $data = $request->all();
+            $result = $this->masterService->create($type, $data);
+            $result->assignRole($request->access);
+            return response()->json(['status' => true, 'message' => "$type created", 'result' => $result], Response::HTTP_CREATED);
+        }
 
         $data = $request->all();
         $result = $this->masterService->create($type, $data);
@@ -195,7 +216,7 @@ class MasterApiController extends Controller
 
     public function update(Request $request, $type, $id)
     {
-        $validation = $this->doRequestValidation($request, $type);
+        $validation = $this->doRequestValidation($request, $type, $id);
         if ($validation !== true) {
             return $validation;
         }
@@ -229,11 +250,17 @@ class MasterApiController extends Controller
                     'message' => 'Failed to update question: ' . $e->getMessage()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
-        } else {
+        }
+        if ($type === 'users') {
             $data = $request->all();
             $result = $this->masterService->update($type, $id, $data);
+            $result->syncRoles($request->access);
             return response()->json(['status' => true, 'message' => "$type updated", 'result' => $result], Response::HTTP_OK);
         }
+
+        $data = $request->all();
+        $result = $this->masterService->update($type, $id, $data);
+        return response()->json(['status' => true, 'message' => "$type updated", 'result' => $result], Response::HTTP_OK);
     }
 
     public function import(Request $request, $type)

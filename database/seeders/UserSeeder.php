@@ -29,7 +29,7 @@ class UserSeeder extends Seeder
             'password'  => Hash::make('secret')
         ]);
 
-        $admin1->assignRole(Role::findByName('Admin1'));
+        $admin1->assignRole(Role::findByName('Checkin'));
 
         $admin2 = User::create([
             'name'      => 'Admin2',
@@ -37,7 +37,7 @@ class UserSeeder extends Seeder
             'password'  => Hash::make('secret')
         ]);
 
-        $admin2->assignRole(Role::findByName('Admin2'));
+        $admin2->assignRole(Role::findByName('Booking'));
 
         $admin3 = User::create([
             'name'      => 'Admin3',
@@ -45,6 +45,6 @@ class UserSeeder extends Seeder
             'password'  => Hash::make('secret')
         ]);
 
-        $admin3->assignRole(Role::findByName('Admin3'));
+        $admin3->assignRole(Role::findByName('Counsel'));
     }
 }
