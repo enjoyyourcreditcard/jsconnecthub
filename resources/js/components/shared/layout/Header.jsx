@@ -189,7 +189,7 @@ const Header = () => {
                 padding: "10px 20px",
                 background: isHomePage
                     ? "transparent"
-                    : "linear-gradient(to bottom, #f0f0f0, #ffffff)",
+                    : "linear-gradient(to bottom, #fff 40%, #e0e4f5 100%)",
                 position: isHomePage ? "absolute" : "initial",
                 top: 0,
                 width: "100%",
@@ -245,7 +245,8 @@ const Header = () => {
                         icon="pi pi-sign-in"
                         className="p-button-text"
                         size="small"
-                        style={{ color: isHomePage ? "#fff" : "#000" }}
+                        style={{ color: isHomePage ? "#3f3f3f" : "#000" }}
+                        // style={{ color: isHomePage ? "#fff" : "#000" }}
                         onClick={() => navigate("/login")}
                     />
                 )}

@@ -8,6 +8,7 @@ function NotFound() {
         <div>
             <Header />
             <div
+                className="with-color"
                 style={{
                     minHeight: "100vh",
                     display: "flex",

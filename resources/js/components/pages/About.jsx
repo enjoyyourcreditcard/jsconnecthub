@@ -9,7 +9,7 @@ function About() {
     return (
         <div>
             <Header title="About This App" />
-            <main style={{ padding: "20px" }}>
+            <main className="admin-container with-color" style={{ padding: "20px" }}>
                 <h2>{user ? `Halo, ${user.name}!` : "Halo!"}</h2>
                 <p>This is jsconnecthub!</p>
             </main>

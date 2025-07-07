@@ -114,7 +114,10 @@ function ManageActivity() {
     return (
         <div>
             <Header />
-            <main style={{ padding: "20px" }}>
+            <main
+                className="admin-container with-color"
+                style={{ padding: "20px" }}
+            >
                 <Card>
                     {isDataReady ? (
                         <>
