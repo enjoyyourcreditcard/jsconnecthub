@@ -1532,24 +1532,6 @@ const CustomDataTable = ({
         setVisibleColumns(orderedSelectedColumns);
     };
 
-    const deleteRecordsDialogFooter = (
-        <>
-            <Button
-                label="No"
-                icon="pi pi-times"
-                severity="secondary"
-                outlined
-                onClick={() => setDeleteRecordsDialog(false)}
-            />
-            <Button
-                label="Yes"
-                icon="pi pi-check"
-                severity="danger"
-                onClick={deleteSelectedRecords}
-            />
-        </>
-    );
-
     if (spinner?.show) {
         return (
             <div
@@ -1712,13 +1694,36 @@ const CustomDataTable = ({
                     style={{ width: "32rem" }}
                     header="Confirm"
                     modal
-                    footer={deleteRecordsDialogFooter}
                     onHide={() => setDeleteRecordsDialog(false)}
                 >
-                    <div className="confirmation-content">
-                        <span>
-                            Are you sure you want to delete the selected {type}?
-                        </span>
+                    <div className="mt-8">
+                        <div style={{ marginBottom: "2rem" }}>
+                            <p>
+                                Are you sure you want to delete the selected{" "}
+                                {type}?
+                            </p>
+                        </div>
+                        <div
+                            style={{
+                                display: "flex",
+                                gap: "10px",
+                                justifyContent: "flex-end",
+                            }}
+                        >
+                            <Button
+                                label="No"
+                                icon="pi pi-times"
+                                severity="secondary"
+                                outlined
+                                onClick={() => setDeleteRecordsDialog(false)}
+                            />
+                            <Button
+                                label="Yes"
+                                icon="pi pi-check"
+                                severity="danger"
+                                onClick={deleteSelectedRecords}
+                            />
+                        </div>
                     </div>
                 </Dialog>
             ) : null}

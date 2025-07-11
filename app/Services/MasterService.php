@@ -278,6 +278,9 @@ class MasterService
         if ($type === 'facilities') {
             $this->cascade($type, $id);
         }
+        if ($type === 'activities') {
+            $this->cascade($type, $id);
+        }
 
         $model = $this->getModel($type)->findOrFail($id);
         $model->delete();
@@ -329,6 +332,17 @@ class MasterService
                 $bookings->each->delete();
             }
             $subFacilities->each->delete();
+        }
+        if ($type === 'activities') {
+            $checkins = $this->getModel('checkin')->where('activity_id', $id)->get();
+
+            if ($checkins) {
+                foreach ($checkins as $checkin) {
+                    DB::table('jobs')->where('id', $checkin->job_id)->delete();
+                }
+            }
+
+            $this->getModel('checkin')->where('activity_id', $id)->delete();
         }
     }
 }

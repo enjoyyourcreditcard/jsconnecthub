@@ -110,7 +110,7 @@ class MasterApiController extends Controller
         if ($data->isNotEmpty()) {
             return response()->json(['status' => true, 'message' => 'Records found', 'result' => $data], Response::HTTP_OK);
         } else {
-            return response()->json(['status' => false, 'message' => 'No records found'], Response::HTTP_OK);
+            return response()->json(['status' => true, 'message' => 'No records found'], Response::HTTP_OK);
         }
     }
 
@@ -391,6 +391,11 @@ class MasterApiController extends Controller
 
                 $imported = [];
                 DB::beginTransaction();
+
+                if ($type === 'activities') {
+                    $this->masterService->deleteAll('checkin');
+                    $this->masterService->deleteAll('activities');
+                }
 
                 foreach ($rows as $index => $row) {
                     $rowData = array_combine($transformedHeaders, $row);
