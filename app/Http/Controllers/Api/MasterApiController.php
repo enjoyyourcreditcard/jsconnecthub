@@ -110,7 +110,7 @@ class MasterApiController extends Controller
         if ($data->isNotEmpty()) {
             return response()->json(['status' => true, 'message' => 'Records found', 'result' => $data], Response::HTTP_OK);
         } else {
-            return response()->json(['status' => false, 'message' => 'No records found'], Response::HTTP_OK);
+            return response()->json(['status' => true, 'message' => 'No records found'], Response::HTTP_OK);
         }
     }
 
@@ -392,11 +392,41 @@ class MasterApiController extends Controller
                 $imported = [];
                 DB::beginTransaction();
 
+                if ($type === 'activities') {
+                    $this->masterService->deleteAll('checkin');
+                    $this->masterService->deleteAll('activities');
+                }
+                if ($type === 'support_strategies') {
+                    $this->masterService->deleteAll('answers');
+                    $this->masterService->deleteAll('counsels');
+                    $this->masterService->deleteAll('radio_options');
+                    $this->masterService->deleteAll('questions');
+                    $this->masterService->deleteAll('support_strategies');
+                }
+                if ($type === 'facilities') {
+                    $this->masterService->deleteAll('bookings');
+                    $this->masterService->deleteAll('facilities');
+                }
+
                 foreach ($rows as $index => $row) {
                     $rowData = array_combine($transformedHeaders, $row);
 
+                    if ($type === 'facilities' && isset($rowData['parent_id'])) {
+                        $parentName = trim($rowData['parent_id']);
+                        if ($parentName !== '') {
+                            $parent = $this->masterService->getByName('facilities', $parentName);
+                            if ($parent) {
+                                $rowData['parent_id'] = $parent->id;
+                            } else {
+                                throw new \Exception("Invalid parent: '$parentName' not found at row " . ($index + 2));
+                            }
+                        } else {
+                            $rowData['parent_id'] = null;
+                        }
+                    }
+
                     foreach ($foreignKeys as $fk => $relatedType) {
-                        if (isset($rowData[$fk]) && !is_numeric($rowData[$fk])) {
+                        if ($type !== 'facilities' && isset($rowData[$fk]) && !is_numeric($rowData[$fk])) {
                             $relatedModel = $this->masterService->getByName($relatedType, $rowData[$fk]);
                             if ($relatedModel) {
                                 $rowData[$fk] = $relatedModel->id;
@@ -444,45 +474,8 @@ class MasterApiController extends Controller
 
     public function destroy(Request $request, $type, $id)
     {
-        if ($type === 'support_strategies') {
-            try {
-                $questions = $this->question->where('support_strategy_id', $id)->get();
-
-                foreach ($questions as $question) {
-                    if ($question->type === 'radio') {
-                        $this->radioOption->where('question_id', $question->id)->delete();
-                    }
-                    $this->masterService->delete('questions', $question->id);
-                }
-
-                $this->masterService->delete($type, $id);
-                return response()->json(['status' => true, 'message' => "support strategies deleted"], Response::HTTP_OK);
-            } catch (\Exception $e) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Failed to delete support strategy: ' . $e->getMessage()
-                ], Response::HTTP_UNPROCESSABLE_ENTITY);
-            }
-        } elseif ($type === 'questions') {
-            try {
-                $question = $this->masterService->getById($type, $id);
-
-                if ($question && $question->type === 'radio') {
-                    $this->radioOption->where('question_id', $id)->delete();
-                }
-
-                $this->masterService->delete($type, $id);
-                return response()->json(['status' => true, 'message' => "$type deleted"], Response::HTTP_OK);
-            } catch (\Exception $e) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Failed to delete question: ' . $e->getMessage()
-                ], Response::HTTP_UNPROCESSABLE_ENTITY);
-            }
-        } else {
-            $this->masterService->delete($type, $id);
-            return response()->json(['status' => true, 'message' => "$type deleted"], Response::HTTP_OK);
-        }
+        $this->masterService->delete($type, $id);
+        return response()->json(['status' => true, 'message' => "$type deleted"], Response::HTTP_OK);
     }
 
     private function changeImportHeader($type)
@@ -492,6 +485,7 @@ class MasterApiController extends Controller
             'students' => ['class' => 'class_id'],
             'checkins' => ['student' => 'student_id', 'activity' => 'activity_id'],
             'questions' => ['support_strategy' => 'support_strategy_id'],
+            'facilities' => ['facility' => 'name', 'parent' => 'parent_id'],
         ][$type] ?? [];
     }
 
@@ -502,6 +496,7 @@ class MasterApiController extends Controller
             'students' => ['class_id' => 'class'],
             'checkins' => ['student_id' => 'students', 'activity_id' => 'activities'],
             'questions' => ['support_strategy_id' => 'support_strategies'],
+            'facilities' => ['parent_id' => 'facilities'],
         ][$type] ?? [];
     }
 
@@ -512,6 +507,7 @@ class MasterApiController extends Controller
             'levels' => 'name',
             'activities' => 'name',
             'support_strategies' => 'name',
+            'facilities' => 'name',
         ];
 
         $field = $uniqueFields[$type] ?? 'name';

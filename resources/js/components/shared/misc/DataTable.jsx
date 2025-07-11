@@ -386,6 +386,30 @@ const CustomDataTable = ({
         return data;
     };
 
+    const generateFacilitySubfacilityData = () => {
+        const data = [];
+
+        collection.forEach((facility) => {
+            data.push({
+                Facility: facility.name,
+                Parent: "",
+            });
+
+            const relatedSubs = subFacilities.filter(
+                (sub) => sub.parent_id === facility.id
+            );
+
+            relatedSubs.forEach((sub) => {
+                data.push({
+                    Facility: sub.name,
+                    Parent: facility.name,
+                });
+            });
+        });
+
+        return data;
+    };
+
     const exportExcel = () => {
         if (hasExpand && type === "levels" && !isGrouped) {
             const dataToExport = generateLevelClassStudentData();
@@ -397,6 +421,12 @@ const CustomDataTable = ({
                 "Level-Class-Student"
             );
             XLSX.writeFile(workbook, "level_class_student_data.xlsx");
+        } else if (hasExpand && type === "facilities" && !isGrouped) {
+            const dataToExport = generateFacilitySubfacilityData();
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Facility");
+            XLSX.writeFile(workbook, "facility_and_subfacility_data.xlsx");
         } else if (type === "counsels" && isGrouped) {
             const dataToExport = [];
             filteredDataState.forEach((group) => {
@@ -453,6 +483,19 @@ const CustomDataTable = ({
                 margin: { top: 10 },
             });
             doc.save("level_class_student_data.pdf");
+        } else if (hasExpand && type === "facilities" && !isGrouped) {
+            const columns = ["Facility", "Parent"];
+            const body = generateFacilitySubfacilityData().map((item) => [
+                item.Facility,
+                item.Parent,
+            ]);
+            autoTable(doc, {
+                head: [columns],
+                body,
+                styles: { fontSize: 10 },
+                margin: { top: 10 },
+            });
+            doc.save("facility_data.pdf");
         } else if (type === "counsels" && isGrouped) {
             const columns = [
                 "Date",
@@ -1532,24 +1575,6 @@ const CustomDataTable = ({
         setVisibleColumns(orderedSelectedColumns);
     };
 
-    const deleteRecordsDialogFooter = (
-        <>
-            <Button
-                label="No"
-                icon="pi pi-times"
-                severity="secondary"
-                outlined
-                onClick={() => setDeleteRecordsDialog(false)}
-            />
-            <Button
-                label="Yes"
-                icon="pi pi-check"
-                severity="danger"
-                onClick={deleteSelectedRecords}
-            />
-        </>
-    );
-
     if (spinner?.show) {
         return (
             <div
@@ -1712,13 +1737,36 @@ const CustomDataTable = ({
                     style={{ width: "32rem" }}
                     header="Confirm"
                     modal
-                    footer={deleteRecordsDialogFooter}
                     onHide={() => setDeleteRecordsDialog(false)}
                 >
-                    <div className="confirmation-content">
-                        <span>
-                            Are you sure you want to delete the selected {type}?
-                        </span>
+                    <div className="mt-8">
+                        <div style={{ marginBottom: "2rem" }}>
+                            <p>
+                                Are you sure you want to delete the selected{" "}
+                                {type}?
+                            </p>
+                        </div>
+                        <div
+                            style={{
+                                display: "flex",
+                                gap: "10px",
+                                justifyContent: "flex-end",
+                            }}
+                        >
+                            <Button
+                                label="No"
+                                icon="pi pi-times"
+                                severity="secondary"
+                                outlined
+                                onClick={() => setDeleteRecordsDialog(false)}
+                            />
+                            <Button
+                                label="Yes"
+                                icon="pi pi-check"
+                                severity="danger"
+                                onClick={deleteSelectedRecords}
+                            />
+                        </div>
                     </div>
                 </Dialog>
             ) : null}

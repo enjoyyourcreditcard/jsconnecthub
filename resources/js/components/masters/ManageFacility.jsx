@@ -183,6 +183,7 @@ function ManageFacility() {
                                 type="facilities"
                                 identifier="id"
                                 hasExpand={true}
+                                hasImport={true}
                                 onFetch={myFetch}
                                 onAdd={handleAdd}
                                 onEdit={handleEdit}

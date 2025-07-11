@@ -16,37 +16,20 @@ function Counsel() {
     const [loadingSupportStrategies, setLoadingSupportStrategies] =
         useState(true);
     const {
-        counsels: { data: counsels = [], endPoints: counselEndPoints },
+        counsels: { data: rawCounsels = [], endPoints: counselEndPoints },
         support_strategies: {
             data: supportStrategies = [],
             endPoints: strategyEndPoints,
         },
     } = useSelector((state) => state.global);
 
-    const groupCounselsByDate = (counsels) => {
-        const grouped = counsels.reduce((acc, counsel) => {
-            const date = DateTime.fromISO(counsel.created_at, { zone: "utc" })
-                .setZone("local")
-                .toFormat("yyyy-MM-dd");
-            if (!acc[date]) {
-                acc[date] = [];
-            }
-            acc[date].push(counsel);
-            return acc;
-        }, {});
-        return Object.entries(grouped)
-            .map(([date, counsels]) => ({
-                date,
-                formattedDate: DateTime.fromISO(date).toFormat("dd MMMM yyyy"),
-                counsels,
-                counselCount: counsels.length,
-            }))
-            .sort(
-                (a, b) => DateTime.fromISO(b.date) - DateTime.fromISO(a.date)
-            );
-    };
-
-    const groupedCounsels = groupCounselsByDate(counsels);
+    const counsels = Array.isArray(rawCounsels)
+        ? rawCounsels
+        : rawCounsels && typeof rawCounsels === "object"
+        ? Object.values(rawCounsels).filter(
+              (item) => typeof item === "object" && item.id
+          )
+        : [];
 
     const myFetch = (params = { timeFilter }) => {
         let currentDateFilter =
@@ -129,6 +112,31 @@ function Counsel() {
         ).finally(() => setLoadingSupportStrategies(false));
         myFetch();
     }, [dispatch]);
+
+    const groupCounselsByDate = (counsels) => {
+        const grouped = counsels.reduce((acc, counsel) => {
+            const date = DateTime.fromISO(counsel.created_at, { zone: "utc" })
+                .setZone("local")
+                .toFormat("yyyy-MM-dd");
+            if (!acc[date]) {
+                acc[date] = [];
+            }
+            acc[date].push(counsel);
+            return acc;
+        }, {});
+        return Object.entries(grouped)
+            .map(([date, counsels]) => ({
+                date,
+                formattedDate: DateTime.fromISO(date).toFormat("dd MMMM yyyy"),
+                counsels,
+                counselCount: counsels.length,
+            }))
+            .sort(
+                (a, b) => DateTime.fromISO(b.date) - DateTime.fromISO(a.date)
+            );
+    };
+
+    const groupedCounsels = groupCounselsByDate(counsels);
 
     const isDataReady = !loadingData && !loadingSupportStrategies;
 
