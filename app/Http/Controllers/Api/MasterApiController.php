@@ -403,12 +403,30 @@ class MasterApiController extends Controller
                     $this->masterService->deleteAll('questions');
                     $this->masterService->deleteAll('support_strategies');
                 }
+                if ($type === 'facilities') {
+                    $this->masterService->deleteAll('bookings');
+                    $this->masterService->deleteAll('facilities');
+                }
 
                 foreach ($rows as $index => $row) {
                     $rowData = array_combine($transformedHeaders, $row);
 
+                    if ($type === 'facilities' && isset($rowData['parent_id'])) {
+                        $parentName = trim($rowData['parent_id']);
+                        if ($parentName !== '') {
+                            $parent = $this->masterService->getByName('facilities', $parentName);
+                            if ($parent) {
+                                $rowData['parent_id'] = $parent->id;
+                            } else {
+                                throw new \Exception("Invalid parent: '$parentName' not found at row " . ($index + 2));
+                            }
+                        } else {
+                            $rowData['parent_id'] = null;
+                        }
+                    }
+
                     foreach ($foreignKeys as $fk => $relatedType) {
-                        if (isset($rowData[$fk]) && !is_numeric($rowData[$fk])) {
+                        if ($type !== 'facilities' && isset($rowData[$fk]) && !is_numeric($rowData[$fk])) {
                             $relatedModel = $this->masterService->getByName($relatedType, $rowData[$fk]);
                             if ($relatedModel) {
                                 $rowData[$fk] = $relatedModel->id;
@@ -467,6 +485,7 @@ class MasterApiController extends Controller
             'students' => ['class' => 'class_id'],
             'checkins' => ['student' => 'student_id', 'activity' => 'activity_id'],
             'questions' => ['support_strategy' => 'support_strategy_id'],
+            'facilities' => ['facility' => 'name', 'parent' => 'parent_id'],
         ][$type] ?? [];
     }
 
@@ -477,6 +496,7 @@ class MasterApiController extends Controller
             'students' => ['class_id' => 'class'],
             'checkins' => ['student_id' => 'students', 'activity_id' => 'activities'],
             'questions' => ['support_strategy_id' => 'support_strategies'],
+            'facilities' => ['parent_id' => 'facilities'],
         ][$type] ?? [];
     }
 
@@ -487,6 +507,7 @@ class MasterApiController extends Controller
             'levels' => 'name',
             'activities' => 'name',
             'support_strategies' => 'name',
+            'facilities' => 'name',
         ];
 
         $field = $uniqueFields[$type] ?? 'name';
