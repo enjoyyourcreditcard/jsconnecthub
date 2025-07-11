@@ -396,6 +396,13 @@ class MasterApiController extends Controller
                     $this->masterService->deleteAll('checkin');
                     $this->masterService->deleteAll('activities');
                 }
+                if ($type === 'support_strategies') {
+                    $this->masterService->deleteAll('answers');
+                    $this->masterService->deleteAll('counsels');
+                    $this->masterService->deleteAll('radio_options');
+                    $this->masterService->deleteAll('questions');
+                    $this->masterService->deleteAll('support_strategies');
+                }
 
                 foreach ($rows as $index => $row) {
                     $rowData = array_combine($transformedHeaders, $row);
@@ -449,45 +456,8 @@ class MasterApiController extends Controller
 
     public function destroy(Request $request, $type, $id)
     {
-        if ($type === 'support_strategies') {
-            try {
-                $questions = $this->question->where('support_strategy_id', $id)->get();
-
-                foreach ($questions as $question) {
-                    if ($question->type === 'radio') {
-                        $this->radioOption->where('question_id', $question->id)->delete();
-                    }
-                    $this->masterService->delete('questions', $question->id);
-                }
-
-                $this->masterService->delete($type, $id);
-                return response()->json(['status' => true, 'message' => "support strategies deleted"], Response::HTTP_OK);
-            } catch (\Exception $e) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Failed to delete support strategy: ' . $e->getMessage()
-                ], Response::HTTP_UNPROCESSABLE_ENTITY);
-            }
-        } elseif ($type === 'questions') {
-            try {
-                $question = $this->masterService->getById($type, $id);
-
-                if ($question && $question->type === 'radio') {
-                    $this->radioOption->where('question_id', $id)->delete();
-                }
-
-                $this->masterService->delete($type, $id);
-                return response()->json(['status' => true, 'message' => "$type deleted"], Response::HTTP_OK);
-            } catch (\Exception $e) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Failed to delete question: ' . $e->getMessage()
-                ], Response::HTTP_UNPROCESSABLE_ENTITY);
-            }
-        } else {
-            $this->masterService->delete($type, $id);
-            return response()->json(['status' => true, 'message' => "$type deleted"], Response::HTTP_OK);
-        }
+        $this->masterService->delete($type, $id);
+        return response()->json(['status' => true, 'message' => "$type deleted"], Response::HTTP_OK);
     }
 
     private function changeImportHeader($type)

@@ -281,6 +281,18 @@ class MasterService
         if ($type === 'activities') {
             $this->cascade($type, $id);
         }
+        if ($type === 'support_strategies') {
+            $questions = $this->getModel('questions')->where('support_strategy_id', $id)->get();
+
+            foreach ($questions as $question) {
+                $this->cascade('questions', $question->id);
+            }
+
+            $this->cascade($type, $id);
+        }
+        if ($type === 'questions') {
+            $this->cascade($type, $id);
+        }
 
         $model = $this->getModel($type)->findOrFail($id);
         $model->delete();
@@ -343,6 +355,19 @@ class MasterService
             }
 
             $this->getModel('checkin')->where('activity_id', $id)->delete();
+        }
+        if ($type === 'support_strategies') {
+            $this->getModel('counsels')->where('support_strategy_id', $id)->delete();
+            $this->getModel('questions')->where('support_strategy_id', $id)->delete();
+        }
+        if ($type === 'questions') {
+            $question = $this->getModel('questions')->find($id);
+
+            $this->getModel('answers')->where('question_id', $id)->delete();
+
+            if ($question->type === 'radio') {
+                $this->getModel('radio_options')->where('question_id', $id)->delete();
+            }
         }
     }
 }
