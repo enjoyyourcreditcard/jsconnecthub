@@ -433,6 +433,8 @@ const CustomDataTable = ({
                 group.counsels.forEach((counsel) => {
                     dataToExport.push({
                         Date: formatDateToLocal(counsel.created_at, "date"),
+                        Level: counsel.level || "N/A",
+                        Class: counsel.class || "N/A",
                         Student: counsel.student || "N/A",
                         "Support Strategies": counsel.support_strategies || "",
                         "Questions and Answers":
@@ -499,6 +501,8 @@ const CustomDataTable = ({
         } else if (type === "counsels" && isGrouped) {
             const columns = [
                 "Date",
+                "Level",
+                "Class",
                 "Student",
                 "Support Strategies",
                 "Questions and Answers",
@@ -508,6 +512,8 @@ const CustomDataTable = ({
                 group.counsels.forEach((counsel) => {
                     body.push([
                         formatDateToLocal(counsel.created_at, "date"),
+                        counsel.level || "N/A",
+                        counsel.class || "N/A",
                         counsel.student || "N/A",
                         counsel.support_strategies || "",
                         formatAnswersForExport(counsel),
@@ -519,7 +525,6 @@ const CustomDataTable = ({
                 body,
                 styles: { fontSize: 10 },
                 margin: { top: 10 },
-                columnStyles: { 3: { cellWidth: 100 } },
             });
             doc.save("counsels_data.pdf");
         } else {
@@ -1236,6 +1241,8 @@ const CustomDataTable = ({
                             style={{ width: "3rem" }}
                             exportable={false}
                         />
+                        <Column field="level" header="Level" sortable />
+                        <Column field="class" header="Class" sortable />
                         <Column field="student" header="Student" sortable />
                         <Column
                             field="support_strategies"
