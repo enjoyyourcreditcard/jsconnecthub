@@ -72,6 +72,8 @@ function Counsel() {
                 if (d) {
                     const formattedCounsels = d.map((i) => ({
                         id: i.id,
+                        level: i.student?.class?.level?.name || "N/A",
+                        class: i.student?.class?.name || "N/A",
                         student: i.student?.name || "N/A",
                         support_strategies: [
                             ...new Set(

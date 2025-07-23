@@ -170,7 +170,7 @@ class MasterService
                 ->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.COUNSEL_MASTER_TYPE')) {
-            return $q->with(['student', 'answers.question.supportStrategy', 'answers.radioOption'])
+            return $q->with(['student.class.level', 'answers.question.supportStrategy', 'answers.radioOption'])
                 ->when($request->time, function ($q) use ($request) {
                     switch ($request->time) {
                         case 'today':
