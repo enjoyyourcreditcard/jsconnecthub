@@ -93,8 +93,8 @@ const Login = () => {
 
     return (
         <div
-            className="home-container with-color"
-            // className="home-container with-background"
+            // className="home-container with-color"
+            className="home-container with-background"
             style={{
                 minHeight: "100vh",
                 display: "flex",
@@ -124,7 +124,7 @@ const Login = () => {
                     }}
                 />
                 <div className="card flex justify-center">
-                    <Card title="Students-Hub" className="w-full">
+                    <Card title="Learning Hub" className="w-full">
                         <form onSubmit={handleSubmit}>
                             <div style={{ marginBottom: "20px" }}>
                                 <FloatLabel>

@@ -245,8 +245,8 @@ const Header = () => {
                         icon="pi pi-sign-in"
                         className="p-button-text"
                         size="small"
-                        style={{ color: isHomePage ? "#3f3f3f" : "#000" }}
-                        // style={{ color: isHomePage ? "#fff" : "#000" }}
+                        // style={{ color: isHomePage ? "#3f3f3f" : "#000" }}
+                        style={{ color: isHomePage ? "#fff" : "#000" }}
                         onClick={() => navigate("/login")}
                     />
                 )}

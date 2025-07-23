@@ -7,9 +7,10 @@
 
 .launch-pad-title {
     font-family: "Modular", sans-serif;
-    font-size: 8rem;
+    font-size: 7rem;
     text-align: center;
-    color: #3f3f3f;
+    /* color: #3f3f3f; */
+    color: white;
 }
 
 .home-container {
@@ -18,11 +19,11 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    /* background-size: cover;
+    background-size: cover;
     background-position: center;
-    background-repeat: no-repeat; */
+    background-repeat: no-repeat;
     position: relative;
-    /* padding-bottom: 5vh; */
+    padding-bottom: 5vh;
 }
 
 .admin-container {
@@ -95,24 +96,24 @@
 /* home-container responsive */
 @media (max-height: 640px) {
     .home-container {
-        /* padding-bottom: 20vh; */
+        padding-bottom: 20vh;
     }
 }
 
 @media (max-height: 768px) {
     .home-container {
-        /* padding-bottom: 10vh; */
+        padding-bottom: 10vh;
     }
 }
 
 @media (max-height: 960px) {
     .home-container {
-        /* padding-bottom: 10vh; */
+        padding-bottom: 10vh;
     }
 
     @media (max-width: 640px) {
         .home-container {
-            /* padding-bottom: 5vh; */
+            padding-bottom: 5vh;
         }
     }
 }

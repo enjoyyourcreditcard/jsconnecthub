@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Students-Hub</title>
+    <title>JS-Connect-Hub</title>
     @viteReactRefresh
     @vite('resources/js/app.jsx')
     <script>
