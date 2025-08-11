@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Validator;
+use Spatie\Permission\Models\Role;
 
 class MasterApiController extends Controller
 {
@@ -411,6 +412,14 @@ class MasterApiController extends Controller
                 foreach ($rows as $index => $row) {
                     $rowData = array_combine($transformedHeaders, $row);
 
+                    // Prepare role/imported access for users (if provided)
+                    $importedAccess = null;
+                    if ($type === 'users') {
+                        $importedAccess = $rowData['access'] ?? ($rowData['role'] ?? null);
+                        // Remove non-fillable fields before validation and creation
+                        unset($rowData['access'], $rowData['role']);
+                    }
+
                     if ($type === 'facilities' && isset($rowData['parent_id'])) {
                         $parentName = trim($rowData['parent_id']);
                         if ($parentName !== '') {
@@ -445,6 +454,18 @@ class MasterApiController extends Controller
 
                     try {
                         $result = $this->masterService->create($type, $rowData);
+
+                        // Assign role for users if provided
+                        if ($type === 'users' && $importedAccess) {
+                            try {
+                                // ensure the role exists
+                                Role::findByName($importedAccess);
+                            } catch (\Throwable $e) {
+                                throw new \Exception("Invalid role: '" . $importedAccess . "' not found at row " . ($index + 2));
+                            }
+                            $result->assignRole($importedAccess);
+                        }
+
                         $imported[] = $result;
                     } catch (\Illuminate\Database\QueryException $e) {
                         if ($e->getCode() === '23000') {
@@ -486,6 +507,7 @@ class MasterApiController extends Controller
             'checkins' => ['student' => 'student_id', 'activity' => 'activity_id'],
             'questions' => ['support_strategy' => 'support_strategy_id'],
             'facilities' => ['facility' => 'name', 'parent' => 'parent_id'],
+            'users' => ['role' => 'access'],
         ][$type] ?? [];
     }
 
