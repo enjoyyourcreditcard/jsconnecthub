@@ -457,12 +457,12 @@ class MasterApiController extends Controller
 
                         // Assign role for users if provided
                         if ($type === 'users' && $importedAccess) {
-                            try {
-                                // ensure the role exists
-                                Role::findByName($importedAccess);
-                            } catch (\Throwable $e) {
-                                throw new \Exception("Invalid role: '" . $importedAccess . "' not found at row " . ($index + 2));
-                            }
+                            // try {
+                            //     // ensure the role exists
+                            //     Role::findByName($importedAccess);
+                            // } catch (\Throwable $e) {
+                            //     throw new \Exception("Invalid role: '" . $importedAccess . "' not found at row " . ($index + 2));
+                            // }
                             $result->assignRole($importedAccess);
                         }
 

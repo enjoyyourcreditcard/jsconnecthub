@@ -170,7 +170,7 @@ function Home() {
         if (studentId && activeButton === "activities") {
             fetchCheckinsByStudent();
         } else if (studentId && activeButton === "facilities") {
-            fetchBookingsByStudent();
+            fetchBookingsByStudent(studentId);
         } else if (studentId && activeButton === "msvi") {
             setAnswers({});
             setSelectedStrategy(null);
@@ -246,11 +246,18 @@ function Home() {
         });
     };
 
-    const fetchBookingsByStudent = () => {
+    const fetchBookingsByStudent = (sId) => {
+        const today = new Date(new Date().setHours(0, 0, 0, 0));
+        console.log(today);
+        const start = today.toISOString();
+        const endDate = new Date(today);
+        endDate.setUTCDate(endDate.getUTCDate() + 1);
+        const end = endDate.toISOString();
+
         dispatch(
             getRecords({
                 type: "bookings",
-                endPoint: `${bookingEndPoints.collection}?student_id=${studentId}&time=today`,
+                endPoint: `${bookingEndPoints.collection}?student_id=${sId}&range_time[start]=${start}&range_time[end]=${end}`,
                 key: "data",
             })
         ).then((result) => {
@@ -295,11 +302,16 @@ function Home() {
         });
     };
 
-    const fetchFacilityBookings = (facilityId) => {
+    const fetchFacilityBookings = (facilityId, time) => {
+        const start = time.toISOString();
+        const endDate = new Date(time);
+        endDate.setUTCDate(endDate.getUTCDate() + 1);
+        const end = endDate.toISOString();
+
         dispatch(
             getRecords({
                 type: "bookings",
-                endPoint: `${bookingEndPoints.collection}?facility_id=${facilityId}&time=today`,
+                endPoint: `${bookingEndPoints.collection}?facility_id=${facilityId}&range_time[start]=${start}&range_time[end]=${end}`,
                 key: "data",
             })
         ).then((result) => {
@@ -684,7 +696,7 @@ function Home() {
                 setIsBooked(false);
                 setSelectedFacility(null);
                 setBookingId(null);
-                fetchBookingsByStudent();
+                fetchBookingsByStudent(studentId);
             })
             .catch((err) => {
                 setError(err.message || "Cancellation failed");
@@ -830,6 +842,15 @@ function Home() {
                     endMinute
                 ),
             };
+        });
+    };
+
+    const isSlotBooked = (slot) => {
+        return facilityBookings.some((booking) => {
+            const bookingStart = new Date(booking.start_time);
+            const bookingEnd = new Date(booking.end_time);
+
+            return slot.start < bookingEnd && slot.end > bookingStart;
         });
     };
 
@@ -1929,7 +1950,7 @@ function Home() {
                                                                         booking.id
                                                                     }
                                                                     header={
-                                                                        <div className="flex items-center gap-2">
+                                                                        <span className="flex align-items-center gap-2 w-full">
                                                                             <span className="truncate max-w-[100px] sm:max-w-[200px] inline-block">
                                                                                 {
                                                                                     booking.facilityName
@@ -1952,7 +1973,7 @@ function Home() {
                                                                                         : "danger"
                                                                                 }
                                                                             />
-                                                                        </div>
+                                                                        </span>
                                                                     }
                                                                 >
                                                                     <div className="flex flex-col gap-2">
@@ -2072,9 +2093,6 @@ function Home() {
                                                                             setSelectedFacility(
                                                                                 null
                                                                             );
-                                                                            fetchFacilityBookings(
-                                                                                location.id
-                                                                            );
                                                                         }}
                                                                         className={`stretch-button ${
                                                                             selectedLocation ===
@@ -2157,9 +2175,6 @@ function Home() {
                                                                             setSelectedFacility(
                                                                                 facility
                                                                             );
-                                                                            fetchFacilityBookings(
-                                                                                facility.id
-                                                                            );
                                                                         }}
                                                                         className={`stretch-button ${
                                                                             selectedFacility?.id ===
@@ -2217,6 +2232,10 @@ function Home() {
                                                                 );
                                                                 setSelectedTimeSlots(
                                                                     []
+                                                                );
+                                                                fetchFacilityBookings(
+                                                                    selectedFacility.id,
+                                                                    e.value
                                                                 );
                                                             }}
                                                             dateFormat="yy-mm-dd"
@@ -2282,9 +2301,10 @@ function Home() {
                                                     severity="secondary"
                                                     icon="pi pi-arrow-left"
                                                     size="small"
-                                                    onClick={() =>
-                                                        stepperRef.current.prevCallback()
-                                                    }
+                                                    onClick={() => {
+                                                        stepperRef.current.prevCallback();
+                                                        setFacilityBookings([]);
+                                                    }}
                                                 />
                                                 <Button
                                                     label="Next"
@@ -2303,58 +2323,49 @@ function Home() {
                                         <StepperPanel header="Time">
                                             <div className="flex flex-col h-full">
                                                 <div className="flex-grow grid grid-cols-1 gap-2">
-                                                    {!isBooked && (
-                                                        <div>
-                                                            <p className="text-center">
-                                                                Select time
-                                                                slots for{" "}
-                                                                {
-                                                                    selectedFacility
-                                                                        ?.parent
-                                                                        .name
-                                                                }
-                                                                {" - "}
-                                                                {
-                                                                    selectedFacility?.name
-                                                                }
-                                                                :
-                                                            </p>
-                                                            <div className="grid grid-cols-2 gap-2 mt-2">
-                                                                {updateTimeSlots().map(
-                                                                    (
-                                                                        slot,
-                                                                        index
-                                                                    ) => (
-                                                                        <div
-                                                                            key={
+                                                    <p className="text-center">
+                                                        Select time slots for{" "}
+                                                        {
+                                                            selectedFacility
+                                                                ?.parent.name
+                                                        }
+                                                        {" - "}
+                                                        {selectedFacility?.name}
+                                                        :
+                                                    </p>
+                                                    <div className="grid grid-cols-2 gap-2 mt-2">
+                                                        {updateTimeSlots().map(
+                                                            (slot, index) => (
+                                                                <div
+                                                                    key={index}
+                                                                    className="flex items-center gap-2 justify-center"
+                                                                >
+                                                                    <Checkbox
+                                                                        inputId={`slot-${index}`}
+                                                                        checked={selectedTimeSlots.includes(
+                                                                            index
+                                                                        )}
+                                                                        onChange={() =>
+                                                                            handleTimeSlotChange(
                                                                                 index
-                                                                            }
-                                                                            className="flex items-center gap-2 justify-center"
-                                                                        >
-                                                                            <Checkbox
-                                                                                inputId={`slot-${index}`}
-                                                                                checked={selectedTimeSlots.includes(
-                                                                                    index
-                                                                                )}
-                                                                                onChange={() =>
-                                                                                    handleTimeSlotChange(
-                                                                                        index
-                                                                                    )
-                                                                                }
-                                                                            />
-                                                                            <label
-                                                                                htmlFor={`slot-${index}`}
-                                                                            >
-                                                                                {
-                                                                                    slot.label
-                                                                                }
-                                                                            </label>
-                                                                        </div>
-                                                                    )
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    )}
+                                                                            )
+                                                                        }
+                                                                        disabled={isSlotBooked(
+                                                                            slot
+                                                                        )}
+                                                                    />
+                                                                    <label
+                                                                        htmlFor={`slot-${index}`}
+                                                                        className="text-xs md:text-base"
+                                                                    >
+                                                                        {
+                                                                            slot.label
+                                                                        }
+                                                                    </label>
+                                                                </div>
+                                                            )
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="flex pt-2 sm:pt-4 justify-between">
@@ -2378,102 +2389,61 @@ function Home() {
                                                     </p>
                                                 )}
                                                 <Button
-                                                    label={
-                                                        isBooked
-                                                            ? "Cancel Booking"
-                                                            : "Reserve"
-                                                    }
-                                                    icon={
-                                                        isBooked
-                                                            ? "pi pi-times"
-                                                            : "pi pi-check"
-                                                    }
+                                                    label="Reserve"
+                                                    icon="pi pi-check"
                                                     iconPos="right"
-                                                    severity={
-                                                        isBooked
-                                                            ? "danger"
-                                                            : undefined
-                                                    }
+                                                    severity="primary"
                                                     size="small"
                                                     onClick={(event) => {
-                                                        if (!isBooked) {
-                                                            confirmPopup({
-                                                                target: event.currentTarget,
-                                                                message: `Are you sure you want to reserve ${
-                                                                    selectedFacility?.name
-                                                                } for ${groupContiguousSlots(
-                                                                    selectedTimeSlots
+                                                        confirmPopup({
+                                                            target: event.currentTarget,
+                                                            message: `Are you sure you want to reserve ${
+                                                                selectedFacility?.name
+                                                            } for ${groupContiguousSlots(
+                                                                selectedTimeSlots
+                                                            )
+                                                                .map(
+                                                                    (group) =>
+                                                                        `${
+                                                                            updateTimeSlots()[
+                                                                                group[0]
+                                                                            ].label.split(
+                                                                                " - "
+                                                                            )[0]
+                                                                        } to ${
+                                                                            updateTimeSlots()[
+                                                                                group[
+                                                                                    group.length -
+                                                                                        1
+                                                                                ]
+                                                                            ].label.split(
+                                                                                " - "
+                                                                            )[1]
+                                                                        }`
                                                                 )
-                                                                    .map(
-                                                                        (
-                                                                            group
-                                                                        ) =>
-                                                                            `${
-                                                                                updateTimeSlots()[
-                                                                                    group[0]
-                                                                                ].label.split(
-                                                                                    " - "
-                                                                                )[0]
-                                                                            } to ${
-                                                                                updateTimeSlots()[
-                                                                                    group[
-                                                                                        group.length -
-                                                                                            1
-                                                                                    ]
-                                                                                ].label.split(
-                                                                                    " - "
-                                                                                )[1]
-                                                                            }`
+                                                                .join(
+                                                                    " and "
+                                                                )}?`,
+                                                            icon: "pi pi-exclamation-triangle",
+                                                            accept: () =>
+                                                                handleReserve(),
+                                                            reject: () => {
+                                                                dispatch(
+                                                                    setToastMessage(
+                                                                        {
+                                                                            severity:
+                                                                                "warn",
+                                                                            summary:
+                                                                                "Action Cancelled",
+                                                                            detail: "Reservation not made.",
+                                                                        }
                                                                     )
-                                                                    .join(
-                                                                        " and "
-                                                                    )}?`,
-                                                                icon: "pi pi-exclamation-triangle",
-                                                                accept: () =>
-                                                                    handleReserve(),
-                                                                reject: () => {
-                                                                    dispatch(
-                                                                        setToastMessage(
-                                                                            {
-                                                                                severity:
-                                                                                    "warn",
-                                                                                summary:
-                                                                                    "Action Cancelled",
-                                                                                detail: "Reservation not made.",
-                                                                            }
-                                                                        )
-                                                                    );
-                                                                },
-                                                            });
-                                                        } else {
-                                                            confirmPopup({
-                                                                target: event.currentTarget,
-                                                                message: `Are you sure you want to cancel your reservation for ${selectedFacility?.name}?`,
-                                                                icon: "pi pi-exclamation-triangle",
-                                                                accept: () =>
-                                                                    handleCancelBooking(
-                                                                        bookingId,
-                                                                        selectedFacility?.name
-                                                                    ),
-                                                                reject: () => {
-                                                                    dispatch(
-                                                                        setToastMessage(
-                                                                            {
-                                                                                severity:
-                                                                                    "warn",
-                                                                                summary:
-                                                                                    "Action Cancelled",
-                                                                                detail: "Reservation not cancelled.",
-                                                                            }
-                                                                        )
-                                                                    );
-                                                                },
-                                                            });
-                                                        }
+                                                                );
+                                                            },
+                                                        });
                                                     }}
                                                     disabled={
-                                                        (!selectedTimeSlots.length &&
-                                                            !isBooked) ||
+                                                        !selectedTimeSlots.length ||
                                                         loading
                                                     }
                                                 />
