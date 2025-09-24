@@ -37,6 +37,8 @@
     background-image: url("/assets/images/JS-KIOSK-Connect.jpg");
     background-attachment: fixed;
     background-position: center 100%;
+    background-size: cover;
+    background-repeat: no-repeat;
 }
 
 .centered-row {

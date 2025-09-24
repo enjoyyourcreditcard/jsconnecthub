@@ -866,11 +866,9 @@ function Home() {
         <div>
             <Header />
             <div
-                className={`home-container with-color`}
-                // className={`home-container ${
-                //     // !showCard && auth() === null ? "with-background" : ""
-                //     auth() === null ? "with-background" : ""
-                // }`}
+                className={`home-container ${
+                    auth() === null ? "with-background" : "with-color"
+                }`}
             >
                 {!showCard && (
                     <div className="w-11/12 sm:w-10/12 md:w-9/12 xl:w-9/12 2xl:w-1/2 flex flex-col gap-2 md:gap-6">
