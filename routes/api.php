@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\MasterApiController;
 use App\Http\Controllers\Api\CcaController;
 use App\Http\Controllers\Api\EquipmentController;
 use App\Http\Controllers\Api\EquipmentLoanController;
+use App\Http\Controllers\Api\SettingsController;
 
 /**
  * References
@@ -68,6 +69,14 @@ Route::post('/equipment-loans', [EquipmentLoanController::class, 'store']);
 Route::put('/equipment-loans-cancel/{id}', [EquipmentLoanController::class, 'cancel']);
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::put('/equipment-loans-return/{id}', [EquipmentLoanController::class, 'markReturned']);
+});
+
+/**
+ * Settings
+ */
+Route::get('/settings/login-required', [SettingsController::class, 'getLoginRequired']);
+Route::group(['middleware' => 'auth:sanctum'], function () {
+    Route::put('/settings/login-required', [SettingsController::class, 'setLoginRequired']);
 });
 
 /**

@@ -19,6 +19,7 @@ class RoleSeeder extends Seeder
             ['name' => 'Checkin', 'guard_name' => 'web'],
             ['name' => 'Booking', 'guard_name' => 'web'],
             ['name' => 'Counsel', 'guard_name' => 'web'],
+            ['name' => 'Student', 'guard_name' => 'web'],
         ];
 
         Role::insert($roles);
@@ -51,9 +52,12 @@ class RoleSeeder extends Seeder
         Permission::create(['name' => 'dashboard-checkin view']);
         Permission::create(['name' => 'dashboard-bookings view']);
         Permission::create(['name' => 'dashboard-counsels view']);
+        // System settings permissions
+        Permission::create(['name' => 'settings toggle-login']);
 
         Role::findByName('Superadmin')->givePermissionTo([
-            'dashboard view'
+            'dashboard view',
+            'settings toggle-login',
         ]);
 
         Role::findByName('Checkin')->givePermissionTo([
