@@ -4,7 +4,7 @@ import "../css/app.css";
 import { PrimeReactProvider } from "primereact/api";
 import React, { useEffect, useState, useRef } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuthHeader, useAuthUser } from "react-auth-kit";
 import { Provider, useSelector, useDispatch } from "react-redux";
 import { store } from "./components/store";
@@ -12,6 +12,7 @@ import { setAuthToken } from "./components/api";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Toast } from "primereact/toast";
 import { setStateData } from "./components/store/global-slice";
+import api from "./components/api";
 import { stateKey } from "./components/utils/constants";
 import Login from "./components/pages/Login";
 import Home from "./components/pages/Home";
@@ -59,11 +60,13 @@ const AppWrapper = () => {
     const authHeader = useAuthHeader();
     const auth = useAuthUser();
     const [authReady, setAuthReady] = useState(false);
+    const [loginRequired, setLoginRequired] = useState(false);
     const { spinner, toastMessage } = useSelector(
         (state) => state.global[stateKey.app]
     );
     const dispatch = useDispatch();
     const toast = useRef(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const eject = setAuthToken(authHeader);
@@ -77,6 +80,25 @@ const AppWrapper = () => {
             toast.current.show(toastMessage);
         }
     }, [toastMessage]);
+
+    // Fetch login-required toggle and enforce redirect for guests when enabled
+    useEffect(() => {
+        const fetchLoginRequired = async () => {
+            try {
+                const res = await api.get("/settings/login-required");
+                const enabled = !!res?.data?.result?.login_required;
+                setLoginRequired(enabled);
+                if (enabled && !auth()) {
+                    navigate("/login", { replace: true });
+                }
+            } catch (e) {
+                // ignore toggle fetch error, do not block app
+            }
+        };
+        fetchLoginRequired();
+        // re-evaluate when auth changes
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [authReady, auth()]);
 
     if (!authReady) {
         return <div>Loading authentication...</div>;
@@ -134,7 +156,7 @@ const AppWrapper = () => {
     ];
 
     return (
-        <BrowserRouter>
+        <>
             <Toast ref={toast} />
             {spinner.show && (
                 <div
@@ -191,7 +213,7 @@ const AppWrapper = () => {
                 ))}
                 <Route path="/*" element={<NotFound />} />
             </Routes>
-        </BrowserRouter>
+        </>
     );
 };
 
@@ -204,7 +226,9 @@ const App = () => (
                 cookieDomain={window.location.hostname}
                 cookieSecure={window.location.protocol === "https:"}
             >
-                <AppWrapper />
+                <BrowserRouter>
+                    <AppWrapper />
+                </BrowserRouter>
             </AuthProvider>
         </Provider>
     </PrimeReactProvider>
