@@ -6,6 +6,9 @@ use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\CounselController;
 use App\Http\Controllers\Api\CheckinController;
 use App\Http\Controllers\Api\MasterApiController;
+use App\Http\Controllers\Api\CcaController;
+use App\Http\Controllers\Api\EquipmentController;
+use App\Http\Controllers\Api\EquipmentLoanController;
 
 /**
  * References
@@ -55,6 +58,17 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::put('/booking-confirm/{id}', [BookingController::class, 'confirm']);
 });
 Route::put('/booking-cancel/{id}', [BookingController::class, 'cancel']);
+
+/**
+ * Loan Equipment
+ */
+Route::get('/ccas', [CcaController::class, 'index']);
+Route::get('/equipment', [EquipmentController::class, 'index']);
+Route::post('/equipment-loans', [EquipmentLoanController::class, 'store']);
+Route::put('/equipment-loans-cancel/{id}', [EquipmentLoanController::class, 'cancel']);
+Route::group(['middleware' => 'auth:sanctum'], function () {
+    Route::put('/equipment-loans-return/{id}', [EquipmentLoanController::class, 'markReturned']);
+});
 
 /**
  * Ms Vi Counsellor
