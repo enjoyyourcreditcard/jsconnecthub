@@ -1948,30 +1948,56 @@ function Home() {
                                                                         booking.id
                                                                     }
                                                                     header={
-                                                                        <span className="flex align-items-center gap-2 w-full">
-                                                                            <span className="truncate max-w-[100px] sm:max-w-[200px] inline-block">
-                                                                                {
-                                                                                    booking.facilityName
-                                                                                }
+                                                                        <div className="flex items-center justify-between gap-2 w-full">
+                                                                            <span className="truncate max-w-[140px] sm:max-w-[260px] inline-block">
+                                                                                {booking.facilityName}
                                                                             </span>
-                                                                            <Badge
-                                                                                value={capitalize(
-                                                                                    booking.status
+                                                                            <div className="flex items-center gap-2">
+                                                                                <Badge
+                                                                                    value={capitalize(booking.status)}
+                                                                                    severity={
+                                                                                        booking.status === "requested"
+                                                                                            ? "info"
+                                                                                            : booking.status === "reserved"
+                                                                                            ? "success"
+                                                                                            : booking.status === "closed"
+                                                                                            ? "secondary"
+                                                                                            : "danger"
+                                                                                    }
+                                                                                />
+                                                                                {(booking.status === "requested" || booking.status === "reserved") && (
+                                                                                    <Button
+                                                                                        label="Cancel"
+                                                                                        icon="pi pi-times"
+                                                                                        severity="danger"
+                                                                                        size="small"
+                                                                                        onClick={(event) => {
+                                                                                            event.preventDefault();
+                                                                                            event.stopPropagation();
+                                                                                            confirmPopup({
+                                                                                                target: event.currentTarget,
+                                                                                                message: `Are you sure you want to cancel your reservation for ${booking.facilityName}?`,
+                                                                                                icon: "pi pi-exclamation-triangle",
+                                                                                                accept: () =>
+                                                                                                    handleCancelBooking(
+                                                                                                        booking.id,
+                                                                                                        booking.facilityName
+                                                                                                    ),
+                                                                                                reject: () => {
+                                                                                                    dispatch(
+                                                                                                        setToastMessage({
+                                                                                                            severity: "warn",
+                                                                                                            summary: "Action Cancelled",
+                                                                                                            detail: "Reservation not cancelled.",
+                                                                                                        })
+                                                                                                    );
+                                                                                                },
+                                                                                            });
+                                                                                        }}
+                                                                                    />
                                                                                 )}
-                                                                                severity={
-                                                                                    booking.status ===
-                                                                                    "requested"
-                                                                                        ? "info"
-                                                                                        : booking.status ===
-                                                                                          "reserved"
-                                                                                        ? "success"
-                                                                                        : booking.status ===
-                                                                                          "closed"
-                                                                                        ? "secondary"
-                                                                                        : "danger"
-                                                                                }
-                                                                            />
-                                                                        </span>
+                                                                            </div>
+                                                                        </div>
                                                                     }
                                                                 >
                                                                     <div className="flex flex-col gap-2">
@@ -2009,46 +2035,7 @@ function Home() {
                                                                                 booking.status
                                                                             )}
                                                                         </p>
-                                                                        {(booking.status ===
-                                                                            "requested" ||
-                                                                            booking.status ===
-                                                                                "reserved") && (
-                                                                            <Button
-                                                                                label="Cancel"
-                                                                                icon="pi pi-times"
-                                                                                severity="danger"
-                                                                                size="small"
-                                                                                onClick={(
-                                                                                    event
-                                                                                ) =>
-                                                                                    confirmPopup(
-                                                                                        {
-                                                                                            target: event.currentTarget,
-                                                                                            message: `Are you sure you want to cancel your reservation for ${booking.facilityName}?`,
-                                                                                            icon: "pi pi-exclamation-triangle",
-                                                                                            accept: () =>
-                                                                                                handleCancelBooking(
-                                                                                                    booking.id,
-                                                                                                    booking.facilityName
-                                                                                                ),
-                                                                                            reject: () => {
-                                                                                                dispatch(
-                                                                                                    setToastMessage(
-                                                                                                        {
-                                                                                                            severity:
-                                                                                                                "warn",
-                                                                                                            summary:
-                                                                                                                "Action Cancelled",
-                                                                                                            detail: "Reservation not cancelled.",
-                                                                                                        }
-                                                                                                    )
-                                                                                                );
-                                                                                            },
-                                                                                        }
-                                                                                    )
-                                                                                }
-                                                                            />
-                                                                        )}
+                                                                        {/* Cancel button moved to header */}
                                                                     </div>
                                                                 </AccordionTab>
                                                             )
