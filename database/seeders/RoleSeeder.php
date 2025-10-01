@@ -52,7 +52,6 @@ class RoleSeeder extends Seeder
         Permission::create(['name' => 'dashboard-checkin view']);
         Permission::create(['name' => 'dashboard-bookings view']);
         Permission::create(['name' => 'dashboard-counsels view']);
-        // System settings permissions
         Permission::create(['name' => 'settings toggle-login']);
 
         Role::findByName('Superadmin')->givePermissionTo([

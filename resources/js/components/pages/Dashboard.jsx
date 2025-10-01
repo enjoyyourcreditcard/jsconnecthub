@@ -366,7 +366,7 @@ function Dashboard() {
                                 filterMode="lenient"
                                 filterPlaceholder="Search"
                                 nodeTemplate={nodeTemplate}
-                                style={{ padding: "0", maxHeight: "480px" }}
+                                className="overflow-auto max-h-120"
                             />
                         </Card>
                     )}

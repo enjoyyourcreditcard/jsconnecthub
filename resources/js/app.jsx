@@ -4,7 +4,13 @@ import "../css/app.css";
 import { PrimeReactProvider } from "primereact/api";
 import React, { useEffect, useState, useRef } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import {
+    BrowserRouter,
+    Routes,
+    Route,
+    Navigate,
+    useNavigate,
+} from "react-router-dom";
 import { AuthProvider, useAuthHeader, useAuthUser } from "react-auth-kit";
 import { Provider, useSelector, useDispatch } from "react-redux";
 import { store } from "./components/store";
@@ -31,12 +37,16 @@ import Counsel from "./components/masters/reports/Counsel";
 import ManageSupportAndQuestions from "./components/masters/ManageSupportAndQuestions";
 import ManageLevelClassStudent from "./components/masters/ManageLevelClassStudent";
 
-const PrivateRoute = ({ element, permission }) => {
+const PrivateRoute = ({ element, permission, loginRequired }) => {
     const auth = useAuthUser();
     const permissions = auth()?.permissions || [];
 
-    if (!auth()) {
+    if (loginRequired && !auth()) {
         return <Navigate to="/login" replace />;
+    }
+
+    if (!loginRequired) {
+        return element;
     }
 
     if (permission) {
@@ -81,23 +91,17 @@ const AppWrapper = () => {
         }
     }, [toastMessage]);
 
-    // Fetch login-required toggle and enforce redirect for guests when enabled
     useEffect(() => {
         const fetchLoginRequired = async () => {
             try {
-                const res = await api.get("/settings/login-required");
+                const res = await api.get("api/settings/login-required");
                 const enabled = !!res?.data?.result?.login_required;
                 setLoginRequired(enabled);
-                if (enabled && !auth()) {
-                    navigate("/login", { replace: true });
-                }
             } catch (e) {
                 // ignore toggle fetch error, do not block app
             }
         };
         fetchLoginRequired();
-        // re-evaluate when auth changes
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [authReady, auth()]);
 
     if (!authReady) {
@@ -196,8 +200,24 @@ const AppWrapper = () => {
             )}
             <Routes>
                 <Route path="/login" element={<Login />} />
-                <Route path="/" element={<Home />} />
-                <Route path="/home" element={<Home />} />
+                <Route
+                    path="/"
+                    element={
+                        <PrivateRoute
+                            element={<Home />}
+                            loginRequired={loginRequired}
+                        />
+                    }
+                />
+                <Route
+                    path="/home"
+                    element={
+                        <PrivateRoute
+                            element={<Home />}
+                            loginRequired={loginRequired}
+                        />
+                    }
+                />
                 <Route path="/about" element={<About />} />
                 {protectedRoutes.map(({ path, element, permission }) => (
                     <Route
@@ -207,6 +227,7 @@ const AppWrapper = () => {
                             <PrivateRoute
                                 element={element}
                                 permission={permission}
+                                loginRequired={loginRequired}
                             />
                         }
                     />

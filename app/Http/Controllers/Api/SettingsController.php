@@ -11,6 +11,11 @@ class SettingsController extends Controller
 {
     public const LOGIN_REQUIRED_KEY = 'login_required';
 
+    public function __construct()
+    {
+        $this->middleware('permission:settings toggle-login', ['only' => ['setLoginRequired']]);
+    }
+
     public function getLoginRequired()
     {
         $value = Setting::where('key', self::LOGIN_REQUIRED_KEY)->value('value');
@@ -23,8 +28,6 @@ class SettingsController extends Controller
 
     public function setLoginRequired(Request $request)
     {
-        $this->middleware('permission:settings toggle-login');
-
         $request->validate([
             'login_required' => ['required', 'boolean'],
         ]);
