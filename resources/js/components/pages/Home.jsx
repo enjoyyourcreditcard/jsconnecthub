@@ -920,7 +920,7 @@ function Home() {
                             <Button
                                 label="Loan Equipment"
                                 severity="help"
-                                onClick={() => navigate("/equipment-loan")}
+                                onClick={() => navigate("/home", { state: { loan: true } })}
                                 className="effected"
                             />
                         </div>

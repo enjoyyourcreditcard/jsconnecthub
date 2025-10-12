@@ -38,14 +38,6 @@ const Header = () => {
             label: "Home",
             command: () => navigate("/"),
         },
-        ...(location.pathname === "/" || location.pathname === "/home"
-            ? [
-                  {
-                      label: "Loan Equipment",
-                      command: () => navigate("/home", { state: { loan: true } }),
-                  },
-              ]
-            : []),
     ];
 
     const getMasterItems = () => {
@@ -110,12 +102,7 @@ const Header = () => {
             label: "Equipment",
             command: () => navigate("/equipment"),
         });
-        if (permissions.includes("equipment-loans view")) {
-            masterSubItems.push({
-                label: "Loan Equipment",
-                command: () => navigate("/equipment-loans"),
-            });
-        }
+        // Removed duplicate 'Loan Equipment' from Master to avoid confusion
         if (permissions.includes("questions view")) {
             masterSubItems.push({
                 label: "Form Ask Ms Vi",
