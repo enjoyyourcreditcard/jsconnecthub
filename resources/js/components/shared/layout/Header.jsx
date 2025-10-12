@@ -38,10 +38,14 @@ const Header = () => {
             label: "Home",
             command: () => navigate("/"),
         },
-        // {
-        //     label: "About",
-        //     command: () => navigate("/about"),
-        // },
+        ...(location.pathname === "/" || location.pathname === "/home"
+            ? [
+                  {
+                      label: "Loan Equipment",
+                      command: () => navigate("/home", { state: { loan: true } }),
+                  },
+              ]
+            : []),
     ];
 
     const getMasterItems = () => {
@@ -101,6 +105,17 @@ const Header = () => {
                 command: () => navigate("/facilities"),
             });
         }
+        // Equipment menu (CCA and Equipment)
+        masterSubItems.push({
+            label: "Equipment",
+            command: () => navigate("/equipment"),
+        });
+        if (permissions.includes("equipment-loans view")) {
+            masterSubItems.push({
+                label: "Loan Equipment",
+                command: () => navigate("/equipment-loans"),
+            });
+        }
         if (permissions.includes("questions view")) {
             masterSubItems.push({
                 label: "Form Ask Ms Vi",
@@ -135,6 +150,11 @@ const Header = () => {
                 command: () => navigate("/facility-reservations"),
             });
         }
+
+        items.push({
+            label: "Equipment Loans",
+            command: () => navigate("/equipment-loans"),
+        });
 
         if (permissions.includes("counsels view")) {
             items.push({
@@ -189,7 +209,7 @@ const Header = () => {
                 padding: "10px 20px",
                 background: isHomePage
                     ? "transparent"
-                    : "linear-gradient(to bottom, #fff 40%, #e0e4f5 100%)",
+                    : "#e0e4f5",
                 position: isHomePage ? "absolute" : "initial",
                 top: 0,
                 width: "100%",

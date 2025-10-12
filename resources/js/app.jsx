@@ -30,6 +30,8 @@ import ManageLevel from "./components/masters/ManageLevel";
 import ManageActivity from "./components/masters/ManageActivity";
 import ManageFacility from "./components/masters/ManageFacility";
 import ManageStudent from "./components/masters/ManageStudent";
+import ManageEquipment from "./components/masters/ManageEquipment";
+import EquipmentLoans from "./components/masters/reports/EquipmentLoans";
 import Checkin from "./components/masters/reports/Checkin";
 import Dashboard from "./components/pages/Dashboard";
 import FacilityReservations from "./components/masters/reports/FacilityReservations";
@@ -142,6 +144,17 @@ const AppWrapper = () => {
             permission: "facilities view",
         },
         {
+            path: "/equipment",
+            element: <ManageEquipment />,
+            permission: undefined,
+        },
+        {
+            path: "/equipment-loans",
+            element: <EquipmentLoans />,
+            permission: "equipment-loans view",
+        },
+        // Removed dedicated equipment-loan page; loan now renders under /home
+        {
             path: "/questions",
             element: <ManageSupportAndQuestions />,
             permission: "questions view",
@@ -219,6 +232,11 @@ const AppWrapper = () => {
                     }
                 />
                 <Route path="/about" element={<About />} />
+                {/* Redirect legacy loan URL to /home with state (no query string) */}
+                <Route
+                    path="/equipment-loan"
+                    element={<Navigate to="/home" replace state={{ loan: true }} />}
+                />
                 {protectedRoutes.map(({ path, element, permission }) => (
                     <Route
                         key={path}

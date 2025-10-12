@@ -11,6 +11,11 @@ use Illuminate\Support\Carbon;
 
 class EquipmentLoanController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:bookings confirm', ['only' => ['confirm']]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -65,15 +70,29 @@ class EquipmentLoanController extends Controller
             'user_id' => $request->user_id,
             'start_date' => $start->toDateString(),
             'end_date' => $end->toDateString(),
-            'status' => 'reserved',
+            'status' => 'requested',
             'notes' => $request->notes,
         ]);
 
         return response()->json([
             'status' => true,
-            'message' => 'Loan created',
+            'message' => 'Loan requested',
             'result' => $loan->load('equipment.cca'),
         ], Response::HTTP_CREATED);
+    }
+
+    public function confirm(int $id)
+    {
+        $loan = EquipmentLoan::find($id);
+        if (!$loan) {
+            return response()->json(['status' => false, 'message' => 'Loan not found'], Response::HTTP_NOT_FOUND);
+        }
+        if ($loan->status === 'cancelled' || $loan->status === 'returned') {
+            return response()->json(['status' => false, 'message' => 'Cannot confirm this loan'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+        $loan->status = 'reserved';
+        $loan->save();
+        return response()->json(['status' => true, 'message' => 'Loan confirmed', 'result' => $loan], Response::HTTP_OK);
     }
 
     public function cancel($id)

@@ -66,6 +66,9 @@ Route::put('/booking-cancel/{id}', [BookingController::class, 'cancel']);
 Route::get('/ccas', [CcaController::class, 'index']);
 Route::get('/equipment', [EquipmentController::class, 'index']);
 Route::post('/equipment-loans', [EquipmentLoanController::class, 'store']);
+Route::group(['middleware' => 'auth:sanctum'], function () {
+    Route::put('/equipment-loans-confirm/{id}', [EquipmentLoanController::class, 'confirm']);
+});
 Route::put('/equipment-loans-cancel/{id}', [EquipmentLoanController::class, 'cancel']);
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::put('/equipment-loans-return/{id}', [EquipmentLoanController::class, 'markReturned']);

@@ -24,7 +24,9 @@ import { Calendar } from "primereact/calendar";
 import { Dropdown } from "primereact/dropdown";
 import { RadioButton } from "primereact/radiobutton";
 import { DateTime } from "luxon";
+import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../shared/layout/Header";
+import { EquipmentLoan } from "../masters/reports/EquipmentLoans";
 import _ from "lodash";
 import "../../../css/home.css";
 
@@ -33,6 +35,8 @@ function Home() {
     const toast = useRef(null);
     const stepperRef = useRef(null);
     const overlayRef = useRef(null);
+    const navigate = useNavigate();
+    const location = useLocation();
     const dispatch = useDispatch();
     const {
         class: { data: classes = [], endPoints: classEndPoints },
@@ -862,6 +866,14 @@ function Home() {
         );
     };
 
+    // Render EquipmentLoan when navigating to /home with loan flag in navigation state
+    // Only show loan form if we're actually on /home path
+    const isHomePath = location.pathname === "/" || location.pathname === "/home";
+    const loanMode = isHomePath && location.state?.loan === true;
+    if (loanMode) {
+        return <EquipmentLoan />;
+    }
+
     return (
         <div>
             <Header />
@@ -873,11 +885,11 @@ function Home() {
                 // }`}
             >
                 {!showCard && (
-                    <div className="w-11/12 sm:w-10/12 md:w-9/12 xl:w-9/12 2xl:w-1/2 flex flex-col gap-2 md:gap-6">
+                    <div className="w-full max-w-6xl px-4 mx-auto flex flex-col gap-4 md:gap-6">
                         {auth() === null && (
                             <h4 className="launch-pad-title">Students-Hub</h4>
                         )}
-                        <div className="grid md:grid-cols-3 gap-2 md:gap-6">
+                        <div className="launch-actions">
                             <Button
                                 label="Checkin/Checkout"
                                 severity="success"
@@ -903,6 +915,12 @@ function Home() {
                                     setActiveButton("msvi");
                                     setShowCard(true);
                                 }}
+                                className="effected"
+                            />
+                            <Button
+                                label="Loan Equipment"
+                                severity="help"
+                                onClick={() => navigate("/equipment-loan")}
                                 className="effected"
                             />
                         </div>

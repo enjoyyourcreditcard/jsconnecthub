@@ -45,7 +45,7 @@ class MasterService
             return $q->with('roles')->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.LEVEL_MASTER_TYPE')) {
-            return $q->with('classes')->get();
+            return $q->with('classes')->distinct()->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.CLASS_MASTER_TYPE')) {
             return $q->with(['level', 'students'])
@@ -54,7 +54,7 @@ class MasterService
                 })
                 ->when($request->level_id, function ($q) use ($request) {
                     return $q->where('level_id', $request->level_id);
-                })->get();
+                })->distinct()->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.STUDENT_MASTER_TYPE')) {
             return $q->with('class.level')
@@ -63,7 +63,7 @@ class MasterService
                 })
                 ->when($request->class_id, function ($q) use ($request) {
                     return $q->where('class_id', $request->class_id);
-                })->get();
+                })->distinct()->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.CHECKIN_MASTER_TYPE')) {
             return $q->with(['student.class.level', 'activity'])
@@ -215,12 +215,12 @@ class MasterService
                 ->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.FACILITY_MASTER_TYPE')) {
-            return $q->with(['parent', 'children'])->get();
+            return $q->with(['parent', 'children'])->distinct()->get();
         }
         if ($type === config('constants.MASTER_TYPE_ARRAY.QUESTION_MASTER_TYPE')) {
-            return $q->with(['supportStrategy', 'radioOptions'])->get();
+            return $q->with(['supportStrategy', 'radioOptions'])->distinct()->get();
         }
-        return $q->get();
+        return $q->distinct()->get();
     }
 
     public function getById($type, $id)
