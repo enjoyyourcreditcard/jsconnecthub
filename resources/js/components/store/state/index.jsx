@@ -7,6 +7,8 @@ export { STUDENT_STATE } from "./Student";
 export { ACTIVITY_STATE } from "./Activity";
 export { FACILITY_STATE } from "./Facility";
 export { SUB_FACILITY_STATE } from "./SubFacility";
+export { CCA_STATE } from "./Cca";
+export { EQUIPMENT_STATE } from "./Equipment";
 export { CHECKIN_STATE } from "./Checkin";
 export { BOOKING_STATE } from "./Booking";
 export { COUNSEL_STATE } from "./Counsel";

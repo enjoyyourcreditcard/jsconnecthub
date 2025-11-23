@@ -187,8 +187,8 @@ function ManageLevelClassStudent() {
             deleteRecord({
                 endPoint: `${classEndPoints.delete}${id}`,
             })
-        ).then((success) => {
-            if (success) {
+        ).then((result) => {
+            if (result?.success || result === true) {
                 myFetch();
             }
         });
@@ -199,8 +199,8 @@ function ManageLevelClassStudent() {
             deleteRecord({
                 endPoint: `${studentEndPoints.delete}${id}`,
             })
-        ).then((success) => {
-            if (success) {
+        ).then((result) => {
+            if (result?.success || result === true) {
                 myFetch();
             }
         });

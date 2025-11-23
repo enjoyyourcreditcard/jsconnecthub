@@ -48,9 +48,14 @@ function EquipmentLoans() {
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState("");
     const [equipmentLoans, setEquipmentLoans] = useState([]);
-    const [ccas, setCcas] = useState([]);
-    const [equipment, setEquipment] = useState([]);
     const [equipmentOptions, setEquipmentOptions] = useState([]);
+    const [loadingCcas, setLoadingCcas] = useState(true);
+    const [loadingEquipment, setLoadingEquipment] = useState(true);
+
+    const {
+        ccas: { data: ccas = [], endPoints: ccaEndPoints } = {},
+        equipment: { data: equipment = [], endPoints: equipmentEndPoints } = {},
+    } = useSelector((state) => state.global);
 
     const myFetch = (params = {}) => {
         let currentDateFilter =
@@ -125,10 +130,21 @@ function EquipmentLoans() {
 
     useEffect(() => {
         myFetch();
-        // Fetch CCAs and Equipment for reference
-        api.get("/api/ccas").then((res) => setCcas(res.data?.result || []));
-        api.get("/api/equipment").then((res) => setEquipment(res.data?.result || []));
-    }, []);
+        dispatch(
+            getRecords({
+                type: "ccas",
+                endPoint: ccaEndPoints.collection,
+                key: "data",
+            })
+        ).finally(() => setLoadingCcas(false));
+        dispatch(
+            getRecords({
+                type: "equipment",
+                endPoint: equipmentEndPoints.collection,
+                key: "data",
+            })
+        ).finally(() => setLoadingEquipment(false));
+    }, [dispatch]);
 
     // Update equipment options when CCA is selected
     useEffect(() => {
@@ -384,6 +400,120 @@ function EquipmentLoans() {
         }
     };
 
+    const handleApprove = (id) => {
+        setLoading(true);
+        dispatch(
+            updateRecord({
+                type: "equipment-loans",
+                endPoint: `/api/equipment-loans-confirm/${id}`,
+                data: {},
+                returnData: true,
+            })
+        )
+            .then(() => {
+                dispatch(
+                    setStateData({
+                        key: "alert",
+                        data: {
+                            type: "success",
+                            text: "Loan approved successfully.",
+                            show: true,
+                        },
+                    })
+                );
+                myFetch();
+            })
+            .catch((err) => {
+                dispatch(
+                    setStateData({
+                        key: "alert",
+                        data: {
+                            type: "danger",
+                            text: err.message || "Failed to approve loan.",
+                            show: true,
+                        },
+                    })
+                );
+            })
+            .finally(() => setLoading(false));
+    };
+
+    const handleReject = (id) => {
+        setLoading(true);
+        dispatch(
+            updateRecord({
+                type: "equipment-loans",
+                endPoint: `/api/equipment-loans-cancel/${id}`,
+                data: {},
+                returnData: true,
+            })
+        )
+            .then(() => {
+                dispatch(
+                    setStateData({
+                        key: "alert",
+                        data: {
+                            type: "success",
+                            text: "Loan rejected successfully.",
+                            show: true,
+                        },
+                    })
+                );
+                myFetch();
+            })
+            .catch((err) => {
+                dispatch(
+                    setStateData({
+                        key: "alert",
+                        data: {
+                            type: "danger",
+                            text: err.message || "Failed to reject loan.",
+                            show: true,
+                        },
+                    })
+                );
+            })
+            .finally(() => setLoading(false));
+    };
+
+    const handleMarkReturned = (id) => {
+        setLoading(true);
+        dispatch(
+            updateRecord({
+                type: "equipment-loans",
+                endPoint: `/api/equipment-loans-return/${id}`,
+                data: {},
+                returnData: true,
+            })
+        )
+            .then(() => {
+                dispatch(
+                    setStateData({
+                        key: "alert",
+                        data: {
+                            type: "success",
+                            text: "Loan marked as returned.",
+                            show: true,
+                        },
+                    })
+                );
+                myFetch();
+            })
+            .catch((err) => {
+                dispatch(
+                    setStateData({
+                        key: "alert",
+                        data: {
+                            type: "danger",
+                            text: err.message || "Failed to mark returned.",
+                            show: true,
+                        },
+                    })
+                );
+            })
+            .finally(() => setLoading(false));
+    };
+
     const columns = [
         { field: "user", header: "User" },
         { field: "equipment", header: "Equipment" },
@@ -400,27 +530,36 @@ function EquipmentLoans() {
         { label: "Returned", value: "returned" },
     ];
 
+    const isDataReady = !loadingData && !loadingCcas && !loadingEquipment;
+
     return (
         <div>
             <Header />
             <main className="admin-container with-color" style={{ padding: "20px" }}>
                 <Card>
-                    <DataTable
-                        type="equipment-loans"
-                        identifier="id"
-                        title="Equipment Loans"
-                        collection={equipmentLoans}
-                        onFetch={(params) => myFetch(params)}
-                        onAdd={handleAdd}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                        timeFilter={timeFilter}
-                        setTimeFilter={setTimeFilter}
-                        dateFilter={dateFilter}
-                        setDateFilter={setDateFilter}
-                        rangeFilter={rangeFilter}
-                        setRangeFilter={setRangeFilter}
-                    />
+                    {isDataReady ? (
+                        <DataTable
+                            type="equipment-loans"
+                            identifier="id"
+                            title="Equipment Loans"
+                            collection={equipmentLoans}
+                            onFetch={(params) => myFetch(params)}
+                            onAdd={handleAdd}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            onConfirm={handleApprove}
+                            onCancel={handleReject}
+                            onReturn={handleMarkReturned}
+                            timeFilter={timeFilter}
+                            setTimeFilter={setTimeFilter}
+                            dateFilter={dateFilter}
+                            setDateFilter={setDateFilter}
+                            rangeFilter={rangeFilter}
+                            setRangeFilter={setRangeFilter}
+                        />
+                    ) : (
+                        <p>Please wait.</p>
+                    )}
                 </Card>
             </main>
 

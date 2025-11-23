@@ -32,7 +32,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () use ($types) {
     /**
      * Master data
      */
-    Route::prefix('{type}')->where(['type' => implode('|', $types)])->group(function () {
+    Route::prefix('{type}')->where(['type' => implode('|', array_values($types))])->group(function () {
         Route::get('/{id}', [MasterApiController::class, 'show']);
         Route::post('/', [MasterApiController::class, 'store']);
         Route::post('/import', [MasterApiController::class, 'import']);
@@ -41,7 +41,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () use ($types) {
     });
 });
 
-Route::prefix('{type}')->where(['type' => implode('|', $types)])->group(function () {
+Route::prefix('{type}')->where(['type' => implode('|', array_values($types))])->group(function () {
     Route::get('/', [MasterApiController::class, 'index']);
 });
 
@@ -63,8 +63,8 @@ Route::put('/booking-cancel/{id}', [BookingController::class, 'cancel']);
 /**
  * Loan Equipment
  */
-Route::get('/ccas', [CcaController::class, 'index']);
-Route::get('/equipment', [EquipmentController::class, 'index']);
+// CCA routes are now handled by master routes at /api/ccas
+// Equipment routes are now handled by master routes at /api/equipment
 Route::post('/equipment-loans', [EquipmentLoanController::class, 'store']);
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::put('/equipment-loans-confirm/{id}', [EquipmentLoanController::class, 'confirm']);

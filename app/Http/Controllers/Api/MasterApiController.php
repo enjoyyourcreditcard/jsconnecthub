@@ -83,6 +83,22 @@ class MasterApiController extends Controller
         if ($type === config('constants.MASTER_TYPE_ARRAY.BLOCKED_DATE_MASTER_TYPE')) {
             $rules = config('constants.MASTER_VALIDATION_ARRAY.BLOCKED_DATE_VALIDATION');
         }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.EQUIPMENT_MASTER_TYPE')) {
+            $rules = config('constants.MASTER_VALIDATION_ARRAY.EQUIPMENT_MASTER_VALIDATION');
+        }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.CCA_MASTER_TYPE')) {
+            $baseRules = config('constants.MASTER_VALIDATION_ARRAY.CCA_MASTER_VALIDATION');
+            $rules = $baseRules;
+            // Handle unique validation for update
+            if ($id !== null && isset($rules['name'])) {
+                $rules['name'] = array_map(function($rule) use ($id) {
+                    if (is_string($rule) && strpos($rule, 'unique:ccas,name') !== false) {
+                        return Rule::unique('ccas', 'name')->ignore($id);
+                    }
+                    return $rule;
+                }, $rules['name']);
+            }
+        }
         return $rules;
     }
 
@@ -495,8 +511,20 @@ class MasterApiController extends Controller
 
     public function destroy(Request $request, $type, $id)
     {
-        $this->masterService->delete($type, $id);
-        return response()->json(['status' => true, 'message' => "$type deleted"], Response::HTTP_OK);
+        try {
+            $this->masterService->delete($type, $id);
+            return response()->json(['status' => true, 'message' => "$type deleted"], Response::HTTP_OK);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => "Record not found"
+            ], Response::HTTP_NOT_FOUND);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage() ?: "Failed to delete record"
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     private function changeImportHeader($type)

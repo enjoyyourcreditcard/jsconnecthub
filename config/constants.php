@@ -10,6 +10,8 @@ return [
         'STUDENT_MASTER_TYPE'           => 'students',
         'ACTIVITY_MASTER_TYPE'          => 'activities',
         'FACILITY_MASTER_TYPE'          => 'facilities',
+        'EQUIPMENT_MASTER_TYPE'         => 'equipment',
+        'CCA_MASTER_TYPE'              => 'ccas',
         'CHECKIN_MASTER_TYPE'           => 'checkin',
         'BOOKING_MASTER_TYPE'           => 'bookings',
         'COUNSEL_MASTER_TYPE'           => 'counsels',
@@ -80,6 +82,18 @@ return [
         'BLOCKED_DATE_VALIDATION' => [
             'reason' => ['required', 'string', 'max:100'],
             'date' => ['required', 'date', 'unique:blocked_dates,date']
+        ],
+        'EQUIPMENT_MASTER_VALIDATION' => [
+            'cca_id' => ['required', 'exists:ccas,id'],
+            'name' => ['required', 'string', 'max:250'],
+            'code' => ['nullable', 'string', 'max:100'],
+            'quantity' => ['nullable', 'integer', 'min:1'],
+            'active' => ['nullable', 'boolean'],
+        ],
+        'CCA_MASTER_VALIDATION' => [
+            'name' => ['required', 'string', 'max:250', 'unique:ccas,name'],
+            'description' => ['nullable', 'string'],
+            'active' => ['nullable', 'boolean'],
         ],
     ],
 ];

@@ -29,30 +29,32 @@ import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { DateTime } from "luxon";
 
-const CustomDataTable = ({
-    title,
-    type,
-    identifier = "id",
-    hasImport,
-    hasExpand,
-    onFetch = () => {},
-    onAdd = () => {},
-    onEdit = () => {},
+    const CustomDataTable = ({
+        title,
+        type,
+        identifier = "id",
+        hasImport,
+        hasExpand,
+        onFetch = () => {},
+        onAdd = () => {},
+        onEdit = () => {},
     onConfirm = () => {},
     onCancel = () => {},
-    onDelete = null,
-    onAddQuestion = () => {},
-    onEditQuestion = () => {},
-    onDeleteQuestion = () => {},
-    onAddClass = () => {},
-    onEditClass = () => {},
-    onDeleteClass = () => {},
-    onAddStudent = () => {},
-    onEditStudent = () => {},
-    onDeleteStudent = () => {},
-    onEditSubFacility = () => {},
-    timeFilter,
-    setTimeFilter,
+    onReturn = () => {},
+        onDelete = null,
+        onDeleteSubFacility = null,
+        onAddQuestion = () => {},
+        onEditQuestion = () => {},
+        onDeleteQuestion = () => {},
+        onAddClass = () => {},
+        onEditClass = () => {},
+        onDeleteClass = () => {},
+        onAddStudent = () => {},
+        onEditStudent = () => {},
+        onDeleteStudent = () => {},
+        onEditSubFacility = () => {},
+        timeFilter,
+        setTimeFilter,
     dateFilter,
     setDateFilter,
     rangeFilter,
@@ -199,13 +201,13 @@ const CustomDataTable = ({
                         deleteRecord({
                             endPoint: `${dataEndPoints.delete}${id}`,
                         })
-                    ).then((success) => {
-                        if (success) {
+                    ).then((result) => {
+                        if (result && result.success) {
                             dispatch(
                                 setToastMessage({
                                     severity: "success",
                                     summary: "Success",
-                                    detail: `${capitalize(type)} deleted`,
+                                    detail: result.message || `${capitalize(type)} deleted`,
                                     life: 3000,
                                 })
                             );
@@ -277,6 +279,18 @@ const CustomDataTable = ({
         });
     };
 
+    const handleReturn = (event, id) => {
+        confirmPopup({
+            target: event.currentTarget,
+            message: `Mark this loan as returned?`,
+            icon: "pi pi-info-circle",
+            acceptClassName: "p-button-success",
+            accept: () => {
+                onReturn(id);
+            },
+        });
+    };
+
     const confirmDeleteSelected = () => {
         if (selectedRecords && selectedRecords.length > 0) {
             setDeleteRecordsDialog(true);
@@ -296,7 +310,7 @@ const CustomDataTable = ({
                     )
                 )
             ).then((results) => {
-                if (results.every((success) => success)) {
+                if (results.every((result) => result?.success || result === true)) {
                     dispatch(
                         setToastMessage({
                             severity: "success",
@@ -410,6 +424,30 @@ const CustomDataTable = ({
         return data;
     };
 
+    const generateCcaEquipmentData = () => {
+        const data = [];
+
+        collection.forEach((cca) => {
+            data.push({
+                CCA: cca.name,
+                Equipment: "",
+            });
+
+            const relatedEquipment = subFacilities.filter(
+                (eq) => eq.parent_id === cca.id
+            );
+
+            relatedEquipment.forEach((eq) => {
+                data.push({
+                    CCA: cca.name,
+                    Equipment: eq.name,
+                });
+            });
+        });
+
+        return data;
+    };
+
     const exportExcel = () => {
         if (hasExpand && type === "levels" && !isGrouped) {
             const dataToExport = generateLevelClassStudentData();
@@ -427,6 +465,12 @@ const CustomDataTable = ({
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Facility");
             XLSX.writeFile(workbook, "facility_and_subfacility_data.xlsx");
+        } else if (hasExpand && type === "ccas" && !isGrouped) {
+            const dataToExport = generateCcaEquipmentData();
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "CCA-Equipment");
+            XLSX.writeFile(workbook, "cca_and_equipment_data.xlsx");
         } else if (type === "counsels" && isGrouped) {
             const dataToExport = [];
             filteredDataState.forEach((group) => {
@@ -498,6 +542,19 @@ const CustomDataTable = ({
                 margin: { top: 10 },
             });
             doc.save("facility_data.pdf");
+        } else if (hasExpand && type === "ccas" && !isGrouped) {
+            const columns = ["CCA", "Equipment"];
+            const body = generateCcaEquipmentData().map((item) => [
+                item.CCA,
+                item.Equipment,
+            ]);
+            autoTable(doc, {
+                head: [columns],
+                body,
+                styles: { fontSize: 10 },
+                margin: { top: 10 },
+            });
+            doc.save("cca_equipment_data.pdf");
         } else if (type === "counsels" && isGrouped) {
             const columns = [
                 "Date",
@@ -922,6 +979,30 @@ const CustomDataTable = ({
                     icon: "pi pi-times",
                     command: (event) =>
                         handleCancel(event.originalEvent, rowData[identifier]),
+                });
+            }
+        }
+        if (type === "equipment-loans") {
+            if (rowData.status === "pending") {
+                actions.push({
+                    label: "Approve",
+                    icon: "pi pi-check",
+                    command: (event) =>
+                        onConfirm(rowData[identifier]),
+                });
+                actions.push({
+                    label: "Reject",
+                    icon: "pi pi-times",
+                    command: (event) =>
+                        onCancel(rowData[identifier]),
+                });
+            }
+            if (rowData.status === "approved") {
+                actions.push({
+                    label: "Mark Returned",
+                    icon: "pi pi-undo",
+                    command: (event) =>
+                        handleReturn(event.originalEvent, rowData[identifier]),
                 });
             }
         }
@@ -1418,8 +1499,8 @@ const CustomDataTable = ({
                             header="Actions"
                             body={(rowData) => {
                                 const permissions = auth()?.permissions || [];
-                                const canEdit = permissions.includes(`${type} edit`) || true; // Temporarily allow
-                                const canDelete = permissions.includes(`${type} delete`) || true; // Temporarily allow
+                                const canEdit = permissions.includes(`equipment edit`); 
+                                const canDelete = permissions.includes(`equipment delete`); 
 
                                 const actions = [
                                     ...(canEdit
@@ -1437,7 +1518,19 @@ const CustomDataTable = ({
                                                   label: "Delete",
                                                   icon: "pi pi-trash",
                                                   command: (event) =>
-                                                      handleDelete(event.originalEvent, rowData.id),
+                                                      confirmPopup({
+                                                          target: event.originalEvent.currentTarget,
+                                                          message: "Do you want to delete this equipment?",
+                                                          icon: "pi pi-info-circle",
+                                                          acceptClassName: "p-button-danger",
+                                                          accept: () => {
+                                                              if (onDeleteSubFacility) {
+                                                                  onDeleteSubFacility(rowData.id);
+                                                              } else {
+                                                                  handleDelete(event.originalEvent, rowData.id);
+                                                              }
+                                                          },
+                                                      }),
                                               },
                                           ]
                                         : []),
@@ -1778,6 +1871,9 @@ const CustomDataTable = ({
                             case "facilities":
                                 headerName = "Facility";
                                 break;
+                            case "ccas":
+                                headerName = "CCA";
+                                break;
                             default:
                                 headerName = null;
                         }
@@ -1878,7 +1974,9 @@ CustomDataTable.propTypes = {
     onEdit: PropTypes.func,
     onConfirm: PropTypes.func,
     onCancel: PropTypes.func,
+    onReturn: PropTypes.func,
     onDelete: PropTypes.func,
+    onDeleteSubFacility: PropTypes.func,
     onAddQuestion: PropTypes.func,
     onEditQuestion: PropTypes.func,
     onDeleteQuestion: PropTypes.func,

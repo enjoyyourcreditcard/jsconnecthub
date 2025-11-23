@@ -10,6 +10,8 @@ import {
     STUDENT_STATE,
     SUB_FACILITY_STATE,
     FACILITY_STATE,
+    CCA_STATE,
+    EQUIPMENT_STATE,
     CHECKIN_STATE,
     BOOKING_STATE,
     COUNSEL_STATE,
@@ -29,6 +31,8 @@ const INITIAL_STATE = {
     [stateKey.students]: STUDENT_STATE,
     [stateKey.sub_facilities]: SUB_FACILITY_STATE,
     [stateKey.facilities]: FACILITY_STATE,
+    [stateKey.ccas]: CCA_STATE,
+    [stateKey.equipment]: EQUIPMENT_STATE,
     [stateKey.checkin]: CHECKIN_STATE,
     [stateKey.bookings]: BOOKING_STATE,
     [stateKey.counsels]: COUNSEL_STATE,
@@ -160,11 +164,13 @@ export const createRecord =
                         isMerge: true,
                     })
                 );
+                const displayType = type ? type.replace(/_/g, " ") : "Record";
+                const label = displayType.charAt(0).toUpperCase() + displayType.slice(1);
                 dispatch(
                     setToastMessage({
                         severity: "success",
                         summary: "Success",
-                        detail: "Record created successfully",
+                        detail: `${label} created successfully`,
                     })
                 );
                 if (returnData === true) {
@@ -176,14 +182,14 @@ export const createRecord =
                 setToastMessage({
                     severity: "error",
                     summary: "Error",
-                    detail: "Failed to create record",
+                    detail: "Failed to create",
                 })
             );
             return false;
         } catch (error) {
             dispatch(resetStateKeyData({ key: "spinner" }));
             const errorMsg =
-                error.response?.data?.message || "Failed to create record";
+                error.response?.data?.message || "Failed to create";
             dispatch(
                 setToastMessage({
                     severity: "error",
@@ -216,11 +222,13 @@ export const updateRecord =
                         isMerge: true,
                     })
                 );
+                const displayTypeUpd = type ? type.replace(/_/g, " ") : "Record";
+                const labelUpd = displayTypeUpd.charAt(0).toUpperCase() + displayTypeUpd.slice(1);
                 dispatch(
                     setToastMessage({
                         severity: "success",
                         summary: "Success",
-                        detail: "Record updated successfully",
+                        detail: `${labelUpd} updated successfully`,
                     })
                 );
                 if (returnData === true) {
@@ -232,14 +240,14 @@ export const updateRecord =
                 setToastMessage({
                     severity: "error",
                     summary: "Error",
-                    detail: "Failed to update record",
+                    detail: "Failed to update",
                 })
             );
             return false;
         } catch (error) {
             dispatch(resetStateKeyData({ key: "spinner" }));
             const errorMsg =
-                error.response?.data?.message || "Failed to update record";
+                error.response?.data?.message || "Failed to update";
             dispatch(
                 setToastMessage({
                     severity: "error",
@@ -264,27 +272,20 @@ export const deleteRecord =
             const response = await api.delete(endPoint);
             dispatch(resetStateKeyData({ key: "spinner" }));
             if (response.data.status) {
-                dispatch(
-                    setToastMessage({
-                        severity: "success",
-                        summary: "Success",
-                        detail: "Record deleted successfully",
-                    })
-                );
-                return true;
+                return { success: true, message: response.data.message };
             }
             dispatch(
                 setToastMessage({
                     severity: "error",
                     summary: "Error",
-                    detail: "Failed to delete record",
+                    detail: "Failed to delete",
                 })
             );
-            return false;
+            return { success: false };
         } catch (error) {
             dispatch(resetStateKeyData({ key: "spinner" }));
             const errorMsg =
-                error.response?.data?.message || "Failed to delete record";
+                error.response?.data?.message || "Failed to delete";
             dispatch(
                 setToastMessage({
                     severity: "error",
@@ -292,7 +293,7 @@ export const deleteRecord =
                     detail: errorMsg,
                 })
             );
-            return false;
+            return { success: false };
         }
     };
 

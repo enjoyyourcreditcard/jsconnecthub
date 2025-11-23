@@ -19,6 +19,9 @@ class MasterService
         'students'              => \App\Models\Student::class,
         'activities'            => \App\Models\Activity::class,
         'facilities'            => \App\Models\Facility::class,
+        'equipment'             => \App\Models\Equipment::class,
+        'equipment_loans'       => \App\Models\EquipmentLoan::class,
+        'ccas'                  => \App\Models\Cca::class,
         'checkin'               => \App\Models\Checkin::class,
         'bookings'              => \App\Models\Booking::class,
         'counsels'              => \App\Models\Result::class,
@@ -217,6 +220,41 @@ class MasterService
         if ($type === config('constants.MASTER_TYPE_ARRAY.FACILITY_MASTER_TYPE')) {
             return $q->with(['parent', 'children'])->distinct()->get();
         }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.EQUIPMENT_MASTER_TYPE')) {
+            $query = $q->with('cca');
+            
+            // Default to active=true if not specified (matching EquipmentController behavior)
+            if (!$request || !$request->filled('active')) {
+                $query->where('active', true);
+            } else {
+                $query->where('active', $request->active);
+            }
+            
+            if ($request && $request->filled('cca_id')) {
+                $query->where('cca_id', $request->cca_id);
+            }
+            if ($request && $request->filled('name')) {
+                $query->where('name', 'like', '%'.$request->name.'%');
+            }
+            
+            return $query->orderBy('name')->distinct()->get();
+        }
+        if ($type === config('constants.MASTER_TYPE_ARRAY.CCA_MASTER_TYPE')) {
+            $query = $q->with('equipment');
+            
+            // Default to active=true if not specified (matching CcaController behavior)
+            if (!$request || !$request->filled('active')) {
+                $query->where('active', true);
+            } else {
+                $query->where('active', $request->active);
+            }
+            
+            if ($request && $request->filled('name')) {
+                $query->where('name', 'like', '%'.$request->name.'%');
+            }
+            
+            return $query->orderBy('name')->distinct()->get();
+        }
         if ($type === config('constants.MASTER_TYPE_ARRAY.QUESTION_MASTER_TYPE')) {
             return $q->with(['supportStrategy', 'radioOptions'])->distinct()->get();
         }
@@ -293,8 +331,17 @@ class MasterService
         if ($type === 'questions') {
             $this->cascade($type, $id);
         }
+        if ($type === 'ccas') {
+            $this->cascade($type, $id);
+        }
+        if ($type === 'equipment') {
+            $this->cascade($type, $id);
+        }
 
-        $model = $this->getModel($type)->findOrFail($id);
+        $model = $this->getModel($type)->find($id);
+        if (!$model) {
+            throw new \Illuminate\Database\Eloquent\ModelNotFoundException("No query results for model [{$this->modelMap[$type]}] {$id}");
+        }
         $model->delete();
     }
 
@@ -368,6 +415,25 @@ class MasterService
             if ($question->type === 'radio') {
                 $this->getModel('radio_options')->where('question_id', $id)->delete();
             }
+        }
+        if ($type === 'ccas') {
+            // Get all equipment related to this CCA
+            $equipments = $this->getModel('equipment')->where('cca_id', $id)->get();
+            
+            // Delete all equipment loans related to these equipments
+            // Equipment loans will be automatically deleted by foreign key cascade
+            // But we can also explicitly delete them if needed
+            foreach ($equipments as $equipment) {
+                $this->getModel('equipment_loans')->where('equipment_id', $equipment->id)->delete();
+            }
+            
+            // Delete all equipment related to this CCA
+            $this->getModel('equipment')->where('cca_id', $id)->delete();
+        }
+        if ($type === 'equipment') {
+            // Delete all equipment loans related to this equipment
+            // Equipment loans will be automatically deleted by foreign key cascade
+            $this->getModel('equipment_loans')->where('equipment_id', $id)->delete();
         }
     }
 }
